@@ -151,6 +151,7 @@ master (cv.json)
 - [ ] `diff` package: apply hunk, revert hunk, apply-all-accepted, produce the "after" CV
 - [ ] Facts gate on hunk creation; ATS-keyword tag on hunks that add a JD term
 - [ ] UI: **s03 Diff** — files rail (sections), unified diff center (red/green with +/− markers), rationale/evidence right, per-hunk Accept/Reject/Edit, bottom action bar
+- [ ] Job switcher: prev/next at the top of s03. Switching job swaps the branch instantly — the preview, fit score, keyword rail, and rationale all re-bind to the new job. A job with no tailoring yet shows master as-is plus a "Tailor for this JD" action.
 - [ ] Tests: hunk apply/revert is reversible; a hunk with an unapproved number is rejected; accepted-only build matches the accepted set
 - [ ] Accept gate: PDF build runs only on accepted hunks; PDF preview in the right rail
 
