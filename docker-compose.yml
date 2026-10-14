@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: applydiff
+      POSTGRES_PASSWORD: applydiff
+      POSTGRES_DB: applydiff
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  tex:
+    image: texlive/texlive:latest-full
+    entrypoint: ["sleep", "infinity"]
+    volumes:
+      - texout:/output
+
+volumes:
+  pgdata:
+  texout:
