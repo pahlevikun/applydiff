@@ -172,6 +172,24 @@ Wireframes: `docs/wireframes/s01..s05` (HTML source + PNG).
 
 ---
 
+## Tailoring rules (bahan dari riset komunitas)
+
+Rules that shape the drafter prompt, sitting next to the facts gate.
+
+**Non-English source is rewritten, not translated.** When the master CV is Indonesian and the target posting is English, the drafter rewrites into CV-English. It never translates word for word. Prompt fence, verbatim: "Jangan nambahin pengalaman, angka, atau skill yang nggak ada di teks aku."
+
+**Bullets start with a past-tense action verb.** Each experience bullet opens with a verb (Architected, Shipped, Built). Keep a number only if the source has it. Never invent one.
+
+**Mirror the posting's wording, not its claims.** Use the term the posting uses when the concept is already true in the CV. Never add a skill the person does not have. This pairs with the ATS-keyword tag on hunks.
+
+**Verify against the original before export.** Diff the tailored CV against the source point by point: changed meaning, differing numbers, claims absent from the source, grammar. Runs as a gate before the PDF builds.
+
+**Never translate proper nouns.** Company, university, and official job titles stay as written on the official site or LinkedIn. Only descriptions translate.
+
+**Localized prompts live in `internal/tailor/prompts/`.** English plus Indonesian first (Bahasa Indonesia market). Each is a data file, not code.
+
+---
+
 ## Open questions
 
 - Honor + Anovium: confirm Indonesia eligibility before they reach the qualified gate.
