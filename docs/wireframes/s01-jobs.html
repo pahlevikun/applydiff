@@ -1,0 +1,133 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="theme.css">
+<style>
+.list{flex:1;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line);cursor:default}
+.row:hover{background:var(--surface)}
+.row .score{font-family:'Plex Mono';font-weight:600;font-size:15px;width:34px;text-align:center;border-radius:7px;padding:5px 0}
+.s42{color:var(--add);background:#0e2a17}.s38{color:var(--amber);background:#2a2110}.s25{color:var(--del);background:#2c1512}.s30{color:var(--muted);background:var(--surface2)}
+.row .c{min-width:0;flex:1}
+.row .t{font-weight:600;font-size:13.5px}
+.row .m{font-size:12px;color:var(--muted);margin-top:2px;display:flex;gap:9px;align-items:center}
+.row .r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.fchip{display:flex;gap:5px}
+.fbar{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;background:var(--surface)}
+.sel{padding:6px 10px;background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;color:var(--fg);font-family:inherit}
+.sel.mono{font-family:'Plex Mono';color:var(--muted)}
+.fchip .c2{font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.fchip .c2.on{color:var(--accent);border-color:var(--accent-dim);background:#3fd0be12}
+.stat{display:flex;gap:18px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.stat div{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px}
+.stat b{display:block;font-size:19px;color:var(--fg);font-family:'Plex Mono';font-weight:600;letter-spacing:0;margin-top:2px}
+</style></head>
+<body><div class="wrap">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ApplyDiff</div>
+    <div class="nav"><a class="on" href="#">Jobs</a><a href="#">Applications</a></div>
+    <div class="grow"></div>
+    <div class="search mono">/ search listings</div>
+    <button class="btn">Scan sources</button>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="lbl">Run</div>
+      <div class="flow"><span class="dot"></span> last scan 14 Oct 08:40</div>
+      <div class="flow muted">12 sources · 340 found</div>
+      <div class="flow muted">drops dead 62 · dedupe 18</div>
+      <div class="hr"></div>
+      <div class="lbl">Status</div>
+      <div class="f on">New <span class="badge">48</span></div>
+      <div class="f">Matched <span class="badge">31</span></div>
+      <div class="f">Shortlisted <span class="badge">9</span></div>
+      <div class="f">Applied <span class="badge">6</span></div>
+      <div class="f">Archived <span class="badge">12</span></div>
+      <div class="hr"></div>
+      <div class="lbl">Region</div>
+      <span class="chip acc">SEA</span> <span class="chip acc">EU</span> <span class="chip">Global</span>
+      <div class="lbl">Remote</div>
+      <span class="chip acc">remote-only</span>
+      <div class="lbl">Source</div>
+      <div class="f">Greenhouse</div><div class="f">Lever</div><div class="f">Ashby</div>
+      <div class="f">Workable</div><div class="f">LinkedIn</div>
+    </div>
+
+    <div class="main">
+      <div class="stat">
+        <div>Accepted today<b>2</b></div>
+        <div>Pending review<b>4</b></div>
+        <div>Avg fit<b>3.6</b></div>
+        <div>Dead dropped<b>62</b></div>
+      </div>
+      <div class="fbar">
+        <select class="sel mono"><option>fit ≥ 3.5</option></select>
+        <select class="sel"><option>Region</option></select>
+        <select class="sel"><option>Any source</option></select>
+        <div class="grow"></div>
+        <span class="dim mono" style="font-size:11px">sorted by fit</span>
+      </div>
+      <div class="list">
+        <div class="row">
+          <div class="score s42">4.2</div>
+          <div class="c"><div class="t">Senior Backend Engineer</div>
+            <div class="m">Honor · Greenhouse <span class="chip acc">100% remote</span> <span class="chip">Python · AWS</span> <span class="dim">14 Oct</span></div></div>
+          <div class="r"><span class="chip amb">US eligibility?</span><span class="dim mono" style="font-size:11px">3 matched lines</span></div>
+        </div>
+        <div class="row">
+          <div class="score s38">3.8</div>
+          <div class="c"><div class="t">Senior Full Stack Engineer, AI Builder</div>
+            <div class="m">CoverGo · Workable <span class="chip acc">100% remote</span> <span class="chip">TS · Node · AI</span> <span class="dim">13 Oct</span></div></div>
+          <div class="r"><span class="chip acc">ready to tailor</span></div>
+        </div>
+        <div class="row">
+          <div class="score s42">4.5</div>
+          <div class="c"><div class="t">Senior Software Engineer, AI Code Evaluation</div>
+            <div class="m">Gramian Consulting · Workable <span class="chip">remote?</span> <span class="chip">Python · LLM</span> <span class="dim">13 Oct</span></div></div>
+          <div class="r"><span class="chip acc">strong</span></div>
+        </div>
+        <div class="row">
+          <div class="score s30">—</div>
+          <div class="c"><div class="t">Senior Software Engineer</div>
+            <div class="m">Speechify · LinkedIn <span class="chip amb">follow up</span> <span class="dim">applied</span></div></div>
+          <div class="r"><span class="chip dim">intro call sent</span></div>
+        </div>
+        <div class="row">
+          <div class="score s30">—</div>
+          <div class="c"><div class="t">Senior Engineer</div>
+            <div class="m">RevenueCat · LinkedIn <span class="chip amb">follow up</span> <span class="dim">applied</span></div></div>
+          <div class="r"><span class="chip dim">no reply</span></div>
+        </div>
+        <div class="row">
+          <div class="score s25">2.5</div>
+          <div class="c"><div class="t">Freelance Full-Stack Developer, Python & JavaScript</div>
+            <div class="m">Digital · Workable <span class="chip acc">remote</span> <span class="chip">Python · JS</span></div></div>
+          <div class="r"><span class="chip dim">below bar</span></div>
+        </div>
+        <div class="row" style="opacity:.6">
+          <div class="score s30">4.1</div>
+          <div class="c"><div class="t">Staff Android Engineer</div>
+            <div class="m">Otta · Linkedin <span class="chip acc">remote</span> <span class="chip">Kotlin</span></div></div>
+          <div class="r"><span class="chip" style="color:var(--del);border-color:#5a241d">posting dead</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rail" style="width:300px;border-right:none;border-left:1px solid var(--line)">
+      <div class="lbl">Preview</div>
+      <div style="font-weight:600;font-size:13.5px">Senior Backend Engineer</div>
+      <div class="muted" style="font-size:12px;margin-top:3px">Honor · Home Instead · healthcare platform, remote-first</div>
+      <div class="hr"></div>
+      <div class="lbl">Fit breakdown</div>
+      <div class="flow">Skills <span class="grow"></span><span class="mono acc">4.5</span></div>
+      <div class="flow">Seniority <span class="grow"></span><span class="mono acc">4.0</span></div>
+      <div class="flow">Domain <span class="grow"></span><span class="mono amb">3.5</span></div>
+      <div class="flow">Logistics <span class="grow"></span><span class="mono" style="color:var(--del)">2.0</span></div>
+      <div class="flow">Motivation <span class="grow"></span><span class="mono acc">4.0</span></div>
+      <div class="hr"></div>
+      <div class="lbl">Keywords</div>
+      <div class="fchip"><span class="c2 on">API design</span><span class="c2 on">distributed</span><span class="c2">relational</span><span class="c2">AWS</span></div>
+      <div class="hr"></div>
+      <div class="lbl">Posting</div>
+      <div class="muted" style="font-size:12px">"Strong backend engineering experience... relational data models... AWS preferred... Python or transferable."</div>
+    </div>
+  </div>
+</div></body></html>
