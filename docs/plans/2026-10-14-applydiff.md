@@ -86,6 +86,23 @@ The CV is JSON, not LaTeX. Every field has a stable id so a diff can target it.
 
 `facts.json` holds every approved metric, keyed by id (`abac_impl: "40%"`). A hunk that introduces a number not present in `facts` is blocked by the facts gate.
 
+### Version model: master + branch (per-job CV)
+
+One canonical **master** CV, one **branch** per job, exactly like git.
+
+- `master` is the source of truth. It is edited manually only; tailoring never writes to it.
+- A job opens a **branch** = `master` at that point. The AI's hunks are diffs against master.
+- You accept/reject hunks on the branch only. Accepted hunks build that job's PDF.
+- Master stays clean. Rejecting a hunk on job A never affects job B.
+- Every hunk targets a field id, so a later master edit can be detected against open branches and flagged **stale** (like a git conflict) for re-review.
+
+```
+master (cv.json)
+ ├── job:honor    = master + accepted hunks
+ ├── job:covergo  = master + accepted hunks
+ └── job:gramian  = ...
+```
+
 ---
 
 ## Phases
