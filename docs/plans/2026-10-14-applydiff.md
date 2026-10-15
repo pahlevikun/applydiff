@@ -119,7 +119,7 @@ master (cv.json)
 
 - [ ] `Job` model + migration (`company`, `title`, `url`, `source`, `posted_at`, `remote`, `region`, `status`)
 - [ ] `internal/source` interface: `Fetch(queries) []RawJob`, registry keyed by id
-- [ ] Sources: Greenhouse, Lever, Ashby, Workable (the four from the threads), then Hiring.cafe, RemoteOK, We Remotely, Remotive, Wellfound, Otta, YC, LinkedIn (discovery-only)
+- [ ] Sources: Greenhouse, Lever, Ashby, Workable (the four from the threads), then Hiring.cafe, RemoteOK, We Remotely, Remotive, Wellfound, Otta, YC, Jobicy, LinkedIn (discovery-only)
 - [ ] `normalizeURL(url)` + `dedupeKey(job)` (URL + `company+role`)
 - [ ] Liveness check drops dead postings before any LLM cost
 - [ ] `jobs/config.yaml` mirrored from the latex-resume repo (sources, queries, filters, caps)
