@@ -119,7 +119,7 @@ master (cv.json)
 
 - [ ] `Job` model + migration (`company`, `title`, `url`, `source`, `posted_at`, `remote`, `region`, `status`)
 - [ ] `internal/source` interface: `Fetch(queries) []RawJob`, registry keyed by id
-- [ ] Sources: Greenhouse, Lever, Ashby, Workable (the four from the threads), then Hiring.cafe, RemoteOK, We Remotely, Remotive, Wellfound, Otta, YC, Jobicy, LinkedIn (discovery-only)
+- [ ] Sources: Greenhouse, Lever, Ashby, Workable (the four from the threads), then Hiring.cafe, RemoteOK, We Remotely, Working Nomads, Remotive, Wellfound, Otta, YC, Jobicy, LinkedIn (discovery-only)
 - [ ] `normalizeURL(url)` + `dedupeKey(job)` (URL + `company+role`)
 - [ ] Liveness check drops dead postings before any LLM cost
 - [ ] `jobs/config.yaml` mirrored from the latex-resume repo (sources, queries, filters, caps)
@@ -205,6 +205,15 @@ Rules that shape the drafter prompt, sitting next to the facts gate.
 **Never translate proper nouns.** Company, university, and official job titles stay as written on the official site or LinkedIn. Only descriptions translate.
 
 **Localized prompts live in `internal/tailor/prompts/`.** English plus Indonesian first (Bahasa Indonesia market). Each is a data file, not code.
+
+---
+
+## Discovery & proof strategy (bahan dari riset komunitas)
+
+- **Prefer niche remote boards over company career pages.** Career pages are the busiest and slowest. Surface Remote OK, We Work Remotely, Working Nomads, Wellfound with "worldwide"/"anywhere" filters. Career pages still scanned, just deprioritized.
+- **Recency matters: apply within 24h.** Remote boards fill fast. Discovery surfaces the freshest postings first, tags anything under 24h, and can alert on new matches in the user's skill set.
+- **Timezone overlap is a hard skip.** A posting that needs overlap outside Asia is skipped, not scored. Already in the logistics dimension; surfaced explicitly on the card.
+- **Proof page (portfolio) artifact.** A third output alongside CV and cover letter: a one-page clickable "proof" with (1) one line on who you are and your field, (2) three real results including personal projects, (3) GitHub and work links, (4) direct contact. Show, don't tell. Generated from the same structured facts; a portfolio beats certificates.
 
 ---
 
