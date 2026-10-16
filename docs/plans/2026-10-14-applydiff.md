@@ -48,6 +48,7 @@ applydiff/
 **Reference projects (patterns only, no code copied):**
 - `career-ops` — source/provider pattern, no-token scan, liveness, dedupe, A-H evaluation, facts + ATS verification, data contract.
 - `ai-job-search` — drafter-reviewer, structured edit JSON (`old_string`/`new_string`), LaTeX toolchain, per-portal CLI, `job_key`.
+- `job-sequencer` — the closest full build: local-first dashboard, agent decomposition (strategist → writer → reviser → critic → claim-validator → factual-auditor → evidence → ATS reviewer → visual QA), adaptive search with quotas, explicit approval gates, anti-slop visual rules. Study for the agent pipeline and search harness; do not copy code.
 
 ---
 
@@ -122,6 +123,7 @@ master (cv.json)
 - [ ] Sources: Greenhouse, Lever, Ashby, Workable (the four from the threads), then Hiring.cafe, RemoteOK, We Remotely, Working Nomads, Remotive, Wellfound, Otta, YC, Jobicy, LinkedIn (discovery-only)
 - [ ] `normalizeURL(url)` + `dedupeKey(job)` (URL + `company+role`)
 - [ ] Liveness check drops dead postings before any LLM cost
+- [ ] Adaptive search quotas: cap call, result, time, and per-source budgets; same-run provenance on detail fetches; a source that yields nothing gets deprioritized within the run
 - [ ] `jobs/config.yaml` mirrored from the latex-resume repo (sources, queries, filters, caps)
 - [ ] UI: **s01 Jobs** — feed, filters (fit/region/source), status rail, preview panel
 - [ ] Test: fixture scan returns N jobs, dedupe removes known dupes, dead postings dropped
@@ -147,6 +149,7 @@ master (cv.json)
 ### Phase 4 — Tailor + diff approval (the point of the app)
 
 - [ ] `tailor` package: drafter pass produces a candidate CV; reviewer pass critiques (drafter-reviewer pattern)
+- [ ] Agent decomposition (per job, bounded): research (company) → strategist (plan the tailoring) → writer (draft edits) → reviser → critic → claim-validator + factual-auditor (facts gate) → evidence (link each claim to a fact) → ATS reviewer (keyword match) → visual QA. Each emits structured hunks against field ids; the facts gate blocks any number not in `facts`.
 - [ ] Emit edits as hunks: `{ field_id, section, before, after, rationale, evidence[] }`
 - [ ] `diff` package: apply hunk, revert hunk, apply-all-accepted, produce the "after" CV
 - [ ] Facts gate on hunk creation; ATS-keyword tag on hunks that add a JD term
@@ -185,6 +188,7 @@ Dark workbench. Tokens in `web/assets/tokens.css`.
 - Radius 10 / 7. Spacing scale 4-6-8-11-14-16-22.
 - Diff is a "forge" ledger, not a GitHub clone: 44px mono line-number gutter, +/− markers, section headers as `@@ summary @@`.
 - Custom 24px stroke icons only. No lucide. No default clean-stroke set.
+- Anti-slop (adopted from job-sequencer): no gradients, no glassmorphism, no rounded-card dashboard, no AI sparkles/robot/magic-wand/"AI-powered" badges, no rainbow status colors, no generic KPI cards, no excess pills, text label over icon when it scans faster, no shadow on every container, no centered operational pages, no purple-as-AI. A component communicates state, enables an action, or improves scanning, or it is dropped.
 
 Wireframes: `docs/wireframes/s01..s05` (HTML source + PNG).
 
@@ -223,3 +227,5 @@ Rules that shape the drafter prompt, sitting next to the facts gate.
 - Which CLI agent is the default runner on the owner's box?
 - Cover letter: same structured diff flow in v1, or Phase 6+?
 - Personal access to LinkedIn (cookies) — discovery only, caps stay at 5/day.
+- SQLite (`node:sqlite`) vs Postgres: job-sequencer proves a single-user local app runs fine on SQLite with no DB service. Postgres is still the chosen default; revisit if local-first simplicity wins.
+- Build fresh (C) vs fork `job-sequencer`: it is ~90% of this product already (TS/React/Fastify/SQLite + Pi runtime). The only ApplyDiff differentiator left is per-hunk diff approval and the Go + Nuxt stack. Reconfirm before Phase 1 lands.
