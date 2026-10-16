@@ -91,6 +91,10 @@ func main() {
 	mux.HandleFunc("/api/match/", srv.handleMatch)
 	mux.HandleFunc("/api/tailor/", srv.handleTailor)
 	mux.HandleFunc("/api/hunks/", srv.handleHunkAction)
+	mux.HandleFunc("/api/applications", srv.handleApplicationsList)
+	mux.HandleFunc("/api/applications/", srv.handleApplicationStatus)
+	mux.HandleFunc("/api/export/", srv.handleExport)
+	mux.HandleFunc("/api/config", srv.handleConfig)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
 
 	addr := ":" + port
