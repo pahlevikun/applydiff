@@ -1,0 +1,29 @@
+# Job discovery config (mirrors latex-resume search harness; Phase 1 subset).
+
+sources:
+  greenhouse:
+    enabled: true
+    boards:
+      - token: stripe
+        company: Stripe
+      - token: gitlab
+        company: GitLab
+
+queries:
+  - backend
+  - software engineer
+  - golang
+  - full stack
+
+filters:
+  regions:
+    - SEA
+    - EU
+    - global
+  remote_only: true
+  min_seniority: senior
+  max_posted_days: 14
+
+caps:
+  per_source: 100
+  max_jobs_per_scan: 500

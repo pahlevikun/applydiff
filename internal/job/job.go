@@ -1,13 +1,13 @@
 package job
 
 type Job struct {
-	ID       string
-	Company  string
-	Title    string
-	URL      string
-	Source   string
-	PostedAt string
-	Remote   string
-	Region   string
-	Status   string
+	ID       string `json:"id"`
+	Company  string `json:"company"`
+	Title    string `json:"title"`
+	URL      string `json:"url"`
+	Source   string `json:"source"`
+	PostedAt string `json:"posted_at"`
+	Remote   string `json:"remote"`
+	Region   string `json:"region"`
+	Status   string `json:"status"`
 }
