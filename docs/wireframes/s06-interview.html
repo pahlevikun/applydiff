@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="theme.css">
+<style>
+.sessions{width:250px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--surface);padding:12px;overflow:hidden}
+.chat{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+.chat .head{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface);font-size:12px;color:var(--muted)}
+.msgs{flex:1;min-height:0;overflow:hidden;padding:18px 16px}
+.msg{max-width:640px;margin-bottom:16px}
+.msg .who{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:5px;font-weight:600}
+.msg .b{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r);padding:11px 13px;font-size:13px;line-height:1.55;color:var(--fg)}
+.msg.me .b{background:#3fd0be12;border-color:var(--accent-dim)}
+.star{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.star span{font-family:'Plex Mono';font-size:10px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:5px;padding:2px 7px}
+.compose{border-top:1px solid var(--line);background:var(--surface);padding:12px 16px;display:flex;gap:10px;align-items:center}
+.ctx{width:290px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--surface);padding:14px;overflow:hidden}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+</style></head>
+<body><div class="wrap">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ApplyDiff</div>
+    <div class="nav"><a href="#">Jobs</a><a href="#">Applications</a><a class="on" href="#">Interview</a><a href="#">My CV</a><a href="#">Sources</a></div>
+    <div class="grow"></div>
+    <button class="btn ghost">New session</button>
+  </div>
+
+  <div class="body" style="flex:1;display:flex;min-height:0">
+    <div class="sessions">
+      <div class="lbl">Sessions</div>
+      <div class="f on">Honor · Senior Backend</div>
+      <div class="f">CoverGo · Full Stack AI</div>
+      <div class="f">Gramian · AI Eval</div>
+      <div class="f">Tripadvisor · SWE</div>
+      <div class="hr"></div>
+      <div class="lbl">Progress</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> 2 questions answered</div>
+      <div class="flow muted">STAR bank · 4 stories</div>
+    </div>
+
+    <div class="chat">
+      <div class="head">Practice interview · keyed to this job's profile, CV, and cover letter</div>
+      <div class="msgs">
+        <div class="msg">
+          <div class="who">Interviewer</div>
+          <div class="b">"Tell me about a time you shipped something that moved a real business metric. What did you personally own?"</div>
+        </div>
+        <div class="msg me">
+          <div class="who">You</div>
+          <div class="b">I owned the ABAC authorization framework end to end, 6+ Go, Rails, Elixir and TypeScript services. It cut policy implementation time 40% for millions of merchant identities.</div>
+          <div class="star"><span>S situation</span><span>T task</span><span>A action</span><span>R result</span></div>
+        </div>
+        <div class="msg">
+          <div class="who">Coach note</div>
+          <div class="b" style="border-style:dashed">Solid metric. Add the one-line tradeoff: rolling out fine-grained access without blocking daily merchant logins. That's the "what I personally owned" proof.</div>
+        </div>
+      </div>
+      <div class="compose">
+        <div class="search" style="flex:1">/ type your answer…</div>
+        <button class="btn ghost sm">Regenerate</button>
+        <button class="btn sm">Save to STAR bank</button>
+      </div>
+    </div>
+
+    <div class="ctx">
+      <div class="lbl">Context loaded</div>
+      <div class="pill">Honor · Senior Backend</div>
+      <div class="pill">profile ✓</div>
+      <div class="pill">CV (accepted hunks) ✓</div>
+      <div class="pill">cover letter ✓</div>
+      <div class="hr"></div>
+      <div class="lbl">STAR bank</div>
+      <div class="flow">ABAC rollout · 40%</div>
+      <div class="flow">GoTo Hackathon · 48h</div>
+      <div class="flow">11 repos test coverage</div>
+      <div class="flow dim">Interim TL · 5 engineers</div>
+      <div class="hr"></div>
+      <div class="lbl">Suggested next</div>
+      <div class="muted" style="font-size:12px">"Why do you want to leave GoTo after 8 years?"</div>
+    </div>
+  </div>
+</div></body></html>
