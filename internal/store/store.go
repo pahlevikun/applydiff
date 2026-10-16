@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "modernc.org/sqlite"
 )
 
 type Store struct {
@@ -12,7 +12,7 @@ type Store struct {
 }
 
 func New(dsn string) (*Store, error) {
-	db, err := sql.Open("pgx", dsn)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, err
 	}
