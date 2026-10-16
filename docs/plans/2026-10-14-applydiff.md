@@ -4,9 +4,9 @@
 
 **Goal:** One local web app that scans job boards, matches each listing against a structured CV, has AI draft tailoring edits, and lets the owner approve those edits per-hunk as diffs before a LaTeX PDF is built.
 
-**Architecture:** Go API + scanner workers, Postgres store, Nuxt 3 web UI, LLM runner that shells to a CLI agent or hits an API directly. The CV lives as structured data; LaTeX is an export target, never the source of truth. Every AI change is a field-level hunk the owner accepts or rejects.
+**Architecture:** Go API + concurrent scanner workers, SQLite store, Nuxt 3 web UI, LLM runner that shells to a CLI agent or hits an API directly. The CV lives as structured data; LaTeX is an export target, never the source of truth. Every AI change is a field-level hunk the owner accepts or rejects.
 
-**Tech Stack:** Go 1.22 · PostgreSQL 16 · Nuxt 3 (Vue 3) · TypeScript · latexmk + TeX Live (Docker) · model runner (CLI agent | direct API).
+**Tech Stack:** Go 1.22 · SQLite (modernc.org/sqlite, pure Go, no CGo) · Nuxt 3 (Vue 3) · TypeScript · latexmk + TeX Live (Docker) · model runner (CLI agent | direct API).
 
 ## Global Constraints
 
@@ -36,13 +36,13 @@ applydiff/
 │   ├── diff/             # hunk engine, apply/revert
 │   ├── build/            # LaTeX render + compile + ATS test
 │   ├── llm/              # runner interface (cli | api)
-│   └── store/            # postgres + migrations
+│   └── store/            # sqlite + migrations
 ├── web/                  # Nuxt 3
 ├── docs/
 │   ├── plans/
 │   └── wireframes/       # s01..s05 HTML + PNG
 ├── fixtures/             # sample JDs + a sample CV
-└── docker-compose.yml    # postgres + texlive
+└── docker-compose.yml    # texlive only (SQLite needs no service)
 ```
 
 **Reference projects (patterns only, no code copied):**
@@ -111,7 +111,7 @@ master (cv.json)
 ### Phase 0 — Scaffold
 
 - [ ] Go module, `cmd/applydiff`, `cmd/scan`, package skeleton
-- [ ] `docker-compose.yml`: postgres 16 + texlive image
+- [ ] `docker-compose.yml`: texlive image only (SQLite is a file, no DB service)
 - [ ] Nuxt 3 app in `web/` with the 5 screens stubbed
 - [ ] `make dev`, `make test`, `make scan` targets
 - [ ] CI: `go test ./...`, `npm test`, `go vet`, lint
@@ -227,5 +227,5 @@ Rules that shape the drafter prompt, sitting next to the facts gate.
 - Which CLI agent is the default runner on the owner's box?
 - Cover letter: same structured diff flow in v1, or Phase 6+?
 - Personal access to LinkedIn (cookies) — discovery only, caps stay at 5/day.
-- SQLite (`node:sqlite`) vs Postgres: job-sequencer proves a single-user local app runs fine on SQLite with no DB service. Postgres is still the chosen default; revisit if local-first simplicity wins.
+- Resolved: SQLite (pure-Go `modernc.org/sqlite`). Single file, no DB service, fits the local-first single-user model. Dropped Postgres.
 - Build fresh (C) vs fork `job-sequencer`: it is ~90% of this product already (TS/React/Fastify/SQLite + Pi runtime). The only ApplyDiff differentiator left is per-hunk diff approval and the Go + Nuxt stack. Reconfirm before Phase 1 lands.
