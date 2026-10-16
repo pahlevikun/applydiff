@@ -15,8 +15,9 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 		j.ID = dedupeKey
 	}
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO jobs (id, company, title, url, source, posted_at, remote, region, status, dedupe_key)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO jobs (id, company, title, url, source, posted_at, remote, region, status, dedupe_key,
+			description, salary_post, salary_ats)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(dedupe_key) DO UPDATE SET
 			company = excluded.company,
 			title = excluded.title,
@@ -25,8 +26,12 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 			posted_at = excluded.posted_at,
 			remote = excluded.remote,
 			region = excluded.region,
-			status = excluded.status
-	`, j.ID, j.Company, j.Title, j.URL, j.Source, j.PostedAt, j.Remote, j.Region, j.Status, dedupeKey)
+			status = excluded.status,
+			description = CASE WHEN excluded.description != '' THEN excluded.description ELSE jobs.description END,
+			salary_post = CASE WHEN excluded.salary_post != '' THEN excluded.salary_post ELSE jobs.salary_post END,
+			salary_ats = CASE WHEN excluded.salary_ats != '' THEN excluded.salary_ats ELSE jobs.salary_ats END
+	`, j.ID, j.Company, j.Title, j.URL, j.Source, j.PostedAt, j.Remote, j.Region, j.Status, dedupeKey,
+		j.Description, j.SalaryPost, j.SalaryATS)
 	return err
 }
 

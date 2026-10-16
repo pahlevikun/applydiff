@@ -80,7 +80,10 @@ onMounted(() => {
     <ul v-if="jobs.length" class="feed">
       <li v-for="job in jobs" :key="job.id" class="row">
         <div class="main">
-          <a class="title" :href="job.url" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
+          <div class="title-row">
+            <a class="title" :href="job.url" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
+            <NuxtLink class="match-link" :to="`/match/${encodeURIComponent(job.id)}`">Match</NuxtLink>
+          </div>
           <div class="sub">
             <span>{{ job.company }}</span>
             <span class="dot">·</span>
@@ -153,10 +156,27 @@ h1 {
 .row:last-child {
   border-bottom: none;
 }
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 .title {
   color: #e7eaf0;
   font-weight: 600;
   text-decoration: none;
+}
+.match-link {
+  font-size: 0.75rem;
+  color: #3fd0be;
+  text-decoration: none;
+  border: 1px solid #232a36;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+}
+.match-link:hover {
+  background: #171c26;
 }
 .title:hover {
   color: #3fd0be;

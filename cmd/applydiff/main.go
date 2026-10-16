@@ -69,6 +69,8 @@ func main() {
 	mux.HandleFunc("/api/jobs", srv.handleJobs)
 	mux.HandleFunc("/api/scan", srv.handleScan)
 	mux.HandleFunc("/api/cv/master", srv.handleCVMaster)
+	mux.HandleFunc("/api/match/", srv.handleMatch)
+	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
 
 	addr := ":" + port
 	log.Printf("listening on %s (db=%s config=%s)", addr, dbPath, cfgPath)
