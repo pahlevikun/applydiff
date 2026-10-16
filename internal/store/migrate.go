@@ -17,6 +17,9 @@ var migration003 string
 //go:embed migrations/004_tailor.sql
 var migration004 string
 
+//go:embed migrations/005_applications.sql
+var migration005 string
+
 func (s *Store) Migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, migration001); err != nil {
 		return err
@@ -27,6 +30,9 @@ func (s *Store) Migrate(ctx context.Context) error {
 	if _, err := s.db.ExecContext(ctx, migration003); err != nil {
 		return err
 	}
-	_, err := s.db.ExecContext(ctx, migration004)
+	if _, err := s.db.ExecContext(ctx, migration004); err != nil {
+		return err
+	}
+	_, err := s.db.ExecContext(ctx, migration005)
 	return err
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/pahlevikun/applydiff/internal/cv"
@@ -257,6 +258,98 @@ func TestAPITailorRoundTrip(t *testing.T) {
 	text, _ := branch.Field("exp.1.b1")
 	if text != "Architected distributed Go APIs" {
 		t.Fatalf("branch cv: %q", text)
+	}
+}
+
+func TestAPIApplicationsAndExport(t *testing.T) {
+	ctx := context.Background()
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	jobID := "job-export-1"
+	j := job.Job{
+		ID: jobID, Company: "Acme", Title: "Go Engineer", URL: "https://example.com/1",
+		Source: "stub", PostedAt: "2026-10-10T10:00:00Z", Remote: "yes", Region: "global", Status: "matched",
+	}
+	if err := st.InsertJob(ctx, j); err != nil {
+		t.Fatal(err)
+	}
+	doc := &cv.Document{
+		Person:  "p",
+		Contact: cv.Contact{Name: "A", Headline: "Eng", Email: "a@b.c"},
+		Summary: cv.Summary{ID: "summary", Text: "Go engineer"},
+		Skills:  []cv.SkillGroup{{ID: "skills.backend", Label: "B", Items: []string{"Go"}}},
+		Experience: []cv.Experience{{
+			ID: "exp.1", Company: "C", Title: "Eng", Start: "2020-01",
+			Bullets: []cv.Bullet{{ID: "exp.1.b1", Text: "Built APIs"}},
+		}},
+		Education:    []cv.Education{{ID: "edu.1", School: "S", Degree: "BS", Year: "2020"}},
+		Achievements: []cv.Achievement{{ID: "ach.1", Text: "Award"}},
+	}
+	if err := st.SaveMaster(ctx, doc); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := &server{
+		store: st,
+		cfg:   &jobconfig.Config{Queries: []string{"golang remote"}},
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/applications", srv.handleApplicationsList)
+	mux.HandleFunc("/api/applications/", srv.handleApplicationStatus)
+	mux.HandleFunc("/api/export/", srv.handleExport)
+	mux.HandleFunc("/api/config", srv.handleConfig)
+
+	transReq := httptest.NewRequest(http.MethodPost, "/api/applications/"+jobID+"/status", strings.NewReader(`{"status":"matched"}`))
+	transReq.Header.Set("Content-Type", "application/json")
+	transRec := httptest.NewRecorder()
+	mux.ServeHTTP(transRec, transReq)
+	if transRec.Code != http.StatusOK {
+		t.Fatalf("transition %d %s", transRec.Code, transRec.Body.String())
+	}
+
+	listReq := httptest.NewRequest(http.MethodGet, "/api/applications", nil)
+	listRec := httptest.NewRecorder()
+	mux.ServeHTTP(listRec, listReq)
+	if listRec.Code != http.StatusOK {
+		t.Fatalf("list %d", listRec.Code)
+	}
+
+	exportReq := httptest.NewRequest(http.MethodPost, "/api/export/"+jobID, nil)
+	exportRec := httptest.NewRecorder()
+	mux.ServeHTTP(exportRec, exportReq)
+	if exportRec.Code != http.StatusOK {
+		t.Fatalf("export %d %s", exportRec.Code, exportRec.Body.String())
+	}
+	app, err := st.GetApplication(ctx, jobID)
+	if err != nil || app.CVSnapshot == "" {
+		t.Fatalf("expected frozen cv snapshot on application")
+	}
+	if err := st.SaveMaster(ctx, &cv.Document{
+		Person: "p", Contact: cv.Contact{Name: "Changed"},
+		Summary: cv.Summary{ID: "summary", Text: "x"},
+		Skills:  []cv.SkillGroup{{ID: "skills.backend", Label: "B", Items: []string{"Go"}}},
+		Experience: []cv.Experience{{ID: "exp.1", Company: "C", Title: "T", Start: "2020", Bullets: []cv.Bullet{{ID: "b", Text: "t"}}}},
+		Education: []cv.Education{{ID: "edu.1", School: "S", Degree: "BS", Year: "2020"}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	app2, _ := st.GetApplication(ctx, jobID)
+	if app2.CVSnapshot != app.CVSnapshot {
+		t.Fatal("snapshot should stay frozen when master changes")
+	}
+
+	cfgReq := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	cfgRec := httptest.NewRecorder()
+	mux.ServeHTTP(cfgRec, cfgReq)
+	if cfgRec.Code != http.StatusOK {
+		t.Fatalf("config %d", cfgRec.Code)
 	}
 }
 

@@ -82,6 +82,9 @@ func (s *Store) LoadBranch(ctx context.Context, jobID string) (*cv.Document, err
 	prop, err := s.LoadProposal(ctx, jobID)
 	if err == sql.ErrNoRows {
 		hunks, err := s.loadBranchHunks(ctx, jobID)
+		if err == sql.ErrNoRows {
+			return master, nil
+		}
 		if err != nil {
 			return nil, err
 		}
