@@ -1,0 +1,89 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="theme.css">
+<style>
+.two{flex:1;display:flex;min-height:0}
+.col{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.col:last-child{border-right:none}
+.chead{padding:9px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);border-bottom:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:8px}
+.doc{flex:1;overflow:hidden;padding:14px;font-size:12.5px;color:var(--muted);line-height:1.65}
+.doc b{color:var(--fg)}
+.hl{background:#3fd0be1a;border-bottom:1px solid var(--accent-dim);color:var(--fg);padding:0 2px;border-radius:2px}
+.gap{background:#f0553f14;border-bottom:1px solid #5a241d;color:#ffb3a5;padding:0 2px;border-radius:2px}
+.map{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:11px;align-items:flex-start}
+.map .k{font-family:'Plex Mono';font-size:11px;min-width:132px;flex:0 0 auto}
+.map .v{font-size:12.5px;color:var(--muted);flex:1}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:5px;font-family:'Plex Mono'}
+.tag.ok{color:var(--add);background:#0e2a17}.tag.par{color:var(--amber);background:#2a2110}.tag.no{color:var(--del);background:#2c1512}
+.gp{display:flex;align-items:center;gap:9px;padding:6px 0}
+.bar{height:6px;border-radius:3px;background:var(--surface2);flex:1;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar.amb i{background:var(--amber)}.bar.del i{background:var(--del)}
+</style></head>
+<body><div class="wrap">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ApplyDiff</div>
+    <div class="nav"><a href="#">Jobs</a><a class="on" href="#">Applications</a><a href="#">Interview</a><a href="#">My CV</a><a href="#">Sources</a></div>
+    <div class="grow"></div>
+    <div class="search mono">/ search</div>
+    <button class="btn ghost">Open JD ↗</button>
+  </div>
+
+  <div class="ctx">
+    <div class="role">Senior Backend Engineer</div>
+    <span class="chip">Honor</span>
+    <span class="chip">Greenhouse</span>
+    <span class="chip acc">100% remote</span>
+    <span class="chip amb">US region?</span>
+    <div class="grow"></div>
+    <span class="mono acc" style="font-size:16px;font-weight:600">4.2</span><span class="dim">/ 5</span>
+    <button class="btn">Tailor CV</button>
+  </div>
+
+  <div class="two">
+    <div class="col">
+      <div class="chead">Job description · extracted <span class="chip" style="margin-left:auto">archived</span></div>
+      <div class="doc">
+        <b>About Honor.</b> Honor's mission is to change the way society cares for older adults. Remote-first, national network across Home Instead.<br><br>
+        <b>As a Senior Backend Engineer</b> you'll work on core services powering how families find care. Teams: Workforce, DemandGen, Growth.<br><br>
+        <b>We're looking for:</b><br>
+        • Strong backend engineering, operating production systems<br>
+        • Experience designing <span class="hl">relational data models</span> at scale<br>
+        • Familiarity with <span class="hl">cloud platforms (AWS preferred)</span> and SOA<br>
+        • <span class="hl">API design, distributed systems</span>, backend performance<br>
+        • <span class="hl">Proficiency in Python</span> or transferable, willing to learn<br><br>
+        <b>Range:</b> $160,000 – $180,000 USD + equity. Remote-first.
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="chead">Your CV · mapped <span class="chip" style="margin-left:auto">latex → structured</span></div>
+      <div class="map"><span class="k">relational data models</span><span class="v">PostgreSQL, MySQL, indexing, schema migration <span class="tag par">partial</span></span></div>
+      <div class="map"><span class="k">cloud platforms</span><span class="v">GCP, AWS, Tencent Cloud, Kubernetes <span class="tag ok">match</span></span></div>
+      <div class="map"><span class="k">API design</span><span class="v">REST, gRPC, GraphQL at merchant scale <span class="tag ok">match</span></span></div>
+      <div class="map"><span class="k">distributed systems</span><span class="v">Kafka, Redis, 6+ microservices, CQRS <span class="tag ok">match</span></span></div>
+      <div class="map"><span class="k">proficiency in Python</span><span class="v">FastAPI/Django listed, not lead stack <span class="tag par">partial</span></span></div>
+      <div class="map"><span class="k">"willing to learn"</span><span class="v">no signal in current summary <span class="tag no">gap</span></span></div>
+      <div class="doc" style="font-size:12px;color:var(--dim);padding-top:10px">
+        <b style="color:var(--muted)">AI note:</b> 4 of 5 requirements match. One genuine gap (Python depth). Tailoring will reframe, not invent. Relational + Python get lifted without adding fake numbers.
+      </div>
+    </div>
+
+    <div class="rail" style="width:320px">
+      <div class="lbl">Fit dimensions</div>
+      <div class="gp"><span class="muted" style="width:78px;font-size:12px">Skills</span><span class="bar"><i style="width:90%"></i></span><span class="mono">4.5</span></div>
+      <div class="gp"><span class="muted" style="width:78px;font-size:12px">Seniority</span><span class="bar"><i style="width:80%"></i></span><span class="mono">4.0</span></div>
+      <div class="gp"><span class="muted" style="width:78px;font-size:12px">Domain</span><span class="bar amb"><i style="width:70%"></i></span><span class="mono">3.5</span></div>
+      <div class="gp"><span class="muted" style="width:78px;font-size:12px">Logistics</span><span class="bar del"><i style="width:40%"></i></span><span class="mono">2.0</span></div>
+      <div class="gp"><span class="muted" style="width:78px;font-size:12px">Motivation</span><span class="bar"><i style="width:80%"></i></span><span class="mono">4.0</span></div>
+
+      <div class="hr"></div>
+      <div class="lbl">Legitimacy check</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> company verified (Honor/Home Instead)</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> real ATS (boards.greenhouse.io)</div>
+      <div class="flow"><span class="dot" style="background:var(--amber)"></span> salary mismatch: post $138k vs ATS $160k</div>
+
+      <div class="hr"></div>
+      <div class="lbl">Decision</div>
+      <div style="display:flex;gap:8px"><button class="btn ghost sm">Skip</button><button class="btn ghost sm">Shortlist</button><button class="btn sm">Tailor →</button></div>
+    </div>
+  </div>
+</div></body></html>

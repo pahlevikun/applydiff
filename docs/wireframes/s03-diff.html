@@ -1,0 +1,146 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="theme.css">
+<style>
+.tabs{display:flex;gap:4px;padding:9px 16px 0;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
+.tabs .t{padding:7px 12px;font-size:12.5px;color:var(--muted);border-radius:var(--r-sm) var(--r-sm) 0 0}
+.tabs .t.on{color:var(--fg);background:var(--surface2);border:1px solid var(--line);border-bottom-color:var(--surface2);margin-bottom:-1px;font-weight:600}
+.ctx{display:flex;align-items:center;gap:11px;padding:11px 16px;background:var(--surface);border-bottom:1px solid var(--line);flex:0 0 auto}
+.ctx .role{font-weight:600;font-size:14.5px}
+.rows{flex:1;display:flex;min-height:0}
+.changes{width:264px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--surface);padding:12px;overflow:hidden}
+.ci{padding:9px 10px;border-radius:var(--r-sm);margin-bottom:6px;border:1px solid transparent}
+.ci:hover{background:var(--surface2)}
+.ci.on{background:var(--surface2);border-color:var(--line)}
+.ci .s{font-family:'Plex Mono';font-size:10px;color:var(--dim)}
+.ci .t{font-size:12.5px;margin-top:3px;line-height:1.4}
+.st{font-size:10px;font-weight:600;padding:1.5px 6px;border-radius:4px;margin-left:6px}
+.st.pend{color:var(--amber);background:#d9a44118}
+.st.acc{color:var(--add);background:#3fb95018}
+.rait{width:290px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--surface);padding:14px;overflow:hidden}
+.acbar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);background:var(--surface)}
+.scrollrail{position:absolute;right:16px;top:158px;bottom:74px;width:3px;border-radius:2px;background:var(--line)}
+.scrollrail i{display:block;width:100%;height:46%;border-radius:2px;background:var(--line2)}
+</style></head>
+<body><div class="wrap">
+
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ApplyDiff</div>
+    <div class="nav"><a href="#">Jobs</a><a class="on" href="#">Applications</a><a href="#">Interview</a><a href="#">My CV</a><a href="#">Sources</a></div>
+    <div class="grow"></div>
+    <div class="search mono">/ search</div>
+    <button class="btn ghost">Reviewer agent</button>
+  </div>
+
+  <div class="tabs">
+    <div class="t">Overview</div>
+    <div class="t on">CV changes · 3</div>
+    <div class="t">Cover letter</div>
+    <div class="t">Questions</div>
+    <div class="grow"></div>
+  </div>
+
+  <div class="ctx">
+    <div class="role">Senior Backend Engineer</div>
+    <span class="chip">Honor</span>
+    <span class="chip acc">fit 4.2 / 5</span>
+    <span class="chip amb">US remote · eligibility?</span>
+    <div class="grow"></div>
+    <div class="btn ghost sm">Regenerate</div>
+  </div>
+
+  <div class="rows">
+    <div class="changes">
+      <div class="lbl">Changes · 3</div>
+      <div class="ci on"><div class="s">@@ summary @@</div><div class="t">Reframe lead to backend, distributed <span class="st acc">acc</span></div></div>
+      <div class="ci"><div class="s">@@ exp.gofood.b1 @@</div><div class="t">Keep the 40% metric, name policy rollout <span class="st pend">?</span></div></div>
+      <div class="ci"><div class="s">@@ skills.backend @@</div><div class="t">Add API design, relational data models <span class="st pend">?</span></div></div>
+      <div class="hr"></div>
+      <div class="lbl">Document</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> 3 changes to review</div>
+      <div class="flow muted"><span class="dim">scroll the sheet, act inline</span></div>
+      <div class="hr"></div>
+      <div class="lbl">Gate</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> facts verified</div>
+      <div class="flow"><span class="dot" style="background:var(--add)"></span> ATS text ok</div>
+    </div>
+
+    <div class="sheetwrap">
+      <div class="scrollrail"><i></i></div>
+      <div class="sheet"><div class="pad">
+
+        <div class="cvn">Farhan Yuda Pahlevi</div>
+        <div class="cvh">Senior Software Engineer</div>
+        <div class="cvc">farhan.y.pahlevi@gmail.com &nbsp;·&nbsp; pahlevikun.id &nbsp;·&nbsp; linkedin.com/in/pahlevikun &nbsp;·&nbsp; github.com/pahlevikun<br>
+        Bogor, West Java, Indonesia (GMT+7) &nbsp;·&nbsp; available for EU and US Eastern overlap</div>
+
+        <div class="cvsec">Professional Summary</div>
+        <div class="cvp accepted">Senior engineer with <b>8+ years</b> building production mobile and backend systems at GoTo Group for millions of merchants across Southeast Asia. Deep in distributed systems: <ins>Go, Kafka event streams, Redis caching, ABAC identity, zero-downtime migration</ins>. L4&ndash;L5 incident commander: cut implementation time by <b>40%</b>, held <b>99.9%+</b> uptime.</div>
+
+        <div class="cvsec">Technical Skills</div>
+        <div class="cvsk">
+          <span class="chg add"><span class="mk">+</span><b>Backend</b>: Go, <ins>API design, distributed systems, relational data models</ins>, Ruby on Rails, Elixir (Phoenix), TypeScript, Python
+            <span class="ats">ATS keyword</span><span class="ctl"><button class="ok">Accept</button><button class="no">Reject</button></span></span><br>
+          <b>Mobile</b>: Kotlin, Java, Android SDK, Jetpack Compose, KMP, Coroutines &amp; Flow, Dart (Flutter), Swift, M3<br>
+          <b>Databases</b>: PostgreSQL, MySQL, Redis, Elasticsearch, SQLite; query optimisation, indexing, schema migration
+        </div>
+
+        <div class="cvsec">Work Experience</div>
+        <div class="cvrow"><div class="l">Senior Software Engineer, Fullstack <span>· GoFood Merchant · GoTo Group</span></div><div class="r">Mar 2023 &ndash; Present</div></div>
+        <ul class="dots">
+          <li class="chg"><span class="mk">~</span>Shipped five production features in Kotlin, Go, and Elixir for millions of merchants: Login Redesign, Email OTP, 1-tap Payment, ABAC integration, and User Re-KYC, each with zero-downtime rollout.</li>
+          <li class="chg add"><span class="mk">+</span>Architected the ABAC authorization framework across 6+ microservices, slashing policy implementation time by <b>40%</b>, cutting policy rollout for millions of merchant identities.
+            <span class="ctl"><button class="ok">Accept</button><button class="no">Reject</button><button>Edit</button></span></li>
+          <li>Led cross-functional system design reviews for Go and Rails microservices: Redis eviction, Elasticsearch multi-tenant indexes, API rate limiting, and Android architecture (MVVM, modular Gradle).</li>
+        </ul>
+
+        <div class="cvrow"><div class="l">Acting Interim Technical Lead <span>· Merchant Platform · GoTo Group</span></div><div class="r">Aug 2024 &ndash; Jul 2025</div></div>
+        <ul class="dots">
+          <li>Mentored 5+ engineers and authored 10+ RFCs, ADRs, and runbooks while commanding L4&ndash;L5 incidents across 6+ services.</li>
+        </ul>
+
+        <div class="cvrow"><div class="l">Senior Android Engineer <span>· GoMerchants · GoTo Financial</span></div><div class="r">Jul 2018 &ndash; Jan 2023</div></div>
+        <ul class="dots">
+          <li>Built merchant identity and search to millions of active GoMerchants users; raised 11 repositories from zero automated test coverage.</li>
+          <li class="chg del"><span class="mk">&minus;</span>Worked on <del>various authentication initiatives</del> across the merchant platform.
+            <span class="ctl"><button class="ok">Accept</button><button class="no">Reject</button></span></li>
+        </ul>
+
+        <div class="cvsec">Education</div>
+        <div class="cvrow"><div class="l">Gunadarma University <span>· Bachelor of Engineering, Informatics</span></div><div class="r">Indonesia</div></div>
+      </div></div>
+    </div>
+
+    <div class="rait">
+      <div class="lbl">Why this edit</div>
+      <div class="rblock">
+        <h4>AI rationale</h4>
+        <div class="muted" style="font-size:12.5px">Posting asks for "API design, distributed systems, relational data models". Your summary led with mobile. Moved backend signal up and kept every real metric.</div>
+      </div>
+      <div class="rblock">
+        <h4>Evidence · cv-facts</h4>
+        <div class="ev">40% ← metric abac_impl</div>
+        <div class="ev">API design ← role goto_backend</div>
+        <div class="ev">microservices ← role goto_backend</div>
+        <div class="ev dim">relational ← SKILL, not in facts</div>
+      </div>
+      <div class="rblock">
+        <h4>Keyword match</h4>
+        <div class="flow"><span class="dot" style="background:var(--add)"></span> API design <span class="dim">literal</span></div>
+        <div class="flow"><span class="dot" style="background:var(--add)"></span> distributed systems</div>
+        <div class="flow"><span class="dot" style="background:var(--amber)"></span> relational data models <span class="dim">new</span></div>
+      </div>
+      <div class="rblock">
+        <h4>After accept</h4>
+        <div class="flow">cv-honor-2026-10-14.pdf <span class="chip acc">preview</span></div>
+        <div class="dim" style="font-size:11px;margin-top:5px">PDF rebuilds per accepted change. ATS text test runs on build.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="acbar">
+    <span class="muted" style="font-size:12px">1 accepted · 2 pending</span>
+    <div class="grow"></div>
+    <button class="btn ghost">Save draft</button>
+    <button class="btn">Apply accepted · build PDF</button>
+  </div>
+
+</div></body></html>
