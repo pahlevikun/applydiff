@@ -1,0 +1,100 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="theme.css">
+<style>
+.cv{flex:1;display:flex;min-height:0}
+.tree{width:250px;flex:0 0 auto;border-right:1px solid var(--line);background:var(--surface);padding:12px;overflow:hidden}
+.item{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r-sm);font-size:12.5px;color:var(--muted)}
+.item.on{background:var(--surface2);color:var(--fg)}
+.item .n{margin-left:auto;font-family:'Plex Mono';font-size:10.5px;color:var(--dim)}
+.sec{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);font-weight:600;margin:12px 0 5px;display:flex;gap:7px}
+.edit{flex:1;min-width:0;display:flex;flex-direction:column}
+.field{padding:12px 16px;border-bottom:1px solid var(--line)}
+.field h5{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);margin-bottom:8px;font-weight:600;display:flex;gap:9px;align-items:center}
+.inp{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-sm);padding:9px 11px;font-size:12.5px;color:var(--fg);line-height:1.5}
+.inp.ta{min-height:64px}
+.row2{display:flex;gap:10px}.row2 .inp{flex:1}
+.src{font-size:10.5px;color:var(--dim);font-family:'Plex Mono';margin-top:5px;display:flex;gap:8px}
+.src .ok{color:var(--add)}
+.meta{width:300px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--surface);padding:14px;overflow:hidden}
+.hist{border-left:2px solid var(--line2);padding-left:11px;margin-left:4px}
+.hist .h{position:relative;padding:5px 0 9px}
+.hist .h:before{content:"";position:absolute;left:-16px;top:9px;width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.hist .h.old:before{background:var(--line2)}
+.hist .h .d{font-size:11px;color:var(--dim);font-family:'Plex Mono'}
+.hist .h .t2{font-size:12px;color:var(--muted);margin-top:2px}
+.chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:5px 0}
+.chk .bx{width:15px;height:15px;border-radius:4px;border:1px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#05221f;background:var(--accent);border-color:var(--accent)}
+.chk .bx.off{background:transparent;color:transparent}
+</style></head>
+<body><div class="wrap">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> ApplyDiff</div>
+    <div class="nav"><a href="#">Jobs</a><a href="#">Applications</a><a href="#">Interview</a><a class="on" href="#">My CV</a><a href="#">Sources</a></div>
+    <div class="grow"></div>
+    <span class="chip mono">farhan-yuda-pahlevi</span>
+    <button class="btn ghost">Import .tex</button>
+    <button class="btn">Export .tex → PDF</button>
+  </div>
+
+  <div class="cv">
+    <div class="tree">
+      <div class="lbl">Sections <span class="dim" style="text-transform:none;letter-spacing:0">· reorder on export</span></div>
+      <div class="item on">Summary <span class="n">1</span></div>
+      <div class="sec">Technical Skills <span class="n">10</span></div>
+      <div class="item">Backend <span class="n">1</span></div>
+      <div class="item">Mobile <span class="n">1</span></div>
+      <div class="item">System Design <span class="n">1</span></div>
+      <div class="item">Infrastructure <span class="n">1</span></div>
+      <div class="item">Security <span class="n">1</span></div>
+      <div class="sec">Work Experience <span class="n">4</span></div>
+      <div class="item">GoFood Merchant <span class="n">6</span></div>
+      <div class="item">Interim TL <span class="n">3</span></div>
+      <div class="item">GoBiz Login <span class="n">2</span></div>
+      <div class="item">GoMerchants <span class="n">3</span></div>
+      <div class="sec">Education <span class="n">2</span></div>
+      <div class="sec">Achievements <span class="n">5</span></div>
+    </div>
+
+    <div class="edit">
+      <div class="field">
+        <h5>Work Experience · GoFood Merchant · Bullet 1
+          <span class="chip acc" style="margin-left:auto">field id: exp.gofood.b1</span></h5>
+        <div class="inp ta">Architected and shipped production ABAC authorization framework (v1 &amp; v2) across 6+ Go, Ruby on Rails, Elixir, and TypeScript microservices, slashing policy implementation time by 40%.</div>
+        <div class="src"><span class="ok">✓ metric 40% = abac_impl</span><span class="ok">✓ verifiable</span><span>role: goto_gofood</span></div>
+      </div>
+      <div class="field">
+        <h5>Headline · Name + contact</h5>
+        <div class="row2"><div class="inp">Farhan Yuda Pahlevi</div><div class="inp">Senior Software Engineer</div></div>
+        <div class="inp" style="margin-top:10px">farhan.y.pahlevi@gmail.com · pahlevikun.id · linkedin.com/in/pahlevikun</div>
+        <div class="inp" style="margin-top:10px">Bogor, West Java, Indonesia (GMT+7) · available for EU and US Eastern overlap</div>
+        <div class="src"><span class="ok">✓ timezone overlap line (remote rule)</span></div>
+      </div>
+      <div class="field">
+        <h5>Technical Skills · Backend</h5>
+        <div class="inp">Go, Ruby on Rails, Elixir (Phoenix), TypeScript (Node.js), Python (FastAPI/Django), PHP (Laravel), Rust (learning); REST, gRPC, GraphQL</div>
+        <div class="src"><span class="ok">✓ 8 items</span><span>reorder per JD without editing text</span></div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="lbl">Field provenance</div>
+      <div class="chk"><span class="bx">✓</span> from source/resume_ats_v2.tex</div>
+      <div class="chk"><span class="bx">✓</span> metrics from AGENTS.md facts</div>
+      <div class="chk"><span class="bx off">✓</span> no fabricated numbers</div>
+
+      <div class="hr"></div>
+      <div class="lbl">History · this field</div>
+      <div class="hist">
+        <div class="h"><div class="d">14 Oct 23:02</div><div class="t2">Tailored for Honor · accepted</div></div>
+        <div class="h old"><div class="d">27 Sep</div><div class="t2">ATS v2 master</div></div>
+        <div class="h old"><div class="d">24 Sep</div><div class="t2">v3 LinkedIn-aligned</div></div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="lbl">Export</div>
+      <div class="flow muted">sections → .tex fragments</div>
+      <div class="flow muted">LaTeX compile → PDF</div>
+      <div class="flow muted">ATS text extract test</div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn ghost sm">Preview PDF</button><button class="btn ghost sm">Diff vs master</button></div>
+    </div>
+  </div>
+</div></body></html>
