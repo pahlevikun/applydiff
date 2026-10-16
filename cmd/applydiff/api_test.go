@@ -10,6 +10,7 @@ import (
 	"github.com/pahlevikun/applydiff/internal/cv"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
+	"github.com/pahlevikun/applydiff/internal/llm"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
 	"github.com/pahlevikun/applydiff/internal/store"
@@ -159,6 +160,103 @@ func TestAPIMatchRoundTrip(t *testing.T) {
 	}
 	if postRes["total"] != getRes["total"] {
 		t.Fatalf("total mismatch post=%v get=%v", postRes["total"], getRes["total"])
+	}
+}
+
+func TestAPITailorRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	jobID := "job-tailor-1"
+	j := job.Job{
+		ID:          jobID,
+		Company:     "Acme",
+		Title:       "Go Engineer",
+		URL:         "https://example.com/1",
+		Source:      "stub",
+		PostedAt:    "2026-10-10T10:00:00Z",
+		Remote:      "yes",
+		Region:      "global",
+		Status:      "matched",
+		Description: "Looking for Go and distributed systems experience.",
+	}
+	if err := st.InsertJob(ctx, j); err != nil {
+		t.Fatal(err)
+	}
+	doc := &cv.Document{
+		Person:  "p",
+		Contact: cv.Contact{Name: "A", Headline: "Eng", Email: "a@b.c"},
+		Summary: cv.Summary{ID: "summary", Text: "Go engineer"},
+		Skills:  []cv.SkillGroup{{ID: "skills.backend", Label: "B", Items: []string{"Go"}}},
+		Experience: []cv.Experience{{
+			ID: "exp.1", Company: "C", Title: "Eng", Start: "2020-01",
+			Bullets: []cv.Bullet{{ID: "exp.1.b1", Text: "Built APIs"}},
+		}},
+		Education:    []cv.Education{{ID: "edu.1", School: "S", Degree: "BS", Year: "2020"}},
+		Achievements: []cv.Achievement{{ID: "ach.1", Text: "Award"}},
+	}
+	if err := st.SaveMaster(ctx, doc); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SaveFacts(ctx, &cv.Facts{Facts: map[string]string{"m": "40%"}}); err != nil {
+		t.Fatal(err)
+	}
+
+	canned := `{"hunks":[{"field_id":"exp.1.b1","section":"experience","before":"Built APIs","after":"Architected distributed Go APIs","rationale":"JD fit","evidence":[]}]}`
+	srv := &server{
+		store: st,
+		cfg:   &jobconfig.Config{},
+		llm:   llm.FakeRunner{Response: canned},
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/tailor/", srv.handleTailor)
+	mux.HandleFunc("/api/hunks/", srv.handleHunkAction)
+
+	postReq := httptest.NewRequest(http.MethodPost, "/api/tailor/"+jobID, nil)
+	postRec := httptest.NewRecorder()
+	mux.ServeHTTP(postRec, postReq)
+	if postRec.Code != http.StatusOK {
+		t.Fatalf("tailor post %d %s", postRec.Code, postRec.Body.String())
+	}
+	var prop map[string]interface{}
+	if err := json.NewDecoder(postRec.Body).Decode(&prop); err != nil {
+		t.Fatal(err)
+	}
+	hunks, ok := prop["hunks"].([]interface{})
+	if !ok || len(hunks) != 1 {
+		t.Fatalf("expected 1 hunk in proposal: %#v", prop["hunks"])
+	}
+	h0 := hunks[0].(map[string]interface{})
+	hunkID := h0["id"].(string)
+
+	getReq := httptest.NewRequest(http.MethodGet, "/api/tailor/"+jobID, nil)
+	getRec := httptest.NewRecorder()
+	mux.ServeHTTP(getRec, getReq)
+	if getRec.Code != http.StatusOK {
+		t.Fatalf("tailor get %d", getRec.Code)
+	}
+
+	accReq := httptest.NewRequest(http.MethodPost, "/api/hunks/"+hunkID+"/accept", nil)
+	accRec := httptest.NewRecorder()
+	mux.ServeHTTP(accRec, accReq)
+	if accRec.Code != http.StatusOK {
+		t.Fatalf("accept %d %s", accRec.Code, accRec.Body.String())
+	}
+
+	branch, err := st.LoadBranch(ctx, jobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text, _ := branch.Field("exp.1.b1")
+	if text != "Architected distributed Go APIs" {
+		t.Fatalf("branch cv: %q", text)
 	}
 }
 

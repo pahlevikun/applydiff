@@ -11,6 +11,7 @@ import (
 
 	"github.com/pahlevikun/applydiff/internal/cv"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
+	"github.com/pahlevikun/applydiff/internal/llm"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
 	"github.com/pahlevikun/applydiff/internal/source/greenhouse"
@@ -21,6 +22,8 @@ type server struct {
 	store  *store.Store
 	cfg    *jobconfig.Config
 	runner *scan.Runner
+	llm    llm.Runner
+	facts  *cv.Facts
 }
 
 func main() {
@@ -55,6 +58,20 @@ func main() {
 
 	registerSources(cfg)
 
+	llmRunner, err := llm.NewRunner(llm.ConfigFromEnv())
+	if err != nil {
+		log.Printf("llm runner disabled (%v); tailor will need FakeRunner in tests", err)
+		llmRunner = llm.FakeRunner{Response: `{"hunks":[]}`}
+	}
+	factsPath := os.Getenv("FACTS_PATH")
+	if factsPath == "" {
+		factsPath = "facts.json"
+	}
+	var facts *cv.Facts
+	if data, err := os.ReadFile(factsPath); err == nil {
+		facts, _ = cv.LoadFactsJSON(data)
+	}
+
 	srv := &server{
 		store: st,
 		cfg:   cfg,
@@ -62,6 +79,8 @@ func main() {
 			Store:  st,
 			Config: cfg,
 		},
+		llm:   llmRunner,
+		facts: facts,
 	}
 
 	mux := http.NewServeMux()
@@ -70,6 +89,8 @@ func main() {
 	mux.HandleFunc("/api/scan", srv.handleScan)
 	mux.HandleFunc("/api/cv/master", srv.handleCVMaster)
 	mux.HandleFunc("/api/match/", srv.handleMatch)
+	mux.HandleFunc("/api/tailor/", srv.handleTailor)
+	mux.HandleFunc("/api/hunks/", srv.handleHunkAction)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
 
 	addr := ":" + port
