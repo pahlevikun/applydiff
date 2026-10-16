@@ -1,0 +1,132 @@
+package main
+
+import (
+	"database/sql"
+	"encoding/json"
+	"net/http"
+	"strings"
+
+	"github.com/pahlevikun/applydiff/internal/tailor"
+)
+
+func (s *server) handleTailor(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/tailor/")
+	jobID := strings.Trim(path, "/")
+	if jobID == "" || strings.Contains(jobID, "/") {
+		http.Error(w, "job id required", http.StatusBadRequest)
+		return
+	}
+	switch r.Method {
+	case http.MethodPost:
+		s.postTailor(w, r, jobID)
+	case http.MethodGet:
+		s.getTailor(w, r, jobID)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string) {
+	j, err := s.store.GetJob(r.Context(), jobID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "job not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	master, err := s.store.LoadMaster(r.Context())
+	if err != nil {
+		http.Error(w, "no master cv saved", http.StatusNotFound)
+		return
+	}
+	facts, err := s.store.LoadFacts(r.Context())
+	if err != nil {
+		facts = s.factsFromFile()
+	}
+	eng := &tailor.Engine{Runner: s.llm}
+	hunks, err := eng.Generate(r.Context(), *j, master, facts)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	prop, err := s.store.SaveProposal(r.Context(), jobID, hunks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if j.Status == "discovered" || j.Status == "matched" {
+		_ = s.store.UpdateJobStatus(r.Context(), jobID, "tailoring")
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(prop)
+}
+
+func (s *server) getTailor(w http.ResponseWriter, r *http.Request, jobID string) {
+	prop, err := s.store.LoadProposal(r.Context(), jobID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "no proposal", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(prop)
+}
+
+func (s *server) handleHunkAction(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	path := strings.TrimPrefix(r.URL.Path, "/api/hunks/")
+	rest := strings.Trim(path, "/")
+	parts := strings.Split(rest, "/")
+	if len(parts) != 2 {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+	hunkID, action := parts[0], parts[1]
+	var status string
+	switch action {
+	case "accept":
+		status = tailor.StatusAccepted
+	case "reject":
+		status = tailor.StatusRejected
+	default:
+		http.Error(w, "unknown action", http.StatusBadRequest)
+		return
+	}
+	h, err := s.store.GetHunk(r.Context(), hunkID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "hunk not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if h.Status == tailor.StatusBlocked {
+		http.Error(w, "hunk blocked by facts gate", http.StatusConflict)
+		return
+	}
+	if err := s.store.SetHunkStatus(r.Context(), hunkID, status); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	jobID, err := s.store.JobIDForHunk(r.Context(), hunkID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	prop, err := s.store.LoadProposal(r.Context(), jobID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(prop)
+}

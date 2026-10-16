@@ -2,11 +2,14 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/pahlevikun/applydiff/internal/cv"
+	"github.com/pahlevikun/applydiff/internal/diff"
+	"github.com/pahlevikun/applydiff/internal/tailor"
 )
 
 func (s *Store) SaveMaster(ctx context.Context, doc *cv.Document) error {
@@ -58,26 +61,16 @@ func (s *Store) ApplyHunk(ctx context.Context, jobID string, hunk cv.Hunk) error
 	if jobID == "" {
 		return fmt.Errorf("store: job_id required")
 	}
-	hunks, err := s.loadBranchHunks(ctx, jobID)
-	if err != nil {
-		return err
+	th := tailor.Hunk{
+		FieldID:   hunk.FieldID,
+		Before:    hunk.Before,
+		After:     hunk.After,
+		Rationale: hunk.Rationale,
+		Evidence:  hunk.Evidence,
+		Status:    tailor.StatusAccepted,
+		Section:   "experience",
 	}
-	replaced := false
-	for i := range hunks {
-		if hunks[i].FieldID == hunk.FieldID {
-			hunks[i] = hunk
-			replaced = true
-			break
-		}
-	}
-	if !replaced {
-		hunks = append(hunks, hunk)
-	}
-	raw, err := json.Marshal(hunks)
-	if err != nil {
-		return err
-	}
-	_, err = s.db.ExecContext(ctx, `UPDATE cv_branches SET hunks = ? WHERE job_id = ?`, string(raw), jobID)
+	_, err := s.SaveProposal(ctx, jobID, []tailor.Hunk{th})
 	return err
 }
 
@@ -86,11 +79,18 @@ func (s *Store) LoadBranch(ctx context.Context, jobID string) (*cv.Document, err
 	if err != nil {
 		return nil, err
 	}
-	hunks, err := s.loadBranchHunks(ctx, jobID)
+	prop, err := s.LoadProposal(ctx, jobID)
+	if err == sql.ErrNoRows {
+		hunks, err := s.loadBranchHunks(ctx, jobID)
+		if err != nil {
+			return nil, err
+		}
+		return cv.ApplyHunks(master, hunks)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return cv.ApplyHunks(master, hunks)
+	return diff.ApplyAllAccepted(master, prop.Hunks)
 }
 
 func (s *Store) loadBranchHunks(ctx context.Context, jobID string) ([]cv.Hunk, error) {
