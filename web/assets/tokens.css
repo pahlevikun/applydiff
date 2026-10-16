@@ -1,0 +1,37 @@
+:root {
+  --bg: #12151a;
+  --surface: #191d23;
+  --surface2: #20252c;
+  --line: #2a2f37;
+  --line2: #353b44;
+  --fg: #e9eaed;
+  --muted: #9ba3ae;
+  --dim: #6e7785;
+  --accent: #6bc9ba;
+  --accent-dim: #2c554d;
+  --amber: #d6ad6a;
+  --add: #79c392;
+  --del: #db8c7c;
+  --r: 10px;
+  --r-sm: 7px;
+  --paper: #fbfaf7;
+  --ink: #1c1f25;
+  --ink-mut: #606772;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+}
