@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/pahlevikun/applydiff/internal/cv"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
@@ -67,6 +68,7 @@ func main() {
 	mux.HandleFunc("/healthz", srv.handleHealthz)
 	mux.HandleFunc("/api/jobs", srv.handleJobs)
 	mux.HandleFunc("/api/scan", srv.handleScan)
+	mux.HandleFunc("/api/cv/master", srv.handleCVMaster)
 
 	addr := ":" + port
 	log.Printf("listening on %s (db=%s config=%s)", addr, dbPath, cfgPath)
@@ -102,6 +104,33 @@ func (s *server) handleJobs(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(jobs)
+}
+
+func (s *server) handleCVMaster(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		doc, err := s.store.LoadMaster(r.Context())
+		if err != nil {
+			http.Error(w, "no master cv saved", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(doc)
+	case http.MethodPut:
+		var doc cv.Document
+		if err := json.NewDecoder(r.Body).Decode(&doc); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := s.store.SaveMaster(r.Context(), &doc); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "saved"})
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *server) handleScan(w http.ResponseWriter, r *http.Request) {
