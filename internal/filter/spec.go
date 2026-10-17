@@ -33,6 +33,8 @@ type Spec struct {
 	ExcludeKeywords       *KeywordRule  `json:"exclude_keywords,omitempty" yaml:"exclude_keywords,omitempty"`
 	Benefits              *CategoryRule `json:"benefits,omitempty" yaml:"benefits,omitempty"`
 	MaxPostedDays         *IntRule      `json:"max_posted_days,omitempty" yaml:"max_posted_days,omitempty"`
+	PostedWithin          *IntRule      `json:"posted_within,omitempty" yaml:"posted_within,omitempty"`
+	MaxApplicants         *IntRule      `json:"max_applicants,omitempty" yaml:"max_applicants,omitempty"`
 	RemoteOnly            bool          `json:"remote_only,omitempty" yaml:"remote_only,omitempty"`
 }
 

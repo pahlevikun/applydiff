@@ -246,6 +246,36 @@ func Evaluate(j job.Job, spec Spec) Result {
 		}
 	}
 
+	if spec.PostedWithin != nil && spec.PostedWithin.Max > 0 {
+		if posted, ok := parsePosted(j.PostedAt); ok {
+			age := time.Since(posted)
+			limit := time.Duration(spec.PostedWithin.Max) * time.Hour
+			if age > limit {
+				if spec.PostedWithin.Hard {
+					res.Keep = false
+					res.Reasons = append(res.Reasons, "skipped: posted outside "+itoa(spec.PostedWithin.Max)+"h window")
+				}
+			} else if !spec.PostedWithin.Hard {
+				res.Score += softBoost(spec.PostedWithin.Boost)
+				res.Reasons = append(res.Reasons, "boost: fresh posting")
+			}
+		} else if spec.PostedWithin.Hard {
+			res.Keep = false
+			res.Reasons = append(res.Reasons, "skipped: posted time unknown")
+		}
+	}
+
+	if spec.MaxApplicants != nil && spec.MaxApplicants.Max > 0 && j.ApplicantCount > 0 {
+		ok := j.ApplicantCount <= spec.MaxApplicants.Max
+		if spec.MaxApplicants.Hard && !ok {
+			res.Keep = false
+			res.Reasons = append(res.Reasons, "skipped: applicant count "+itoa(j.ApplicantCount))
+		} else if !spec.MaxApplicants.Hard && ok {
+			res.Score += softBoost(spec.MaxApplicants.Boost)
+			res.Reasons = append(res.Reasons, "boost: low competition")
+		}
+	}
+
 	if res.Keep && len(res.Reasons) == 0 {
 		res.Reasons = append(res.Reasons, "matched: no hard filters failed")
 	}
