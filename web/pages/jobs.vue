@@ -18,8 +18,11 @@ type JobView = {
     status: string
     arrangement?: string
     filter_skip_reason?: string
+    risk?: number
+    flags?: { code: string; severity: string; message: string }[]
   }
   filter: FilterResult
+  priority?: number
 }
 
 type FilterSpec = Record<string, unknown>
@@ -208,6 +211,9 @@ onMounted(async () => {
             <span class="dot">·</span>
             <span class="source">{{ row.job.source }}</span>
             <span v-if="row.job.arrangement === 'remote' || row.job.remote === 'yes'" class="badge remote">Remote</span>
+            <span v-if="row.job.risk" :class="['badge', row.job.flags?.some((f) => f.severity === 'hard') ? 'risk-hard' : 'risk-soft']">
+              Risk {{ row.job.risk }}
+            </span>
             <span v-if="row.job.status === 'skipped'" class="badge skip">Skipped</span>
             <span class="posted">{{ formatPosted(row.job.posted_at) }}</span>
           </div>
@@ -413,6 +419,20 @@ h1 {
 .badge.skip {
   background: var(--amber-bg);
   color: var(--amber);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+.badge.risk-soft {
+  background: var(--amber-bg);
+  color: var(--amber);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+.badge.risk-hard {
+  background: var(--del-bg);
+  color: var(--del);
   font-size: 0.7rem;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;

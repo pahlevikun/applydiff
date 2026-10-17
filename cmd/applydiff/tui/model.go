@@ -61,7 +61,7 @@ type model struct {
 	ivRubricFocus int
 	ivLoadErr    string
 	styles   struct {
-		bg, surface, surface2, line, fg, muted, dim, accent, add, del lipgloss.Style
+		bg, surface, surface2, line, fg, muted, dim, accent, add, del, amber lipgloss.Style
 	}
 }
 
@@ -382,8 +382,24 @@ func (m model) viewFeed() string {
 	var right strings.Builder
 	right.WriteString(m.styles.dim.Render(fmt.Sprintf("%-36s %-14s %6s %5s", "Title", "Company", "Region", "Score")) + "\n")
 	for i, j := range m.jobs {
-		line := fmt.Sprintf("%-36s %-14s %6s %5d",
-			trunc(j.Job.Title, 36), trunc(j.Job.Company, 14), trunc(j.Job.Region, 6), j.Filter.Score)
+		riskBadge := ""
+		if j.Job.Risk > 0 {
+			riskBadge = fmt.Sprintf(" R%d", j.Job.Risk)
+			hard := false
+			for _, f := range j.Job.Flags {
+				if f.Severity == "hard" {
+					hard = true
+					break
+				}
+			}
+			if hard {
+				riskBadge = m.styles.del.Render(riskBadge)
+			} else {
+				riskBadge = m.styles.amber.Render(riskBadge)
+			}
+		}
+		line := fmt.Sprintf("%-36s %-14s %6s %5d%s",
+			trunc(j.Job.Title, 36), trunc(j.Job.Company, 14), trunc(j.Job.Region, 6), j.Filter.Score, riskBadge)
 		if i == m.cursor {
 			right.WriteString(m.styles.accent.Render("› "+line) + "\n")
 		} else {
@@ -406,6 +422,16 @@ func (m model) viewJob() string {
 	}
 	var b strings.Builder
 	b.WriteString(m.styles.fg.Render(m.detail.Job.Title) + " @ " + m.detail.Job.Company + "\n")
+	if m.detail.Job.Risk > 0 || len(m.detail.Job.Flags) > 0 {
+		b.WriteString(m.styles.amber.Render(fmt.Sprintf("Risk %d", m.detail.Job.Risk)) + "\n")
+		for _, f := range m.detail.Job.Flags {
+			style := m.styles.amber
+			if f.Severity == "hard" {
+				style = m.styles.del
+			}
+			b.WriteString(style.Render(fmt.Sprintf("  [%s] %s", f.Severity, f.Message)) + "\n")
+		}
+	}
 	if m.detail.Match != nil {
 		b.WriteString(m.styles.muted.Render(fmt.Sprintf("Match %d/25", m.detail.Match.Total)) + "\n")
 		for _, r := range m.detail.Match.Requirements {

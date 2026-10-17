@@ -9,10 +9,23 @@ import (
 	"github.com/pahlevikun/applydiff/internal/scan"
 )
 
+// ScanOptions tune risk filtering and presets for a scan run.
+type ScanOptions struct {
+	MinRisk *int
+	MaxRisk *int
+	Preset  string
+	Source  string
+}
+
 // Scan runs job sources.
-func (a *App) Scan(ctx context.Context, dryRun bool) (scan.Result, error) {
+func (a *App) Scan(ctx context.Context, dryRun bool, opt ScanOptions) (scan.Result, error) {
 	if dryRun {
 		return scan.Result{}, nil
+	}
+	if a.Runner != nil {
+		a.Runner.MinRisk = opt.MinRisk
+		a.Runner.MaxRisk = opt.MaxRisk
+		a.Runner.Preset = opt.Preset
 	}
 	return a.Runner.Run(ctx)
 }

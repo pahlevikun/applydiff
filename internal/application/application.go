@@ -23,6 +23,9 @@ type Application struct {
 	Status       string    `json:"status"`
 	FollowUpNote string    `json:"follow_up_note"`
 	CVSnapshot   string    `json:"cv_snapshot,omitempty"` // JSON frozen at export
+	Channel      string    `json:"channel"`
+	Referrer     string    `json:"referrer"`
+	Notes        string    `json:"notes"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
@@ -34,7 +37,18 @@ type ListItem struct {
 	URL          string    `json:"url"`
 	Status       string    `json:"status"`
 	FollowUpNote string    `json:"follow_up_note"`
+	Channel      string    `json:"channel"`
+	Referrer     string    `json:"referrer"`
+	Notes        string    `json:"notes"`
 	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// ChannelStats aggregates application outcomes per channel.
+type ChannelStats struct {
+	Channel       string  `json:"channel"`
+	Total         int     `json:"total"`
+	Replies       int     `json:"replies"`
+	InterviewRate float64 `json:"interview_rate"`
 }
 
 var legalTransitions = map[string][]string{
