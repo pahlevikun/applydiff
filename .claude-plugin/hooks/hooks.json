@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "SessionStart": [{ "command": "./integrations/hooks/ensure-applydiff.sh" }],
+    "PreToolUse": [{ "command": "./integrations/hooks/deny-gated.sh" }]
+  }
+}

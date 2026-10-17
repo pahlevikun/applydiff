@@ -20,7 +20,7 @@ func TestImportMasterCVExample(t *testing.T) {
 	}
 	defer app.Close()
 
-	master := filepath.Join("..", "..", "examples", "cv", "master.json")
+	master := filepath.Join("..", "..", "cv", "master_cv.json")
 	if err := app.ImportMasterCV(ctx, master, false); err != nil {
 		t.Fatal(err)
 	}
@@ -28,14 +28,14 @@ func TestImportMasterCVExample(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if doc.Person != "example-senior-backend" {
+	if doc.Person != "farhan-yuda-pahlevi" {
 		t.Fatalf("unexpected person %q", doc.Person)
 	}
 	facts, err := app.Store.LoadFacts(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if facts.Facts["exp.1.b1.latency_after"] != "180ms" {
+	if facts.Facts["exp.1.b4.abac"] != "6+ microservices ~40%" {
 		t.Fatalf("missing demo facts: %#v", facts.Facts)
 	}
 }

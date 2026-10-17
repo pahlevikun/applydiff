@@ -18,6 +18,8 @@ sources:
     enabled: true
   workingnomads:
     enabled: true
+  fourdayweek:
+    enabled: true
 
 queries:
   - backend

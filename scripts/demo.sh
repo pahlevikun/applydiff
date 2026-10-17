@@ -13,7 +13,7 @@ mkdir -p bin
 go build -o bin/applydiff ./cmd/applydiff
 
 echo "==> import example CV"
-./bin/applydiff cv import examples/cv/master.json
+./bin/applydiff cv import cv/master_cv.json
 
 echo "==> scan (live sources)"
 ./bin/applydiff scan

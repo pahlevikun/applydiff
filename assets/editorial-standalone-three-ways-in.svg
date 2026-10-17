@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" width="1200" height="720" fill="none" role="img" aria-label="ApplyDiff standalone form: five ways in, one Go core, human approval gate">
+  <rect x="1" y="1" width="1198" height="718" rx="12" fill="#fbfaf7" stroke="#e6e3db" stroke-width="2"/>
+
+  <text x="56" y="52" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#b86b11" letter-spacing="1.2">
+    03 / CONVERGENCE &#183; STANDALONE FORM (AS IMPLEMENTED IN REPO)
+  </text>
+  <text x="56" y="88" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="28" font-weight="700" fill="#1c1f25" letter-spacing="-0.5">
+    Five ways in funnel into one Go core and one SQLite file on your machine
+  </text>
+  <text x="56" y="116" font-family="IBM Plex Sans, sans-serif" font-size="15" fill="#606772">
+    Agents may draft hunks via skill or MCP; approve, reject, build, and apply stay human-gated in the terminal or web UI.
+  </text>
+
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="#e6e3db" stroke-width="1.5"/>
+
+  <!-- Legend -->
+  <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#606772">
+    <rect x="56" y="148" width="10" height="10" rx="2" fill="#1c1f25"/>
+    <text x="72" y="157">shipped in working tree</text>
+    <rect x="220" y="148" width="10" height="10" rx="2" fill="none" stroke="#b86b11" stroke-width="1.2" stroke-dasharray="3 2"/>
+    <text x="236" y="157">scaffold / not finished</text>
+    <circle cx="400" cy="153" r="4" fill="#ffb454"/>
+    <text x="412" y="157">human-only gate</text>
+  </g>
+
+  <!-- Five inputs (left) -->
+  <text x="56" y="198" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">WAYS IN</text>
+
+  <g font-family="IBM Plex Sans, sans-serif" font-size="13" fill="#1c1f25">
+    <rect x="56" y="212" width="200" height="44" rx="6" fill="#f2efe9" stroke="#d8d4ca"/>
+    <text x="68" y="232" font-weight="600">CLI + TUI</text>
+    <text x="68" y="248" font-size="11" fill="#606772">applydiff scan, tui</text>
+
+    <rect x="56" y="266" width="200" height="44" rx="6" fill="#f2efe9" stroke="#d8d4ca"/>
+    <text x="68" y="286" font-weight="600">Web UI</text>
+    <text x="68" y="302" font-size="11" fill="#606772">applydiff serve</text>
+
+    <rect x="56" y="320" width="200" height="44" rx="6" fill="#f2efe9" stroke="#d8d4ca"/>
+    <text x="68" y="340" font-weight="600">Skill (Cursor / Claude)</text>
+    <text x="68" y="356" font-size="11" fill="#606772">shell + --json</text>
+
+    <rect x="56" y="374" width="200" height="44" rx="6" fill="#f2efe9" stroke="#d8d4ca"/>
+    <text x="68" y="394" font-weight="600">MCP stdio</text>
+    <text x="68" y="410" font-size="11" fill="#606772">applydiff mcp</text>
+
+    <rect x="56" y="428" width="200" height="44" rx="6" fill="none" stroke="#b86b11" stroke-width="1.2" stroke-dasharray="5 3"/>
+    <text x="68" y="448" font-weight="600">Tauri desktop</text>
+    <text x="68" y="464" font-size="11" fill="#606772">README + conf only</text>
+  </g>
+
+  <!-- Convergence rays -->
+  <path d="M256 234 L420 320" stroke="#d8d4ca" stroke-width="1.5"/>
+  <path d="M256 288 L420 320" stroke="#d8d4ca" stroke-width="1.5"/>
+  <path d="M256 342 L420 320" stroke="#d8d4ca" stroke-width="1.5"/>
+  <path d="M256 396 L420 320" stroke="#d8d4ca" stroke-width="1.5"/>
+  <path d="M256 450 L420 340" stroke="#b86b11" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+
+  <!-- Core -->
+  <rect x="420" y="268" width="280" height="168" rx="10" fill="#1c1f25"/>
+  <text x="440" y="298" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#ffb454">internal/runtime.App</text>
+  <text x="440" y="322" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="#e8e6e1">Same methods for CLI, HTTP, MCP</text>
+  <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#c8c4bc">
+    <text x="440" y="348">scan � match � tailor � propose</text>
+    <text x="440" y="368">internal/runs (--async)</text>
+    <text x="440" y="388">llm.Runner (app path)</text>
+    <text x="440" y="408">export: xelatex � tectonic</text>
+  </g>
+
+  <!-- Data layer -->
+  <rect x="440" y="456" width="240" height="72" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="456" y="478" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">Per-user app-data (paths.Resolve)</text>
+  <text x="456" y="498" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">applydiff.db � WAL � jobs/config.yaml</text>
+  <text x="456" y="516" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">Legacy: ./applydiff.db in cwd still wins</text>
+
+  <!-- Human gate threshold -->
+  <line x1="720" y1="180" x2="720" y2="560" stroke="#b86b11" stroke-width="2" stroke-dasharray="5 4"/>
+  <rect x="668" y="562" width="104" height="22" rx="4" fill="#fbfaf7" stroke="#b86b11" stroke-width="1.2"/>
+  <text x="678" y="577" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#b86b11">HUMAN GATE</text>
+
+  <!-- Right: agent vs human paths -->
+  <text x="748" y="198" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">AFTER CORE</text>
+
+  <rect x="748" y="212" width="396" height="88" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="764" y="236" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="#1c1f25">Agent path (skill / MCP)</text>
+  <text x="764" y="256" font-family="IBM Plex Mono, monospace" font-size="11" fill="#606772">tailor --context � host drafts � propose</text>
+  <text x="764" y="276" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">Hooks deny approve � reject � build � apply</text>
+  <text x="764" y="292" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">Hunks land as PENDING</text>
+
+  <rect x="748" y="312" width="396" height="88" rx="8" fill="#2a1a0e" stroke="#b86b11" stroke-width="1.2"/>
+  <circle cx="764" cy="332" r="4" fill="#ffb454"/>
+  <text x="776" y="336" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="#ffb454">Human path (TUI / web / CLI)</text>
+  <text x="764" y="356" font-family="IBM Plex Mono, monospace" font-size="11" fill="#e8c9a0">approve � reject � build � apply</text>
+  <text x="764" y="376" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#e8c9a0">TTY or --confirm � action_log actor</text>
+  <text x="764" y="392" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#e8c9a0">applydiff open � diff page</text>
+
+  <rect x="748" y="416" width="396" height="56" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="764" y="440" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="#1c1f25">Install (no compile for users)</text>
+  <text x="764" y="460" font-family="IBM Plex Mono, monospace" font-size="11" fill="#606772">install.sh � brew/scoop templates � GoReleaser on tag</text>
+
+  <!-- Bottom: gaps -->
+  <line x1="56" y1="548" x2="1144" y2="548" stroke="#e6e3db" stroke-width="1.5"/>
+  <text x="56" y="576" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#606772">NOT YET IN REPO (honest backlog)</text>
+  <text x="56" y="598" font-family="IBM Plex Sans, sans-serif" font-size="12" fill="#606772">
+    Tauri bundles + signing CI � Tectonic download into Paths.Bin � ensure-applydiff release fetch + sha256 � main.version on releases
+  </text>
+  <text x="56" y="622" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#9098a3">
+    Source: docs/plans/2026-10-17-standalone-app-skills-mcp.md + local implementation audit � Oct 2026
+  </text>
+
+  <text x="56" y="668" font-family="IBM Plex Mono, monospace" font-size="10" fill="#9098a3">
+    EVIDENCE: verified architecture � inference: desktop dashed � unknown: production signing dates
+  </text>
+</svg>

@@ -21,7 +21,7 @@ onMounted(async () => {
     <p v-if="loading" class="dim">Loading jobs…</p>
     <ul v-else class="jobs">
       <li v-for="j in jobs" :key="j.id">
-        <NuxtLink :to="`/interview/${j.id}`" class="job-link">
+        <NuxtLink :to="`/interview/${encodeURIComponent(j.id)}`" class="job-link">
           {{ j.title }} <span class="dim">@ {{ j.company }}</span>
         </NuxtLink>
       </li>

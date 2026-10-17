@@ -11,19 +11,22 @@ import (
 
 // SourceView is one row in the sources settings grid.
 type SourceView struct {
-	ID       string                `json:"id"`
-	Name     string                `json:"name"`
-	Hint     string                `json:"hint"`
-	Enabled  bool                  `json:"enabled"`
+	ID       string                  `json:"id"`
+	Name     string                  `json:"name"`
+	Hint     string                  `json:"hint"`
+	Enabled  bool                    `json:"enabled"`
+	Scan     SourceScanMode          `json:"scan"`
+	Origins  string                  `json:"origins,omitempty"`
 	LastScan *store.SourceScanResult `json:"last_scan,omitempty"`
 }
 
 // ConfigView is exposed to the Sources UI.
 type ConfigView struct {
-	Sources []SourceView `json:"sources"`
-	Queries []string     `json:"queries"`
-	Filters filter.Spec  `json:"filters"`
-	LLM     LLMView      `json:"llm"`
+	Sources    []SourceView `json:"sources"`
+	Queries    []string     `json:"queries"`
+	Filters    filter.Spec  `json:"filters"`
+	LLM        LLMView      `json:"llm"`
+	ConfigPath string       `json:"config_path,omitempty"`
 }
 
 type LLMView struct {
@@ -31,37 +34,36 @@ type LLMView struct {
 	Model string `json:"model"`
 }
 
-var defaultSources = []SourceView{
-	{ID: "hiring_cafe", Name: "Hiring.cafe", Hint: "agg · prefer ATS links", Enabled: true},
-	{ID: "greenhouse", Name: "Greenhouse", Hint: "boards.greenhouse.io", Enabled: true},
-	{ID: "lever", Name: "Lever", Hint: "jobs.lever.co", Enabled: true},
-	{ID: "ashby", Name: "Ashby", Hint: "jobs.ashbyhq.com", Enabled: true},
-	{ID: "workable", Name: "Workable", Hint: "apply.workable.com", Enabled: true},
-	{ID: "linkedin", Name: "LinkedIn Jobs", Hint: "discovery only · cap 5/day", Enabled: true},
-	{ID: "wellfound", Name: "Wellfound", Hint: "startup", Enabled: true},
-	{ID: "weworkremotely", Name: "We Work Remotely", Hint: "remote board", Enabled: true},
-	{ID: "remoteok", Name: "Remote OK", Hint: "remote board", Enabled: true},
-	{ID: "remotive", Name: "Remotive", Hint: "remote board", Enabled: true},
-	{ID: "jobicy", Name: "Jobicy", Hint: "remote board", Enabled: true},
-	{ID: "workingnomads", Name: "Working Nomads", Hint: "remote board", Enabled: true},
-	{ID: "otta", Name: "Otta", Hint: "filter remote on site", Enabled: true},
-	{ID: "ycombinator", Name: "Y Combinator", Hint: "workatastartup", Enabled: true},
-	{ID: "alignjobs", Name: "AlignJobs.id", Hint: "ID-focused, freemium", Enabled: false},
-	{ID: "manual", Name: "Manual paste", Hint: "threads / DM links", Enabled: true},
+func catalogSourceViews() []SourceView {
+	cat := SourceCatalog()
+	out := make([]SourceView, len(cat))
+	for i, e := range cat {
+		out[i] = SourceView{
+			ID:      e.ID,
+			Name:    e.Name,
+			Hint:    e.Hint,
+			Enabled: e.DefaultOn,
+			Scan:    e.Scan,
+			Origins: e.Origins,
+		}
+	}
+	return out
 }
 
 // BuildView merges yaml config, persisted toggles, and LLM env.
 func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Context, key string) (string, error), lastScan map[string]store.SourceScanResult) ConfigView {
-	sources := make([]SourceView, len(defaultSources))
-	for i, s := range defaultSources {
-		sources[i] = s
+	sources := catalogSourceViews()
+	for i := range sources {
+		for _, e := range SourceCatalog() {
+			if e.ID != sources[i].ID {
+				continue
+			}
+			if e.ConfigEnabled != nil {
+				sources[i].Enabled = e.ConfigEnabled(c)
+			}
+			break
+		}
 	}
-	sources[1].Enabled = c.Sources.Greenhouse.Enabled
-	setEnabled(&sources, "remotive", c.Sources.Remotive.Enabled)
-	setEnabled(&sources, "remoteok", c.Sources.RemoteOK.Enabled)
-	setEnabled(&sources, "jobicy", c.Sources.Jobicy.Enabled)
-	setEnabled(&sources, "weworkremotely", c.Sources.WeWorkRemotely.Enabled)
-	setEnabled(&sources, "workingnomads", c.Sources.WorkingNomads.Enabled)
 
 	if loadOverride != nil {
 		raw, err := loadOverride(ctx, "source_enabled")
@@ -93,14 +95,5 @@ func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Co
 			Mode:  llmCfg.Provider,
 			Model: llmCfg.Model,
 		},
-	}
-}
-
-func setEnabled(sources *[]SourceView, id string, enabled bool) {
-	for i := range *sources {
-		if (*sources)[i].ID == id {
-			(*sources)[i].Enabled = enabled
-			return
-		}
 	}
 }

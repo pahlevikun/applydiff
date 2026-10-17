@@ -29,7 +29,7 @@ func (a *App) ImportMasterCV(ctx context.Context, masterPath string, dryRun bool
 	if dryRun {
 		return nil
 	}
-	if err := a.Store.SaveMaster(ctx, doc); err != nil {
+	if err := a.SaveMasterCV(ctx, doc); err != nil {
 		return err
 	}
 	if facts != nil {

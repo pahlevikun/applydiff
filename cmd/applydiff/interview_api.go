@@ -11,19 +11,13 @@ import (
 )
 
 func (s *server) handleInterview(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/interview/")
-	rest := strings.Trim(path, "/")
-	if rest == "" {
+	jobKey, route, ok := parseInterviewPath(r.URL.Path)
+	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	parts := strings.Split(rest, "/")
-	jobKey := parts[0]
-	if jobKey == "" {
-		http.NotFound(w, r)
-		return
-	}
-	if len(parts) == 1 {
+	switch route {
+	case interviewRouteWorkspace:
 		if r.Method != http.MethodGet {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -35,10 +29,7 @@ func (s *server) handleInterview(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, ws)
-		return
-	}
-	switch parts[1] {
-	case "kit":
+	case interviewRouteKit:
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -49,20 +40,16 @@ func (s *server) handleInterview(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, kit)
-	case "mock":
-		if len(parts) < 3 || parts[2] != "save" {
-			http.NotFound(w, r)
-			return
-		}
+	case interviewRouteMockSave:
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 		var body struct {
-			Type     string                    `json:"type"`
-			Steps    []interview.MockStep      `json:"steps"`
-			Scores   map[string]int            `json:"scores"`
-			Comments map[string]string         `json:"comments"`
+			Type     string                `json:"type"`
+			Steps    []interview.MockStep    `json:"steps"`
+			Scores   map[string]int          `json:"scores"`
+			Comments map[string]string       `json:"comments"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -74,7 +61,7 @@ func (s *server) handleInterview(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, sess)
-	case "stories":
+	case interviewRouteStories:
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return

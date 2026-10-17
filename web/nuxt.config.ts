@@ -6,6 +6,9 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
   },
+  routeRules: {
+    '/': { redirect: '/jobs' },
+  },
   css: ['~/assets/theme.css'],
   vite: {
     server: {

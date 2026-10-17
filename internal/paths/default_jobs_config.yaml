@@ -1,0 +1,111 @@
+# Job discovery config (mirrors latex-resume search harness).
+
+sources:
+  greenhouse:
+    enabled: true
+    boards:
+      - token: stripe
+        company: Stripe
+      - token: gitlab
+        company: GitLab
+  remotive:
+    enabled: true
+  remoteok:
+    enabled: true
+  jobicy:
+    enabled: true
+  weworkremotely:
+    enabled: true
+  workingnomads:
+    enabled: true
+  fourdayweek:
+    enabled: true
+
+queries:
+  - backend
+  - software engineer
+  - golang
+  - full stack
+
+filters:
+  remote_only: true
+  regions:
+    hard: true
+    values:
+      - SEA
+      - EU
+      - global
+  arrangement:
+    hard: true
+    values:
+      - remote
+      - hybrid
+  min_seniority:
+    hard: true
+    values:
+      - senior
+  max_posted_days:
+    hard: true
+    max: 14
+  visa_sponsorship:
+    hard: false
+    require: true
+    boost: 8
+  weekly_days:
+    hard: false
+    values:
+      - "4"
+      - "4.5"
+    boost: 12
+  async_friendly:
+    hard: false
+    require: true
+    boost: 5
+  eor_friendly:
+    hard: false
+    require: true
+    boost: 6
+  must_have_keywords:
+    hard: false
+    all: true
+    values:
+      - go
+      - golang
+    boost: 3
+  benefits:
+    hard: false
+    values:
+      - "4-day week"
+      - visa sponsorship
+      - equity
+    boost: 4
+  salary_min:
+    hard: false
+    min: 80000
+    currency: USD
+    boost: 5
+  salary_disclosed:
+    hard: false
+    require: true
+    boost: 2
+  employment_type:
+    hard: true
+    values:
+      - full-time
+      - contract
+  exclude_employment:
+    hard: true
+    values:
+      - commission-only
+      - unpaid
+  archetype:
+    hard: false
+    values:
+      - backend
+      - fullstack
+      - platform
+    boost: 4
+
+caps:
+  per_source: 100
+  max_jobs_per_scan: 500

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [{ "command": "./integrations/hooks/ensure-applydiff.sh" }],
+    "beforeShellExecution": [{ "command": "./integrations/hooks/deny-gated.sh" }]
+  }
+}

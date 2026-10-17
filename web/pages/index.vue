@@ -1,3 +1,5 @@
-<template>
-  <h1>ApplyDiff</h1>
-</template>
+<script setup lang="ts">
+await navigateTo('/jobs', { replace: true })
+</script>
+
+<template />

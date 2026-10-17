@@ -53,6 +53,7 @@ const presets = ref<Preset[]>([])
 const loading = ref(false)
 const scanning = ref(false)
 const error = ref<string | null>(null)
+const { track, actionErrorMessage } = useActivity()
 const lastScan = ref<ScanResult | null>(null)
 const showFilters = ref(true)
 const searchEl = ref<HTMLInputElement | null>(null)
@@ -101,12 +102,15 @@ async function loadJobs() {
 
 async function applyPreset(id: string) {
   error.value = null
+  const name = presets.value.find((p) => p.id === id)?.name ?? id
   try {
-    await $fetch(`/api/filters/presets/${id}/apply`, { method: 'POST' })
-    await loadFilters()
-    await loadJobs()
+    await track(`Apply filter preset · ${name}`, async () => {
+      await $fetch(`/api/filters/presets/${id}/apply`, { method: 'POST' })
+      await loadFilters()
+      await loadJobs()
+    })
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to apply preset'
+    error.value = actionErrorMessage(e)
   }
 }
 
@@ -114,10 +118,12 @@ async function runScan() {
   scanning.value = true
   error.value = null
   try {
-    lastScan.value = await $fetch<ScanResult>('/api/scan', { method: 'POST' })
+    lastScan.value = await track('Job scan', () => $fetch<ScanResult>('/api/scan', { method: 'POST' }), {
+      successDetail: (s) => `fetched ${s.fetched}, stored ${s.stored}, skipped ${s.skipped}`,
+    })
     await loadJobs()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Scan failed'
+    error.value = actionErrorMessage(e)
   } finally {
     scanning.value = false
   }
@@ -204,7 +210,8 @@ onMounted(async () => {
           <div class="title-row">
             <a class="title" :href="row.job.url" target="_blank" rel="noopener noreferrer">{{ row.job.title }}</a>
             <span v-if="row.filter.score > 0" class="score">+{{ row.filter.score }}</span>
-            <NuxtLink class="match-link" :to="`/match/${encodeURIComponent(row.job.id)}`">Match</NuxtLink>
+            <NuxtLink class="job-action" :to="jobRoute('match', row.job.id)">Match</NuxtLink>
+            <NuxtLink class="job-action" :to="jobRoute('diff', row.job.id)">Diff</NuxtLink>
           </div>
           <div class="sub">
             <span>{{ row.job.company }}</span>
@@ -374,7 +381,7 @@ h1 {
   color: var(--amber);
   font-variant-numeric: tabular-nums;
 }
-.match-link {
+.job-action {
   font-size: 0.75rem;
   color: var(--accent);
   text-decoration: none;
@@ -382,7 +389,7 @@ h1 {
   padding: 0.15rem 0.5rem;
   border-radius: 6px;
 }
-.match-link:hover {
+.job-action:hover {
   background: var(--surface2);
 }
 .title:hover {

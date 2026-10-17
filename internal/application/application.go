@@ -52,7 +52,7 @@ type ChannelStats struct {
 }
 
 var legalTransitions = map[string][]string{
-	StatusDiscovered:  {StatusMatched, StatusShortlisted, StatusClosed},
+	StatusDiscovered:  {StatusMatched, StatusShortlisted, StatusTailoring, StatusClosed},
 	StatusMatched:     {StatusShortlisted, StatusTailoring, StatusClosed},
 	StatusShortlisted: {StatusTailoring, StatusReady, StatusClosed},
 	StatusTailoring:   {StatusReady, StatusClosed},

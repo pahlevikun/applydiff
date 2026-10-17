@@ -253,7 +253,7 @@ func (m model) updateDiff(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case " ":
 		m.hunkSel[m.hunkIdx] = !m.hunkSel[m.hunkIdx]
 	case "a":
-		_, err := m.app.ApproveHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false, false)
+		_, err := m.app.ApproveHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false, false, runtime.ActorHuman)
 		if err != nil {
 			m.err = err.Error()
 		} else {
@@ -261,7 +261,7 @@ func (m model) updateDiff(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.proposal = p
 		}
 	case "x":
-		_, err := m.app.RejectHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false)
+		_, err := m.app.RejectHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false, runtime.ActorHuman)
 		if err != nil {
 			m.err = err.Error()
 		} else {
@@ -269,7 +269,7 @@ func (m model) updateDiff(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.proposal = p
 		}
 	case "b":
-		_, err := m.app.BuildPDF(m.ctx, m.selected, false)
+		_, err := m.app.BuildPDF(m.ctx, m.selected, false, runtime.ActorHuman)
 		if err != nil {
 			m.err = err.Error()
 		} else {

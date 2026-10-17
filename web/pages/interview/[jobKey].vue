@@ -43,7 +43,16 @@ type Job = {
 }
 
 const route = useRoute()
-const jobKey = computed(() => String(route.params.jobKey))
+
+function decodeJobKey(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+const jobKey = computed(() => decodeJobKey(String(route.params.jobKey)))
 
 const job = ref<Job | null>(null)
 const ws = ref<Workspace | null>(null)
@@ -102,8 +111,8 @@ function resetRunner(fw: Framework) {
 }
 
 async function loadJob() {
-  const jobs = await $fetch<Job[]>('/api/jobs')
-  job.value = jobs.find((j) => j.id === jobKey.value) ?? null
+  const rows = await $fetch<{ job: Job }[]>('/api/jobs')
+  job.value = rows.map((r) => r.job).find((j) => j.id === jobKey.value) ?? null
 }
 
 async function loadWorkspace() {
@@ -122,9 +131,17 @@ async function loadWorkspace() {
   }
 }
 
+const { track, actionErrorMessage } = useActivity()
+
 async function ensureKit() {
-  await $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/kit`, { method: 'POST' })
-  await loadWorkspace()
+  try {
+    await track('Generate interview kit', async () => {
+      await $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/kit`, { method: 'POST' })
+      await loadWorkspace()
+    })
+  } catch (e) {
+    error.value = actionErrorMessage(e)
+  }
 }
 
 function toggleTimer() {
@@ -161,15 +178,21 @@ async function saveSession() {
     note: stepNotes.value[i] ?? '',
     weak: remainSec.value[i] <= 0,
   }))
-  await $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/mock/save`, {
-    method: 'POST',
-    body: {
-      type: ws.value.mock_type,
-      steps,
-      scores: rubricScores.value,
-      comments: rubricComments.value,
-    },
-  })
+  try {
+    await track('Save mock interview session', () =>
+      $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/mock/save`, {
+        method: 'POST',
+        body: {
+          type: ws.value!.mock_type,
+          steps,
+          scores: rubricScores.value,
+          comments: rubricComments.value,
+        },
+      }),
+    )
+  } catch (e) {
+    error.value = actionErrorMessage(e)
+  }
 }
 
 const filteredStories = computed(() => {
@@ -192,19 +215,26 @@ function newStory() {
 }
 
 async function saveStory() {
-  if (editingStory.value?.id) {
-    await $fetch(`/api/interview/stories/${encodeURIComponent(editingStory.value.id)}`, {
-      method: 'PUT',
-      body: storyForm.value,
+  const label = editingStory.value?.id ? 'Update STAR story' : 'Add STAR story'
+  try {
+    await track(label, async () => {
+      if (editingStory.value?.id) {
+        await $fetch(`/api/interview/stories/${encodeURIComponent(editingStory.value.id)}`, {
+          method: 'PUT',
+          body: storyForm.value,
+        })
+      } else {
+        await $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/stories`, {
+          method: 'POST',
+          body: storyForm.value,
+        })
+      }
+      editingStory.value = null
+      await loadWorkspace()
     })
-  } else {
-    await $fetch(`/api/interview/${encodeURIComponent(jobKey.value)}/stories`, {
-      method: 'POST',
-      body: storyForm.value,
-    })
+  } catch (e) {
+    error.value = actionErrorMessage(e)
   }
-  editingStory.value = null
-  await loadWorkspace()
 }
 
 onMounted(() => {

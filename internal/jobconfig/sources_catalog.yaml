@@ -1,0 +1,906 @@
+# ApplyDiff source catalog — merged from career-ops providers, ai-job-search portals, job-sequencer, plugins.
+# scan: live | planned | manual
+
+- id: freehire
+  name: FreeHire
+  hint: "ai-job-search · job-sequencer"
+  scan: planned
+  default_on: true
+  origins: ai_job_search,job_sequencer
+
+- id: jobbank
+  name: Jobbank (DK)
+  hint: "ai-job-search portal CLI"
+  scan: planned
+  default_on: true
+  origins: ai_job_search
+
+- id: jobdanmark
+  name: JobDanmark
+  hint: "ai-job-search portal CLI"
+  scan: planned
+  default_on: true
+  origins: ai_job_search
+
+- id: jobindex
+  name: Jobindex
+  hint: "ai-job-search portal CLI"
+  scan: planned
+  default_on: true
+  origins: ai_job_search
+
+- id: jobnet
+  name: Jobnet
+  hint: "ai-job-search portal CLI"
+  scan: planned
+  default_on: true
+  origins: ai_job_search
+
+- id: tokyodev
+  name: TokyoDev
+  hint: "job-sequencer built-in"
+  scan: planned
+  default_on: true
+  origins: job_sequencer
+
+- id: japan_dev
+  name: Japan Dev
+  hint: "job-sequencer built-in"
+  scan: planned
+  default_on: true
+  origins: job_sequencer
+
+- id: relocate_me
+  name: Relocate.me
+  hint: "job-sequencer built-in"
+  scan: planned
+  default_on: true
+  origins: job_sequencer
+
+- id: indeed_indonesia
+  name: Indeed Indonesia
+  hint: "job-sequencer built-in"
+  scan: planned
+  default_on: true
+  origins: job_sequencer
+
+- id: ycombinator_remote
+  name: Y Combinator Remote
+  hint: "job-sequencer built-in"
+  scan: planned
+  default_on: true
+  origins: job_sequencer
+
+- id: linkedin_alerts
+  name: LinkedIn alerts
+  hint: "career-ops plugin · email/RSS ingest"
+  scan: planned
+  default_on: true
+  origins: career_ops_plugin
+
+- id: startup_boards
+  name: Startup boards
+  hint: "career-ops plugin aggregator"
+  scan: planned
+  default_on: true
+  origins: career_ops_plugin
+
+- id: hiring_cafe
+  name: Hiring.cafe
+  hint: "applydiff roadmap aggregator"
+  scan: planned
+  default_on: true
+  origins: applydiff
+
+- id: glassdoor
+  name: Glassdoor
+  hint: "planned · manual paste"
+  scan: planned
+  default_on: false
+  origins: applydiff
+
+- id: wellfound
+  name: Wellfound
+  hint: "startup board"
+  scan: planned
+  default_on: true
+  origins: applydiff,merged_features
+
+- id: otta
+  name: Otta
+  hint: "filter remote on site"
+  scan: planned
+  default_on: true
+  origins: applydiff
+
+- id: ycombinator
+  name: Y Combinator
+  hint: "workatastartup"
+  scan: planned
+  default_on: true
+  origins: applydiff
+
+- id: alignjobs
+  name: AlignJobs.id
+  hint: "ID-focused board"
+  scan: planned
+  default_on: false
+  origins: applydiff
+
+- id: linkedin
+  name: LinkedIn Jobs
+  hint: "discovery only · no HTML scrape"
+  scan: planned
+  default_on: true
+  origins: applydiff,ai_job_search,job_sequencer
+
+- id: manual
+  name: Manual paste
+  hint: "threads / DM / alert links"
+  scan: manual
+  default_on: true
+  origins: applydiff
+
+- id: fourdayweek
+  name: 4 Day Week
+  hint: "career-ops 4dayweek · 4dayweek.io/api/jobs"
+  scan: live
+  default_on: true
+  origins: career_ops,applydiff
+
+- id: a16z-speedrun-talent
+  name: A16Z Speedrun Talent
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: adp-workforcenow
+  name: Adp Workforcenow
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: agentic-jobs
+  name: Agentic Jobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: alibaba
+  name: Alibaba
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: amazon
+  name: Amazon
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: applitrack
+  name: Applitrack
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: arbeitnow
+  name: Arbeitnow
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: arbeitsagentur
+  name: Arbeitsagentur
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: ashby
+  name: Ashby
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: avature
+  name: Avature
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: bamboohr
+  name: Bamboohr
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: beesite
+  name: Beesite
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: breezy
+  name: Breezy
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: builtin
+  name: Builtin
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: careerviet
+  name: Careerviet
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: collage
+  name: Collage
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: comeet
+  name: Comeet
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: consider
+  name: Consider
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: cryptocurrencyjobs
+  name: Cryptocurrencyjobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: csod
+  name: Csod
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: dassault
+  name: Dassault
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: deutschebahn
+  name: Deutschebahn
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: echojobs
+  name: Echojobs
+  hint: "retired in career-ops · kept for parity"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: eightfold
+  name: Eightfold
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: eploy
+  name: Eploy
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: feishu-jobs
+  name: Feishu Jobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: flowxtra
+  name: Flowxtra
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: garena
+  name: Garena
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: gem
+  name: Gem
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: generalist-world
+  name: Generalist World
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: getonbrd
+  name: Getonbrd
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: getro
+  name: Getro
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: glints
+  name: Glints
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: google
+  name: Google
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: greenhouse
+  name: Greenhouse
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: gupy
+  name: Gupy
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: hackernews
+  name: Hackernews
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: hecklerkoch
+  name: Hecklerkoch
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: higheredjobs
+  name: Higheredjobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: himalayas
+  name: Himalayas
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: hiringroom
+  name: Hiringroom
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: ibm
+  name: Ibm
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: icims
+  name: Icims
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: itviec
+  name: Itviec
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jazzhr
+  name: Jazzhr
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jibeapply
+  name: Jibeapply
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jobbankca
+  name: Jobbankca
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jobicy
+  name: Jobicy
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: jobspresso
+  name: Jobspresso
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jobstreet
+  name: Jobstreet
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: jobvite
+  name: Jobvite
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: join
+  name: Join
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: joinup
+  name: Joinup
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: justjoin
+  name: Justjoin
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: kalibrr
+  name: Kalibrr
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: landingjobs
+  name: Landingjobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: larajobs
+  name: Larajobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: lever
+  name: Lever
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: manfred
+  name: Manfred
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: meituan
+  name: Meituan
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: mokahr
+  name: Mokahr
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: mycareersfuture
+  name: Mycareersfuture
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: neogov
+  name: Neogov
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: nodesk
+  name: Nodesk
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: nofluffjobs
+  name: Nofluffjobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: occ
+  name: Occ
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: oraclecloud
+  name: Oraclecloud
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: pageup
+  name: Pageup
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: peoplesoft
+  name: Peoplesoft
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: personio
+  name: Personio
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: phenom
+  name: Phenom
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: pinpoint
+  name: Pinpoint
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: platsbanken
+  name: Platsbanken
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: prevueaps
+  name: Prevueaps
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: pythonorg
+  name: Pythonorg
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: radancy
+  name: Radancy
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: recruitee
+  name: Recruitee
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: redrover
+  name: Redrover
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: remoteok
+  name: Remoteok
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: remotive
+  name: Remotive
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: remotli
+  name: Remotli
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: rheinmetall
+  name: Rheinmetall
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: rippling
+  name: Rippling
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: schoolspring
+  name: Schoolspring
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: senjob
+  name: Senjob
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: smartrecruiters
+  name: Smartrecruiters
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: softgarden
+  name: Softgarden
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: solidjobs
+  name: Solidjobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: startup-jobs
+  name: Startup Jobs
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: successfactors
+  name: Successfactors
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: taleo
+  name: Taleo
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: teamtailor
+  name: Teamtailor
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: techinasia
+  name: Techinasia
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: telegram-channel
+  name: Telegram Channel
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: tencent
+  name: Tencent
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: thehub
+  name: Thehub
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: themuse
+  name: Themuse
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: tkms
+  name: Tkms
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: torre
+  name: Torre
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: ultipro
+  name: Ultipro
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: vdab
+  name: Vdab
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: weworkremotely
+  name: Weworkremotely
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: workable
+  name: Workable
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: workday
+  name: Workday
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: workingnomads
+  name: Workingnomads
+  hint: "career-ops provider"
+  scan: live
+  default_on: true
+  origins: career_ops
+
+- id: wttj
+  name: Wttj
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: yourator
+  name: Yourator
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+
+- id: zoho-recruit
+  name: Zoho Recruit
+  hint: "career-ops provider"
+  scan: planned
+  default_on: true
+  origins: career_ops
+

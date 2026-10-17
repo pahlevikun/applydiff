@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -10,9 +11,8 @@ import (
 )
 
 func (s *server) handleTailor(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/tailor/")
-	jobID := strings.Trim(path, "/")
-	if jobID == "" || strings.Contains(jobID, "/") {
+	jobID := jobIDFromAPIPath("/api/tailor/", r.URL.Path)
+	if jobID == "" {
 		http.Error(w, "job id required", http.StatusBadRequest)
 		return
 	}
@@ -27,6 +27,18 @@ func (s *server) handleTailor(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string) {
+	if r.URL.Query().Get("async") == "1" {
+		run, err := s.app.Runs.Start(r.Context(), "tailor", jobID, func(ctx context.Context) (any, error) {
+			return s.app.Tailor(ctx, jobID, false)
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(run)
+		return
+	}
 	j, err := s.app.Store.GetJob(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -36,7 +48,7 @@ func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	master, err := s.app.Store.LoadMaster(r.Context())
+	master, err := s.app.MasterCV(r.Context())
 	if err != nil {
 		http.Error(w, "no master cv saved", http.StatusNotFound)
 		return
@@ -56,9 +68,7 @@ func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if j.Status == "discovered" || j.Status == "matched" {
-		_ = s.app.Store.UpdateJobStatus(r.Context(), jobID, "tailoring")
-	}
+	_ = s.app.RecordTailorStarted(r.Context(), jobID)
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(prop)
 }
