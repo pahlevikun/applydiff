@@ -13,4 +13,37 @@ type Job struct {
 	Description string `json:"description,omitempty"`
 	SalaryPost  string `json:"salary_post,omitempty"`
 	SalaryATS   string `json:"salary_ats,omitempty"`
+
+	Arrangement          string   `json:"arrangement,omitempty"`
+	DaysOnsite           int      `json:"days_onsite,omitempty"`
+	WeeklyDays           float64  `json:"weekly_days,omitempty"`
+	AsyncFriendly        bool     `json:"async_friendly,omitempty"`
+	TimezoneOverlapHours int      `json:"timezone_overlap_hours,omitempty"`
+	Country              string   `json:"country,omitempty"`
+	EmploymentType       string   `json:"employment_type,omitempty"`
+	Seniority            string   `json:"seniority,omitempty"`
+	SalaryMin            int      `json:"salary_min,omitempty"`
+	SalaryCurrency       string   `json:"salary_currency,omitempty"`
+	SalaryDisclosed      bool     `json:"salary_disclosed,omitempty"`
+	Equity               bool     `json:"equity,omitempty"`
+	CompanyStage         string   `json:"company_stage,omitempty"`
+	CompanySize          string   `json:"company_size,omitempty"`
+	VisaSponsorship      bool     `json:"visa_sponsorship,omitempty"`
+	Relocation           bool     `json:"relocation,omitempty"`
+	EORFriendly          bool     `json:"eor_friendly,omitempty"`
+	Archetype            string   `json:"archetype,omitempty"`
+	Keywords             []string `json:"keywords,omitempty"`
+	Benefits             []string `json:"benefits,omitempty"`
+
+	FilterSkipReason string `json:"filter_skip_reason,omitempty"`
+}
+
+// JobView is returned from the jobs API with live filter evaluation.
+type JobView struct {
+	Job    Job `json:"job"`
+	Filter struct {
+		Keep    bool     `json:"keep"`
+		Score   int      `json:"score"`
+		Reasons []string `json:"reasons"`
+	} `json:"filter"`
 }

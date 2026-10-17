@@ -98,6 +98,9 @@ func runServer() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", srv.handleHealthz)
 	mux.HandleFunc("/api/jobs", srv.handleJobs)
+	mux.HandleFunc("/api/filters", srv.handleFilters)
+	mux.HandleFunc("/api/filters/presets", srv.handleFilterPresets)
+	mux.HandleFunc("/api/filters/presets/", srv.handleFilterPresets)
 	mux.HandleFunc("/api/scan", srv.handleScan)
 	mux.HandleFunc("/api/cv/master", srv.handleCVMaster)
 	mux.HandleFunc("/api/match/", srv.handleMatch)
@@ -138,13 +141,12 @@ func (s *server) handleJobs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	jobs, err := s.store.ListJobs(r.Context())
+	jobs, err := s.jobsWithFilters(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(jobs)
+	writeJSON(w, jobs)
 }
 
 func (s *server) handleCVMaster(w http.ResponseWriter, r *http.Request) {

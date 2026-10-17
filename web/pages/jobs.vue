@@ -1,14 +1,39 @@
 <script setup lang="ts">
-type Job = {
+type FilterResult = {
+  keep: boolean
+  score: number
+  reasons: string[]
+}
+
+type JobView = {
+  job: {
+    id: string
+    company: string
+    title: string
+    url: string
+    source: string
+    posted_at: string
+    remote: string
+    region: string
+    status: string
+    arrangement?: string
+    filter_skip_reason?: string
+  }
+  filter: FilterResult
+}
+
+type FilterSpec = Record<string, unknown>
+
+type FiltersPayload = {
+  spec: FilterSpec
+  active_preset_id: string
+  active_preset_name?: string
+}
+
+type Preset = {
   id: string
-  company: string
-  title: string
-  url: string
-  source: string
-  posted_at: string
-  remote: string
-  region: string
-  status: string
+  name: string
+  spec: FilterSpec
 }
 
 type ScanResult = {
@@ -19,21 +44,61 @@ type ScanResult = {
   skipped: number
 }
 
-const jobs = ref<Job[]>([])
+const jobs = ref<JobView[]>([])
+const filters = ref<FiltersPayload | null>(null)
+const presets = ref<Preset[]>([])
 const loading = ref(false)
 const scanning = ref(false)
 const error = ref<string | null>(null)
 const lastScan = ref<ScanResult | null>(null)
+const showFilters = ref(true)
+
+const filterCategories = [
+  { key: 'arrangement', label: 'Work arrangement' },
+  { key: 'weekly_days', label: 'Weekly schedule' },
+  { key: 'async_friendly', label: 'Async / flexible' },
+  { key: 'timezone_overlap_hours', label: 'Timezone overlap' },
+  { key: 'regions', label: 'Region' },
+  { key: 'countries', label: 'Country' },
+  { key: 'employment_type', label: 'Employment type' },
+  { key: 'seniority', label: 'Seniority' },
+  { key: 'salary_min', label: 'Compensation' },
+  { key: 'visa_sponsorship', label: 'Visa' },
+  { key: 'eor_friendly', label: 'EOR / contractor' },
+  { key: 'archetype', label: 'Role archetype' },
+  { key: 'must_have_keywords', label: 'Must-have keywords' },
+  { key: 'benefits', label: 'Benefits' },
+]
+
+async function loadFilters() {
+  try {
+    filters.value = await $fetch<FiltersPayload>('/api/filters')
+    presets.value = await $fetch<Preset[]>('/api/filters/presets')
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load filters'
+  }
+}
 
 async function loadJobs() {
   loading.value = true
   error.value = null
   try {
-    jobs.value = await $fetch<Job[]>('/api/jobs')
+    jobs.value = await $fetch<JobView[]>('/api/jobs')
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load jobs'
   } finally {
     loading.value = false
+  }
+}
+
+async function applyPreset(id: string) {
+  error.value = null
+  try {
+    await $fetch(`/api/filters/presets/${id}/apply`, { method: 'POST' })
+    await loadFilters()
+    await loadJobs()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to apply preset'
   }
 }
 
@@ -57,8 +122,21 @@ function formatPosted(iso: string) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-onMounted(() => {
-  loadJobs()
+function categorySummary(key: string): string {
+  const spec = filters.value?.spec
+  if (!spec || !spec[key]) return '—'
+  const rule = spec[key] as { hard?: boolean; values?: string[]; require?: boolean; min?: number }
+  if (rule.values?.length) {
+    return `${rule.hard ? 'hard' : 'soft'} · ${rule.values.join(', ')}`
+  }
+  if (rule.require) return `${rule.hard ? 'hard' : 'soft'} · required`
+  if (rule.min) return `min ${rule.min}`
+  return 'configured'
+}
+
+onMounted(async () => {
+  await loadFilters()
+  await loadJobs()
 })
 </script>
 
@@ -66,31 +144,64 @@ onMounted(() => {
   <main class="page">
     <header class="bar">
       <h1>Jobs</h1>
-      <button class="scan" type="button" :disabled="scanning" @click="runScan">
-        {{ scanning ? 'Scanning…' : 'Scan' }}
-      </button>
+      <div class="actions">
+        <button class="ghost" type="button" @click="showFilters = !showFilters">
+          {{ showFilters ? 'Hide filters' : 'Filters' }}
+        </button>
+        <button class="scan" type="button" :disabled="scanning" @click="runScan">
+          {{ scanning ? 'Scanning…' : 'Scan' }}
+        </button>
+      </div>
     </header>
+
+    <aside v-if="showFilters && filters" class="filter-panel">
+      <div class="panel-head">
+        <span class="panel-title">Filter preset</span>
+        <select
+          class="preset-select"
+          :value="filters.active_preset_id || ''"
+          @change="applyPreset(($event.target as HTMLSelectElement).value)"
+        >
+          <option value="">Default (config.yaml)</option>
+          <option v-for="p in presets" :key="p.id" :value="p.id">{{ p.name }}</option>
+        </select>
+      </div>
+      <p v-if="filters.active_preset_name" class="active-name">Active: {{ filters.active_preset_name }}</p>
+      <ul class="cat-list">
+        <li v-for="cat in filterCategories" :key="cat.key">
+          <span class="cat-label">{{ cat.label }}</span>
+          <span class="cat-val">{{ categorySummary(cat.key) }}</span>
+        </li>
+      </ul>
+      <NuxtLink to="/sources" class="edit-link">Edit full filter set →</NuxtLink>
+    </aside>
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="lastScan" class="meta">
-      Last scan: fetched {{ lastScan.fetched }}, stored {{ lastScan.stored }}, dead {{ lastScan.dead }}
+      Last scan: fetched {{ lastScan.fetched }}, stored {{ lastScan.stored }}, skipped {{ lastScan.skipped }}, dead
+      {{ lastScan.dead }}
     </p>
     <p v-if="loading && !jobs.length" class="meta">Loading…</p>
 
     <ul v-if="jobs.length" class="feed">
-      <li v-for="job in jobs" :key="job.id" class="row">
+      <li v-for="row in jobs" :key="row.job.id" class="row" :class="{ skipped: !row.filter.keep }">
         <div class="main">
           <div class="title-row">
-            <a class="title" :href="job.url" target="_blank" rel="noopener noreferrer">{{ job.title }}</a>
-            <NuxtLink class="match-link" :to="`/match/${encodeURIComponent(job.id)}`">Match</NuxtLink>
+            <a class="title" :href="row.job.url" target="_blank" rel="noopener noreferrer">{{ row.job.title }}</a>
+            <span v-if="row.filter.score > 0" class="score">+{{ row.filter.score }}</span>
+            <NuxtLink class="match-link" :to="`/match/${encodeURIComponent(row.job.id)}`">Match</NuxtLink>
           </div>
           <div class="sub">
-            <span>{{ job.company }}</span>
+            <span>{{ row.job.company }}</span>
             <span class="dot">·</span>
-            <span class="source">{{ job.source }}</span>
-            <span v-if="job.remote === 'yes'" class="badge remote">Remote</span>
-            <span class="posted">{{ formatPosted(job.posted_at) }}</span>
+            <span class="source">{{ row.job.source }}</span>
+            <span v-if="row.job.arrangement === 'remote' || row.job.remote === 'yes'" class="badge remote">Remote</span>
+            <span v-if="row.job.status === 'skipped'" class="badge skip">Skipped</span>
+            <span class="posted">{{ formatPosted(row.job.posted_at) }}</span>
           </div>
+          <p v-if="row.filter.reasons.length" class="reasons">
+            {{ row.filter.keep ? row.filter.reasons[0] : row.filter.reasons.find((r) => r.startsWith('skipped')) || row.filter.reasons[0] }}
+          </p>
         </div>
       </li>
     </ul>
@@ -100,7 +211,7 @@ onMounted(() => {
 
 <style scoped>
 .page {
-  max-width: 52rem;
+  max-width: 56rem;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
   font-family: system-ui, sans-serif;
@@ -114,6 +225,10 @@ onMounted(() => {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+.actions {
+  display: flex;
+  gap: 0.5rem;
 }
 h1 {
   font-size: 1.35rem;
@@ -129,9 +244,75 @@ h1 {
   font-weight: 600;
   cursor: pointer;
 }
+.ghost {
+  background: transparent;
+  color: #8b95a5;
+  border: 1px solid #232a36;
+  border-radius: 7px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
 .scan:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+.filter-panel {
+  border: 1px solid #232a36;
+  border-radius: 10px;
+  background: #11151d;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.panel-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8b95a5;
+}
+.preset-select {
+  background: #171c26;
+  color: #e7eaf0;
+  border: 1px solid #232a36;
+  border-radius: 7px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+.active-name {
+  font-size: 0.8rem;
+  color: #3fd0be;
+  margin: 0.5rem 0 0;
+}
+.cat-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 1rem;
+  font-size: 0.78rem;
+}
+.cat-label {
+  color: #8b95a5;
+}
+.cat-val {
+  display: block;
+  color: #e7eaf0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+.edit-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: #3fd0be;
+  text-decoration: none;
 }
 .error {
   color: #f0553f;
@@ -153,6 +334,10 @@ h1 {
   padding: 0.85rem 1rem;
   background: #11151d;
 }
+.row.skipped {
+  opacity: 0.72;
+  background: #0f1218;
+}
 .row:last-child {
   border-bottom: none;
 }
@@ -166,6 +351,11 @@ h1 {
   color: #e7eaf0;
   font-weight: 600;
   text-decoration: none;
+}
+.score {
+  font-size: 0.7rem;
+  color: #d9a441;
+  font-variant-numeric: tabular-nums;
 }
 .match-link {
   font-size: 0.75rem;
@@ -190,6 +380,12 @@ h1 {
   align-items: center;
   gap: 0.35rem;
 }
+.reasons {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: #5c6675;
+  font-family: ui-monospace, monospace;
+}
 .dot {
   opacity: 0.5;
 }
@@ -199,6 +395,13 @@ h1 {
 .badge.remote {
   background: #0e2a17;
   color: #3fb950;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+}
+.badge.skip {
+  background: #2a1a0e;
+  color: #d9a441;
   font-size: 0.7rem;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;

@@ -3,8 +3,9 @@ package scan
 import (
 	"context"
 	"strings"
-	"time"
 
+	"github.com/pahlevikun/applydiff/internal/extract"
+	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/source"
@@ -31,6 +32,8 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 		return res, nil
 	}
 
+	spec := r.Config.Filters.EffectiveSpec()
+
 	queries := r.Config.Queries
 	var fetched []job.Job
 	for _, src := range source.List() {
@@ -48,12 +51,23 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 	deduped := job.Dedupe(fetched)
 	res.Deduped = len(deduped)
 
-	filtered := filterJobs(deduped, r.Config.Filters)
-	if cap := r.Config.Caps.MaxJobsPerScan; cap > 0 && len(filtered) > cap {
-		filtered = filtered[:cap]
+	candidates := deduped
+	if cap := r.Config.Caps.MaxJobsPerScan; cap > 0 && len(candidates) > cap {
+		candidates = candidates[:cap]
 	}
 
-	for _, j := range filtered {
+	for _, j := range candidates {
+		if j.Description != "" || j.Title != "" {
+			extract.FromText(&j)
+		}
+		eval := filter.Evaluate(j, spec)
+		if !eval.Keep {
+			j.Status = "skipped"
+			j.FilterSkipReason = firstSkipReason(eval.Reasons)
+		} else if j.Status == "" {
+			j.Status = "discovered"
+		}
+
 		if !job.Alive(ctx, r.Client, j.URL) {
 			res.Dead++
 			continue
@@ -61,80 +75,23 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 		if err := r.Store.UpsertJob(ctx, j, job.DedupeKey(j)); err != nil {
 			return res, err
 		}
-		res.Stored++
+		if j.Status == "skipped" {
+			res.Skipped++
+		} else {
+			res.Stored++
+		}
 	}
-	res.Skipped = len(filtered) - res.Stored - res.Dead
 	return res, nil
 }
 
-func filterJobs(jobs []job.Job, f jobconfig.Filters) []job.Job {
-	out := make([]job.Job, 0, len(jobs))
-	cutoff := time.Now().AddDate(0, 0, -f.MaxPostedDays)
-	for _, j := range jobs {
-		if f.RemoteOnly && j.Remote != "yes" {
-			continue
-		}
-		if !matchesSeniority(j.Title, f.MinSeniority) {
-			continue
-		}
-		if !matchesRegion(j.Region, f.Regions) {
-			continue
-		}
-		if f.MaxPostedDays > 0 {
-			if posted, ok := parsePosted(j.PostedAt); ok && posted.Before(cutoff) {
-				continue
-			}
-		}
-		out = append(out, j)
-	}
-	return out
-}
-
-func matchesSeniority(title, min string) bool {
-	min = strings.TrimSpace(strings.ToLower(min))
-	if min == "" {
-		return true
-	}
-	lower := strings.ToLower(title)
-	switch min {
-	case "senior":
-		for _, kw := range []string{"senior", "staff", "principal", "lead", "sr."} {
-			if strings.Contains(lower, kw) {
-				return true
-			}
-		}
-		return false
-	default:
-		return strings.Contains(lower, min)
-	}
-}
-
-func matchesRegion(region string, allowed []string) bool {
-	if len(allowed) == 0 {
-		return true
-	}
-	region = strings.ToLower(strings.TrimSpace(region))
-	for _, a := range allowed {
-		if strings.ToLower(strings.TrimSpace(a)) == region {
-			return true
+func firstSkipReason(reasons []string) string {
+	for _, r := range reasons {
+		if strings.HasPrefix(r, "skipped:") {
+			return r
 		}
 	}
-	return false
-}
-
-func parsePosted(s string) (time.Time, bool) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return time.Time{}, false
+	if len(reasons) > 0 {
+		return reasons[0]
 	}
-	layouts := []string{
-		time.RFC3339,
-		"2006-01-02T15:04:05-07:00",
-	}
-	for _, layout := range layouts {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t, true
-		}
-	}
-	return time.Time{}, false
+	return "skipped: filter"
 }

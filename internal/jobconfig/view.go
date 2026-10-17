@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/llm"
 )
 
@@ -19,7 +20,7 @@ type SourceView struct {
 type ConfigView struct {
 	Sources []SourceView `json:"sources"`
 	Queries []string     `json:"queries"`
-	Filters Filters      `json:"filters"`
+	Filters filter.Spec  `json:"filters"`
 	LLM     LLMView      `json:"llm"`
 }
 
@@ -71,7 +72,7 @@ func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Co
 	return ConfigView{
 		Sources: sources,
 		Queries: c.Queries,
-		Filters: c.Filters,
+		Filters: c.Filters.EffectiveSpec(),
 		LLM: LLMView{
 			Mode:  llmCfg.Provider,
 			Model: llmCfg.Model,
