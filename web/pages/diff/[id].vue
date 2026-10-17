@@ -118,8 +118,49 @@ function hunkClass(fieldId: string): string {
   return 'chg add'
 }
 
-onMounted(loadAll)
+const hunkIndex = ref(0)
+
+function moveHunk(delta: number) {
+  const n = proposal.value?.hunks.length ?? 0
+  if (n === 0) return
+  hunkIndex.value = Math.max(0, Math.min(n - 1, hunkIndex.value + delta))
+  selectedHunkId.value = proposal.value!.hunks[hunkIndex.value].id
+}
+
+async function toggleSelectedHunk() {
+  const h = proposal.value?.hunks[hunkIndex.value]
+  if (!h) return
+  await setStatus(h, h.status === 'accepted' ? 'reject' : 'accept')
+}
+
+function onDiffKey(e: KeyboardEvent) {
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  if (e.key === 'j') {
+    e.preventDefault()
+    moveHunk(1)
+  }
+  if (e.key === 'k') {
+    e.preventDefault()
+    moveHunk(-1)
+  }
+  if (e.code === 'Space') {
+    e.preventDefault()
+    toggleSelectedHunk()
+  }
+}
+
+onMounted(() => {
+  loadAll()
+  window.addEventListener('keydown', onDiffKey)
+})
+onUnmounted(() => window.removeEventListener('keydown', onDiffKey))
 watch(jobId, loadAll)
+watch(
+  () => proposal.value?.hunks.length,
+  () => {
+    hunkIndex.value = 0
+  }
+)
 </script>
 
 <template>
