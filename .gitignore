@@ -13,3 +13,4 @@ internal/webembed/public/*
 *.aux
 *.log
 *.out
+bin/

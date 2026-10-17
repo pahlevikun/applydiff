@@ -9,8 +9,8 @@ import (
 func (s *server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		view := s.cfg.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-			return s.store.GetSetting(ctx, key)
+		view := s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
+			return s.app.Store.GetSetting(ctx, key)
 		})
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(view)
@@ -34,8 +34,8 @@ func (s *server) putConfigSources(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "source_id required", http.StatusBadRequest)
 		return
 	}
-	view := s.cfg.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-		return s.store.GetSetting(ctx, key)
+	view := s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
+		return s.app.Store.GetSetting(ctx, key)
 	})
 	overrides := map[string]bool{}
 	for _, src := range view.Sources {
@@ -47,15 +47,15 @@ func (s *server) putConfigSources(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := s.store.SetSetting(r.Context(), "source_enabled", string(raw)); err != nil {
+	if err := s.app.Store.SetSetting(r.Context(), "source_enabled", string(raw)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if body.SourceID == "greenhouse" {
-		s.cfg.Sources.Greenhouse.Enabled = body.Enabled
+		s.app.Config.Sources.Greenhouse.Enabled = body.Enabled
 	}
-	view = s.cfg.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-		return s.store.GetSetting(ctx, key)
+	view = s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
+		return s.app.Store.GetSetting(ctx, key)
 	})
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(view)

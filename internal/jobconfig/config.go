@@ -28,7 +28,7 @@ type BoardConfig struct {
 	Company string `yaml:"company"`
 }
 
-// Filters is the filter spec from jobs/config.yaml (inline categories).
+// Filters is the inline filter spec from config yaml.
 type Filters struct {
 	Spec filter.Spec `yaml:",inline"`
 }
@@ -51,14 +51,10 @@ func Load(path string) (*Config, error) {
 	return &cfg, nil
 }
 
-// EffectiveSpec returns the filter spec with legacy yaml fields applied.
+// EffectiveSpec returns the filter spec.
 func (f Filters) EffectiveSpec() filter.Spec {
-	spec := f.Spec.Clone()
-	filter.NormalizeLegacy(&spec, nil, spec.RemoteOnly, "", 0)
-	return spec
+	return f.Spec.Clone()
 }
 
-// MergeLegacy applies remote_only shorthand into arrangement when needed.
-func (f *Filters) MergeLegacy() {
-	filter.NormalizeLegacy(&f.Spec, nil, f.Spec.RemoteOnly, "", 0)
-}
+// MergeLegacy is a no-op; legacy flat keys are represented inside Spec.
+func (f *Filters) MergeLegacy() {}

@@ -1,10 +1,10 @@
-.PHONY: help cli tui web pdf docker release test
+.PHONY: help cli tui web pdf docker release test build dev
 
 BIN := bin/applydiff
 GO := go
 
 help:
-	@echo "Targets: cli, tui, web, pdf, docker, release, test"
+	@echo "Targets: cli, tui, web, pdf, docker, release, test, build, dev"
 
 cli:
 	$(GO) build -o $(BIN) ./cmd/applydiff
@@ -27,3 +27,9 @@ release:
 
 test:
 	$(GO) test ./...
+
+build: cli web
+
+dev:
+	@echo "API: go run ./cmd/applydiff serve --port 8080"
+	@echo "Web: cd web && npm run dev"
