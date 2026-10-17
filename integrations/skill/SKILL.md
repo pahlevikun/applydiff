@@ -18,7 +18,6 @@ Use the `applydiff` CLI (JSON via `--json`). Never run `approve`, `reject`, `bui
 | tailor | `applydiff add` (stdin JD) → `match` → `tailor <key> --context --json` → host drafts → `propose <key> --hunks -` |
 | review | `applydiff open <key>` — hand off to human |
 | build | Tell user to run `applydiff build` locally after approving hunks |
-| interview | `applydiff interview kit <key> --json` |
 | doctor | `applydiff doctor --json` |
 
 ## Pasted job description

@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/interview"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/runtime"
@@ -25,8 +26,6 @@ const (
 	screenApps      screen = 4
 	screenInterview screen = 5
 )
-
-const screenCount = 6
 
 type model struct {
 	app      *runtime.App
@@ -152,14 +151,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help = true
 			return m, nil
 		case "tab":
-			m.screen = screen((int(m.screen) + 1) % screenCount)
+			m.screen = stepScreen(m.screen, 1)
 			m.status = screenName(m.screen)
 			if m.screen == screenInterview {
 				return m, m.loadInterviewCmd()
 			}
 			return m, nil
 		case "shift+tab":
-			m.screen = screen((int(m.screen) + screenCount - 1) % screenCount)
+			m.screen = stepScreen(m.screen, -1)
 			m.status = screenName(m.screen)
 			if m.screen == screenInterview {
 				return m, m.loadInterviewCmd()
@@ -358,11 +357,14 @@ func (m model) statusBar() string {
 }
 
 func (m model) helpOverlay() string {
+	iv := ""
+	if features.InterviewPrepEnabled {
+		iv = "\nInterview: space timer · n/p step · d rubric focus · 1-5 score · enter save · r reload"
+	}
 	return lipgloss.NewStyle().Padding(1, 2).Render(`ApplyDiff TUI — Phosphor
 ? close help
 Feed: j/k g/G move · enter job · / filter
-Diff: j/k hunk · space toggle · a accept · x reject · b build PDF
-Interview: space timer · n/p step · d rubric focus · 1-5 score · enter save · r reload
+Diff: j/k hunk · space toggle · a accept · x reject · b build PDF` + iv + `
 tab / shift+tab: switch screen`)
 }
 
@@ -508,7 +510,7 @@ func Run(app *runtime.App) error {
 	}
 	m := initialModel(app)
 	if !isInteractive() {
-		if os.Getenv("APPLYDIFF_TUI_SNAPSHOT") != "" {
+		if os.Getenv("APPLYDIFF_TUI_SNAPSHOT") != "" && features.InterviewPrepEnabled {
 			m.screen = screenInterview
 			m.status = "Interview"
 			m.width = 100

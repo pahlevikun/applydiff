@@ -1,4 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { interviewPrepEnabled } from './utils/features'
+
+const interviewRouteRules = interviewPrepEnabled
+  ? {}
+  : {
+      '/interview': { redirect: '/jobs' },
+      '/interview/**': { redirect: '/jobs' },
+    }
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
@@ -8,6 +17,7 @@ export default defineNuxtConfig({
   },
   routeRules: {
     '/': { redirect: '/jobs' },
+    ...interviewRouteRules,
   },
   css: ['~/assets/theme.css'],
   vite: {

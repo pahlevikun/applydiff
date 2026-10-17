@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/spf13/cobra"
 )
@@ -63,7 +64,6 @@ func newRootCmd() *cobra.Command {
 		cmdCV(),
 		cmdServe(),
 		cmdTUI(),
-		cmdInterview(),
 		cmdDoctor(),
 		cmdInit(),
 		cmdOpen(),
@@ -74,6 +74,9 @@ func newRootCmd() *cobra.Command {
 	)
 	// Legacy entrypoints
 	root.AddCommand(cmdExportDBLegacy(), cmdImportDBLegacy())
+	if features.InterviewPrepEnabled {
+		root.AddCommand(cmdInterview())
+	}
 	return root
 }
 
