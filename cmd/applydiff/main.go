@@ -20,6 +20,7 @@ import (
 
 type server struct {
 	store  *store.Store
+	dbPath string
 	cfg    *jobconfig.Config
 	runner *scan.Runner
 	llm    llm.Runner
@@ -27,6 +28,20 @@ type server struct {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "export-db":
+			runExportDB(os.Args[2:])
+			return
+		case "import-db":
+			runImportDB(os.Args[2:])
+			return
+		}
+	}
+	runServer()
+}
+
+func runServer() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -58,11 +73,7 @@ func main() {
 
 	registerSources(cfg)
 
-	llmRunner, err := llm.NewRunner(llm.ConfigFromEnv())
-	if err != nil {
-		log.Printf("llm runner disabled (%v); tailor will need FakeRunner in tests", err)
-		llmRunner = llm.FakeRunner{Response: `{"hunks":[]}`}
-	}
+	llmRunner := llm.NewRunnerFromEnv()
 	factsPath := os.Getenv("FACTS_PATH")
 	if factsPath == "" {
 		factsPath = "facts.json"
@@ -73,8 +84,9 @@ func main() {
 	}
 
 	srv := &server{
-		store: st,
-		cfg:   cfg,
+		store:  st,
+		dbPath: dbPath,
+		cfg:    cfg,
 		runner: &scan.Runner{
 			Store:  st,
 			Config: cfg,
@@ -94,6 +106,8 @@ func main() {
 	mux.HandleFunc("/api/applications", srv.handleApplicationsList)
 	mux.HandleFunc("/api/applications/", srv.handleApplicationStatus)
 	mux.HandleFunc("/api/export/", srv.handleExport)
+	mux.HandleFunc("/api/db/export", srv.handleDBExport)
+	mux.HandleFunc("/api/db/import", srv.handleDBImport)
 	mux.HandleFunc("/api/config", srv.handleConfig)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
 
