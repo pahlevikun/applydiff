@@ -71,6 +71,41 @@ func (s *Store) DeleteInterviewKit(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *Store) UpdateStory(ctx context.Context, story *interview.Story) error {
+	if story == nil || story.ID == "" {
+		return fmt.Errorf("store: story id required")
+	}
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE story_bank SET category = ?, situation = ?, task = ?, action = ?, result = ?, learning = ?, evidence_json = ?
+		WHERE id = ?
+	`, story.Category, story.Situation, story.Task, story.Action, story.Result, story.Learning, story.EvidenceJSON, story.ID)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
+func (s *Store) FinishMockSession(ctx context.Context, sessionID, status, finishedAt string) error {
+	if sessionID == "" {
+		return fmt.Errorf("store: session id required")
+	}
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE mock_session SET status = ?, finished_at = ? WHERE id = ?
+	`, status, finishedAt, sessionID)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 func (s *Store) SaveStory(ctx context.Context, story *interview.Story) error {
 	if story == nil || story.ApplicationID == "" {
 		return fmt.Errorf("store: story requires application_id")
