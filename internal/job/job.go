@@ -36,6 +36,18 @@ type Job struct {
 	Benefits             []string `json:"benefits,omitempty"`
 
 	FilterSkipReason string `json:"filter_skip_reason,omitempty"`
+
+	Risk           int `json:"risk,omitempty"`
+	ApplicantCount int `json:"applicant_count,omitempty"`
+	FlagsJSON      string `json:"-"`
+	Flags          []JobRiskFlag `json:"flags,omitempty"`
+}
+
+// JobRiskFlag mirrors stored scam-guard signals for API consumers.
+type JobRiskFlag struct {
+	Code     string `json:"code"`
+	Severity string `json:"severity"`
+	Message  string `json:"message"`
 }
 
 // JobView is returned from the jobs API with live filter evaluation.
@@ -46,4 +58,5 @@ type JobView struct {
 		Score   int      `json:"score"`
 		Reasons []string `json:"reasons"`
 	} `json:"filter"`
+	Priority float64 `json:"priority,omitempty"`
 }

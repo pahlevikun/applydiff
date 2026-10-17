@@ -36,6 +36,8 @@ type Job = {
   company: string
   title: string
   url: string
+  risk?: number
+  flags?: { code: string; severity: string; message: string }[]
 }
 
 const route = useRoute()
@@ -59,9 +61,11 @@ const dimensionRows = computed(() => {
   ]
 })
 
+type JobView = { job: Job }
+
 async function loadJob() {
-  const jobs = await $fetch<Job[]>('/api/jobs')
-  job.value = jobs.find((j) => j.id === jobId.value) ?? null
+  const jobs = await $fetch<JobView[]>('/api/jobs')
+  job.value = jobs.find((row) => row.job.id === jobId.value)?.job ?? null
 }
 
 async function runMatch() {
@@ -108,6 +112,17 @@ onMounted(() => {
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="loading" class="meta">Computing match…</p>
+
+    <section v-if="job?.flags?.length" class="risk-panel">
+      <h2>Risk signals</h2>
+      <p v-if="job.risk" class="risk-score">Score {{ job.risk }}</p>
+      <ul>
+        <li v-for="(flag, i) in job.flags" :key="i" :class="['risk-flag', flag.severity]">
+          <span class="code">{{ flag.code }}</span>
+          <span>{{ flag.message }}</span>
+        </li>
+      </ul>
+    </section>
 
     <section v-if="match" class="legit">
       <span :class="['flag', match.legitimacy.company_verified ? 'ok' : 'warn']">
@@ -212,6 +227,46 @@ onMounted(() => {
 }
 .meta {
   color: var(--muted);
+}
+.risk-panel {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.risk-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+.risk-score {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--amber);
+}
+.risk-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.risk-flag {
+  font-size: 0.8rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.risk-flag:last-child {
+  border-bottom: none;
+}
+.risk-flag .code {
+  font-family: ui-monospace, monospace;
+  margin-right: 0.5rem;
+}
+.risk-flag.hard {
+  color: var(--del);
+}
+.risk-flag.soft {
+  color: var(--amber);
 }
 .legit {
   display: flex;

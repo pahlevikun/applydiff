@@ -15,8 +15,8 @@ func (s *Store) CreateApplication(ctx context.Context, jobID string) (*applicati
 	}
 	now := time.Now().UTC()
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO applications (job_id, status, follow_up_note, cv_snapshot, updated_at)
-		VALUES (?, ?, '', '', ?)
+		INSERT INTO applications (job_id, status, follow_up_note, cv_snapshot, channel, referrer, notes, updated_at)
+		VALUES (?, ?, '', '', 'board', '', '', ?)
 		ON CONFLICT(job_id) DO NOTHING
 	`, jobID, application.StatusDiscovered, now.Format(time.RFC3339))
 	if err != nil {
@@ -29,9 +29,9 @@ func (s *Store) GetApplication(ctx context.Context, jobID string) (*application.
 	var a application.Application
 	var updated string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT job_id, status, follow_up_note, cv_snapshot, updated_at
+		SELECT job_id, status, follow_up_note, cv_snapshot, channel, referrer, notes, updated_at
 		FROM applications WHERE job_id = ?
-	`, jobID).Scan(&a.JobID, &a.Status, &a.FollowUpNote, &a.CVSnapshot, &updated)
+	`, jobID).Scan(&a.JobID, &a.Status, &a.FollowUpNote, &a.CVSnapshot, &a.Channel, &a.Referrer, &a.Notes, &updated)
 	if err != nil {
 		return nil, err
 	}
@@ -44,6 +44,9 @@ func (s *Store) ListApplications(ctx context.Context) ([]application.ListItem, e
 		SELECT j.id, j.company, j.title, j.url,
 		       COALESCE(a.status, 'discovered'),
 		       COALESCE(a.follow_up_note, ''),
+		       COALESCE(a.channel, 'board'),
+		       COALESCE(a.referrer, ''),
+		       COALESCE(a.notes, ''),
 		       COALESCE(a.updated_at, '')
 		FROM jobs j
 		LEFT JOIN applications a ON a.job_id = j.id
@@ -58,7 +61,7 @@ func (s *Store) ListApplications(ctx context.Context) ([]application.ListItem, e
 	for rows.Next() {
 		var item application.ListItem
 		var updated string
-		if err := rows.Scan(&item.JobID, &item.Company, &item.Title, &item.URL, &item.Status, &item.FollowUpNote, &updated); err != nil {
+		if err := rows.Scan(&item.JobID, &item.Company, &item.Title, &item.URL, &item.Status, &item.FollowUpNote, &item.Channel, &item.Referrer, &item.Notes, &updated); err != nil {
 			return nil, err
 		}
 		if updated != "" {
@@ -93,6 +96,24 @@ func (s *Store) TransitionApplication(ctx context.Context, jobID, toStatus, foll
 		return nil, err
 	}
 	return s.GetApplication(ctx, jobID)
+}
+
+func (s *Store) SetApplicationChannel(ctx context.Context, jobID, channel, referrer, notes string) error {
+	if channel == "" {
+		channel = "board"
+	}
+	now := time.Now().UTC().Format(time.RFC3339)
+	res, err := s.db.ExecContext(ctx, `
+		UPDATE applications SET channel = ?, referrer = ?, notes = ?, updated_at = ? WHERE job_id = ?
+	`, channel, referrer, notes, now, jobID)
+	if err != nil {
+		return err
+	}
+	n, _ := res.RowsAffected()
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (s *Store) SetApplicationCVSnapshot(ctx context.Context, jobID, cvJSON string) error {
