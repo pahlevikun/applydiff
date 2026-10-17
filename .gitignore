@@ -14,3 +14,4 @@ internal/webembed/public/*
 *.log
 *.out
 bin/
+web/dist
