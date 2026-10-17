@@ -80,8 +80,14 @@ type ApplyResult struct {
 	Message string `json:"message,omitempty"`
 }
 
+// ApplyOptions carries channel metadata for an application record.
+type ApplyOptions struct {
+	Channel  string
+	Referrer string
+}
+
 // Apply records submission intent. Auto-submit is never performed.
-func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool) (*ApplyResult, error) {
+func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool, meta ApplyOptions) (*ApplyResult, error) {
 	if mode == "" {
 		mode = ApplyManual
 	}
@@ -118,6 +124,13 @@ func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool
 	}
 	if _, err := a.Store.CreateApplication(ctx, j.ID); err != nil {
 		return nil, err
+	}
+	if meta.Channel != "" || meta.Referrer != "" {
+		ch := meta.Channel
+		if ch == "" {
+			ch = "board"
+		}
+		_ = a.Store.SetApplicationChannel(ctx, j.ID, ch, meta.Referrer, "")
 	}
 	app, err := a.Store.GetApplication(ctx, j.ID)
 	if err != nil {

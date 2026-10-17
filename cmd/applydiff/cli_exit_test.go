@@ -20,7 +20,7 @@ func TestCLIHelpListsSubcommands(t *testing.T) {
 	out := buf.String()
 	for _, sub := range []string{
 		"scan", "jobs", "show", "match", "tailor", "diff", "approve", "reject",
-		"build", "apply", "export", "import", "serve", "tui",
+		"build", "apply", "stats", "export", "import", "serve", "tui",
 	} {
 		if !containsWord(out, sub) {
 			t.Fatalf("help missing subcommand %q:\n%s", sub, out)

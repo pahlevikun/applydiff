@@ -89,6 +89,8 @@ func (a *App) ListJobs(ctx context.Context) ([]job.JobView, error) {
 	spec := a.EffectiveFilterSpec(ctx)
 	out := make([]job.JobView, 0, len(jobs))
 	for _, j := range jobs {
+		peers := a.peerHashesExcluding(ctx, j.ID)
+		a.assessAndPersistJobRisk(ctx, &j, peers)
 		eval := filter.Evaluate(j, spec)
 		if j.Status == "skipped" && j.FilterSkipReason != "" {
 			eval.Keep = false
@@ -101,6 +103,7 @@ func (a *App) ListJobs(ctx context.Context) ([]job.JobView, error) {
 		v.Filter.Keep = eval.Keep
 		v.Filter.Score = eval.Score
 		v.Filter.Reasons = eval.Reasons
+		v.Priority = filter.Priority(j, eval.Score)
 		out = append(out, v)
 	}
 	return out, nil
@@ -132,6 +135,8 @@ func (a *App) ShowJob(ctx context.Context, key string) (*JobDetail, error) {
 	if fv.Job.ID == "" {
 		fv.Job = *j
 	}
+	peers := a.peerHashesExcluding(ctx, j.ID)
+	a.assessAndPersistJobRisk(ctx, j, peers)
 	detail := &JobDetail{Job: *j, View: fv}
 	res, err := a.Store.LoadMatchResult(ctx, j.ID)
 	if err == nil {

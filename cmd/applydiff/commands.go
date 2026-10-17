@@ -13,13 +13,21 @@ import (
 
 func cmdScan() *cobra.Command {
 	var source, preset string
+	minRisk := -1
+	maxRisk := -1
 	c := &cobra.Command{
 		Use:   "scan",
 		Short: "Pull jobs from configured sources",
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = source
-			_ = preset
-			res, err := rootApp.Scan(cmd.Context(), globalDryRun)
+			opt := runtime.ScanOptions{Preset: preset, Source: source}
+			if minRisk >= 0 {
+				opt.MinRisk = &minRisk
+			}
+			if maxRisk >= 0 {
+				opt.MaxRisk = &maxRisk
+			}
+			res, err := rootApp.Scan(cmd.Context(), globalDryRun, opt)
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
 				return fmt.Sprintf("fetched=%d stored=%d skipped=%d", res.Fetched, res.Stored, res.Skipped)
@@ -27,7 +35,9 @@ func cmdScan() *cobra.Command {
 		},
 	}
 	c.Flags().StringVar(&source, "source", "", "limit to one source id")
-	c.Flags().StringVar(&preset, "preset", "", "apply filter preset before scan")
+	c.Flags().StringVar(&preset, "preset", "", "apply filter preset before scan (e.g. aggressive)")
+	c.Flags().IntVar(&minRisk, "min-risk", -1, "only keep jobs with risk score >= N (0-100)")
+	c.Flags().IntVar(&maxRisk, "max-risk", -1, "only keep jobs with risk score <= N (0-100)")
 	return c
 }
 
@@ -62,6 +72,12 @@ func cmdShow() *cobra.Command {
 			exitOn(emitOrJSON(detail, func() string {
 				var b strings.Builder
 				b.WriteString(fmt.Sprintf("%s — %s @ %s\n", detail.Job.ID, detail.Job.Title, detail.Job.Company))
+				if detail.Job.Risk > 0 || len(detail.Job.Flags) > 0 {
+					b.WriteString(fmt.Sprintf("risk: %d\n", detail.Job.Risk))
+					for _, f := range detail.Job.Flags {
+						b.WriteString(fmt.Sprintf("  [%s] %s: %s\n", f.Severity, f.Code, f.Message))
+					}
+				}
 				if detail.Match != nil {
 					b.WriteString(fmt.Sprintf("match total: %d\n", detail.Match.Total))
 					for _, r := range detail.Match.Requirements {
@@ -236,14 +252,39 @@ The output/ directory is created when missing. Set OUTPUT_ROOT to override the d
 	return c
 }
 
+func cmdStats() *cobra.Command {
+	c := &cobra.Command{
+		Use:   "stats",
+		Short: "Application reply and interview rates per channel",
+		Run: func(cmd *cobra.Command, args []string) {
+			stats, err := rootApp.ChannelStats(cmd.Context())
+			exitOn(err)
+			exitOn(emitOrJSON(stats, func() string {
+				var b strings.Builder
+				for _, row := range stats {
+					b.WriteString(fmt.Sprintf("%s  total=%d replies=%d interview_rate=%.2f\n",
+						row.Channel, row.Total, row.Replies, row.InterviewRate))
+				}
+				return strings.TrimRight(b.String(), "\n")
+			}))
+		},
+	}
+	return c
+}
+
 func cmdApply() *cobra.Command {
 	mode := "manual"
+	channel := "board"
+	referrer := ""
 	c := &cobra.Command{
 		Use:   "apply <job-key>",
 		Short: "Record application submission (never auto-submits)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			res, err := rootApp.Apply(cmd.Context(), args[0], runtime.ApplyMode(mode), globalDryRun)
+			res, err := rootApp.Apply(cmd.Context(), args[0], runtime.ApplyMode(mode), globalDryRun, runtime.ApplyOptions{
+				Channel:  channel,
+				Referrer: referrer,
+			})
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
 				return fmt.Sprintf("%s — %s (%s)", res.JobID, res.URL, res.Message)
@@ -251,6 +292,8 @@ func cmdApply() *cobra.Command {
 		},
 	}
 	c.Flags().StringVar(&mode, "mode", "manual", "manual, assisted, or auto (auto disabled)")
+	c.Flags().StringVar(&channel, "channel", "board", "application channel: board, referral, inbound, linkedin, email, other")
+	c.Flags().StringVar(&referrer, "referrer", "", "referrer name or handle")
 	return c
 }
 

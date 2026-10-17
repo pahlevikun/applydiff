@@ -10,10 +10,10 @@ func lipColor(name string) lipgloss.Color {
 }
 
 func baseStyles() struct {
-	bg, surface, surface2, line, fg, muted, dim, accent, add, del lipgloss.Style
+	bg, surface, surface2, line, fg, muted, dim, accent, add, del, amber lipgloss.Style
 } {
 	return struct {
-		bg, surface, surface2, line, fg, muted, dim, accent, add, del lipgloss.Style
+		bg, surface, surface2, line, fg, muted, dim, accent, add, del, amber lipgloss.Style
 	}{
 		bg:       lipgloss.NewStyle().Background(lipColor("bg")),
 		surface:  lipgloss.NewStyle().Background(lipColor("surface")).Foreground(lipColor("fg")),
@@ -25,5 +25,6 @@ func baseStyles() struct {
 		accent:   lipgloss.NewStyle().Foreground(lipColor("accent")).Bold(true),
 		add:      lipgloss.NewStyle().Foreground(lipColor("add")),
 		del:      lipgloss.NewStyle().Foreground(lipColor("del")),
+		amber:    lipgloss.NewStyle().Foreground(lipColor("amber")),
 	}
 }
