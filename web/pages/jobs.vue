@@ -52,6 +52,11 @@ const scanning = ref(false)
 const error = ref<string | null>(null)
 const lastScan = ref<ScanResult | null>(null)
 const showFilters = ref(true)
+const searchEl = ref<HTMLInputElement | null>(null)
+const selectedJob = ref(0)
+
+useSearchFocus(searchEl)
+useListKeys(selectedJob, computed(() => jobs.value.length))
 
 const filterCategories = [
   { key: 'arrangement', label: 'Work arrangement' },
@@ -144,6 +149,13 @@ onMounted(async () => {
   <main class="page">
     <header class="bar">
       <h1>Jobs</h1>
+      <input
+        ref="searchEl"
+        class="search"
+        type="search"
+        placeholder="Search (/)"
+        aria-label="Search jobs"
+      />
       <div class="actions">
         <button class="ghost" type="button" @click="showFilters = !showFilters">
           {{ showFilters ? 'Hide filters' : 'Filters' }}
