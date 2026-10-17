@@ -57,6 +57,7 @@ func newRootCmd() *cobra.Command {
 		cmdImport(),
 		cmdServe(),
 		cmdTUI(),
+		cmdInterview(),
 	)
 	// Legacy entrypoints
 	root.AddCommand(cmdExportDBLegacy(), cmdImportDBLegacy())
