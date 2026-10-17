@@ -117,6 +117,29 @@ Nuxt 3. Wireframe s01–s06 jadi halaman nyata.
 - Diff view = komponen utama, sama persis logikanya dengan TUI + CLI.
 - Gak ada auto-submit. Gak ada loading spinner generik. Skeleton disesuaikan bentuk.
 
+## Data model — DB-first
+
+**SQLite adalah satu-satunya sumber kebenaran.** Semua state hidup di DB:
+jobs, applications, CV master + varian per lamaran, hunks + keputusan, status,
+catatan, riwayat.
+
+Disk cuma dipakai buat **artefak hasil build**:
+
+```
+output/
+  2026-10-17-revenuecat-senior-backend.pdf
+  2026-10-17-anovium-fullstack.pdf
+```
+
+Aturan:
+
+- Gak ada direktori per-lamaran. Gak ada YAML/JSON sebagai sumber state.
+- PDF (dan `.tex` sementara) ditulis ke `output/`. Nama file =
+  `<tanggal>-<company>-<role>`.
+- "Apa yang gue kirim" dibaca dari DB (diff + keputusan hunk), bukan dari folder.
+- Pindah mesin = copy file `.db` (atau `applydiff export`). Backup = copy `.db`.
+- DB rusak = gak ada recovery dari disk. Jadi `export` wajib gampang.
+
 ## Fase + checklist
 
 ### Fase A — Token & desain
@@ -155,10 +178,15 @@ Nuxt 3. Wireframe s01–s06 jadi halaman nyata.
 - [ ] Keyboard shortcuts
 - [ ] Responsive (min 1280, turun ke 1024)
 
-### Fase E — Packaging
-- [ ] Satu binary `applydiff` (CLI + TUI + serve)
-- [ ] Makefile: `make cli`, `make tui`, `make web`, `make pdf`
-- [ ] README: quickstart 3 muka
+### Fase E — Packaging & distribusi
+- [ ] Embed hasil build Nuxt ke binary (`go:embed`), `applydiff serve` jalan tanpa Node
+- [ ] Satu binary: CLI + TUI + serve
+- [ ] `applydiff build` tulis PDF ke `output/` (nama `<tanggal>-<company>-<role>`)
+- [ ] Docker image (binary + TeX Live) → user cukup punya Docker
+- [ ] Fallback: kalau `xelatex` gak ada, pakai container `texlive/texlive`
+- [ ] Release binary (linux/darwin/windows) + checksum
+- [ ] Makefile: `make cli`, `make tui`, `make web`, `make pdf`, `make docker`
+- [ ] README: quickstart 3 muka + jalur zero-install
 
 ## Definisi selesai
 
