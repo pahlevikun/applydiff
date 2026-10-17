@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" fill="none" role="img" aria-label="Zero tokens are spent until a posting survives three deterministic gates">
+  <!-- Editorial Paper Canvas (tokens-root.css: paper #fbfaf7, paper-line #e6e3db, ink #1c1f25, ink-mut #606772) -->
+  <rect x="1" y="1" width="1198" height="658" rx="12" fill="#fbfaf7" stroke="#e6e3db" stroke-width="2" />
+
+  <!-- Editorial Header -->
+  <text x="56" y="52" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11.5" font-weight="600" fill="#b86b11" letter-spacing="1.2">
+    02 / CONVERGENCE PIPELINE &#183; DETERMINISTIC FUNNEL BEFORE LLM SPEND
+  </text>
+  <text x="56" y="88" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="29" font-weight="700" fill="#1c1f25" letter-spacing="-0.5">
+    Zero model tokens are spent until a posting survives three deterministic gates
+  </text>
+  <text x="56" y="116" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" fill="#606772">
+    Six public feeds converge through deduplication, hard/soft filters, and 9 scam rules before an LLM proposes a single CV hunk.
+  </text>
+
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="#e6e3db" stroke-width="1.5" />
+
+  <!-- Phase Cost Banner Strip -->
+  <rect x="56" y="150" width="668" height="28" rx="5" fill="#f2efe9" stroke="#d8d4ca" stroke-width="1" />
+  <text x="70" y="168" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">
+    PHASE A &#183; DETERMINISTIC GO ENGINE (0 LLM TOKENS &#183; OFFLINE-TESTABLE)
+  </text>
+
+  <rect x="744" y="150" width="400" height="28" rx="5" fill="#2a1a0e" stroke="#b86b11" stroke-width="1" />
+  <circle cx="760" cy="164" r="4" fill="#ffb454" />
+  <text x="772" y="168" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">
+    PHASE B &#183; LLM TAILORING &amp; HUMAN HUNK GATE
+  </text>
+
+  <!-- Stage Column Headers -->
+  <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">
+    <text x="56" y="206">01. SOURCES (6)</text>
+    <text x="256" y="206">02. DEDUPE &amp; LIVENESS</text>
+    <text x="438" y="206">03. HARD / SOFT FILTERS</text>
+    <text x="614" y="206">04. SCAM SCREEN (9)</text>
+    <text x="756" y="206">05. BRANCH &amp; HUNK GATE</text>
+    <text x="990" y="206">06. ARTIFACTS</text>
+  </g>
+  <g font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11.5" fill="#606772">
+    <text x="56" y="223">max 100/src &#183; 500/scan</text>
+    <text x="256" y="223">URL + 400-char SHA256</text>
+    <text x="438" y="223">Skip reason or +boost</text>
+    <text x="614" y="223">Hard +35 (&#8805;70) &#183; Soft +12</text>
+    <text x="756" y="223">facts.json + human approve</text>
+    <text x="990" y="223">SQLite + LaTeX</text>
+  </g>
+
+  <!-- Vertical Gate Hairlines -->
+  <line x1="244" y1="194" x2="244" y2="500" stroke="#e6e3db" stroke-width="1" />
+  <line x1="426" y1="194" x2="426" y2="500" stroke="#e6e3db" stroke-width="1" />
+  <line x1="602" y1="194" x2="602" y2="500" stroke="#e6e3db" stroke-width="1" />
+
+  <!-- THE TOKEN BOUNDARY THRESHOLD LINE (x=734) -->
+  <line x1="734" y1="150" x2="734" y2="594" stroke="#b86b11" stroke-width="2" stroke-dasharray="5 4" />
+  <rect x="682" y="502" width="104" height="22" rx="4" fill="#fbfaf7" stroke="#b86b11" stroke-width="1.2" />
+  <text x="692" y="517" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#b86b11">
+    TOKEN THRESHOLD
+  </text>
+
+  <!-- ==================== CONVERGENCE FLOW RAYS ==================== -->
+  <!-- 6 Source Labels on Left (y = 262, 298, 334, 370, 406, 442) -->
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" font-weight="500" fill="#1c1f25">
+    <circle cx="64" cy="258" r="3.5" fill="#1c1f25" />
+    <text x="76" y="262">greenhouse</text>
+
+    <circle cx="64" cy="294" r="3.5" fill="#1c1f25" />
+    <text x="76" y="298">remotive</text>
+
+    <circle cx="64" cy="330" r="3.5" fill="#1c1f25" />
+    <text x="76" y="334">remoteok</text>
+
+    <circle cx="64" cy="366" r="3.5" fill="#1c1f25" />
+    <text x="76" y="370">jobicy</text>
+
+    <circle cx="64" cy="402" r="3.5" fill="#1c1f25" />
+    <text x="76" y="406">weworkremotely</text>
+
+    <circle cx="64" cy="438" r="3.5" fill="#1c1f25" />
+    <text x="76" y="442">workingnomads</text>
+  </g>
+
+  <!-- Converging Stream Lines from 6 Sources (x=188) -> Gate 2 (x=280) -> Gate 3 (x=460) -> Gate 4 (x=636) -> Focal Point (x=734, y=348) -->
+  <g stroke="#1c1f25" stroke-linecap="round" fill="none">
+    <path d="M 188 258 C 240 258, 260 296, 320 306 C 390 318, 450 332, 520 338 C 600 344, 670 348, 734 348" stroke-width="2.2" opacity="0.75" />
+    <path d="M 188 294 C 240 294, 260 312, 320 320 C 390 328, 450 338, 520 342 C 600 346, 670 348, 734 348" stroke-width="2.2" opacity="0.8" />
+    <path d="M 188 330 C 240 330, 260 334, 320 338 C 390 342, 450 345, 520 346 C 600 347, 670 348, 734 348" stroke-width="2.8" />
+    <path d="M 188 366 C 240 366, 260 362, 320 358 C 390 354, 450 351, 520 350 C 600 349, 670 348, 734 348" stroke-width="2.8" />
+    <path d="M 188 402 C 240 402, 260 384, 320 376 C 390 368, 450 358, 520 354 C 600 350, 670 348, 734 348" stroke-width="2.2" opacity="0.8" />
+    <path d="M 188 438 C 240 438, 260 400, 320 390 C 390 378, 450 364, 520 358 C 600 352, 670 348, 734 348" stroke-width="2.2" opacity="0.75" />
+  </g>
+
+  <!-- Shed / Filtered-Out Trajectories (Dropping into bottom annotation rail) -->
+  <!-- Drop 1: Dedupe & Liveness -->
+  <path d="M 284 378 C 296 420, 302 465, 302 528" stroke="#8d929b" stroke-width="1.5" stroke-dasharray="3 4" fill="none" />
+  <circle cx="302" cy="528" r="3.5" fill="#8d929b" />
+  <text x="256" y="548" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#606772">Dropped: duplicates</text>
+  <text x="256" y="564" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11" fill="#8d929b">Dead HTTP / identical URL</text>
+
+  <!-- Drop 2: Hard Filter Skips -->
+  <path d="M 468 364 C 482 414, 488 465, 488 528" stroke="#c0725f" stroke-width="1.5" stroke-dasharray="3 4" fill="none" />
+  <circle cx="488" cy="528" r="3.5" fill="#c0725f" />
+  <text x="438" y="548" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#b3603f">Skipped with reason</text>
+  <text x="438" y="564" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11" fill="#606772">Hard: region, &gt;14d, level</text>
+  <text x="438" y="580" font-family="IBM Plex Mono, monospace" font-size="10" fill="#6f9440">Soft boost: 4d wk (+12), visa (+8)</text>
+
+  <!-- Flag 3: Deterministic Scam Screen -->
+  <path d="M 642 352 C 652 410, 656 450, 656 482" stroke="#e5644e" stroke-width="1.5" stroke-dasharray="3 4" fill="none" />
+  <rect x="610" y="252" width="114" height="72" rx="5" fill="#e5644e" fill-opacity="0.08" stroke="#c0725f" stroke-width="1" />
+  <text x="618" y="269" font-family="IBM Plex Mono, monospace" font-size="9.5" font-weight="600" fill="#b3603f">5 HARD FLAGS (&#8805;70)</text>
+  <text x="618" y="284" font-family="IBM Plex Mono, monospace" font-size="9" fill="#606772">&#183; domain-mismatch</text>
+  <text x="618" y="297" font-family="IBM Plex Mono, monospace" font-size="9" fill="#606772">&#183; pay-to-work</text>
+  <text x="618" y="310" font-family="IBM Plex Mono, monospace" font-size="9" fill="#606772">&#183; clone-and-run</text>
+
+  <!-- Convergence Bottleneck Node at Token Threshold (x=734, y=348) -->
+  <circle cx="734" cy="348" r="10" fill="#fbfaf7" stroke="#b86b11" stroke-width="4" />
+  <circle cx="734" cy="348" r="4" fill="#b86b11" />
+
+  <!-- ==================== PHASE B: POST-THRESHOLD WORKFLOW ==================== -->
+  <!-- Box 1: Match + Tailor Branch -->
+  <rect x="758" y="256" width="194" height="84" rx="8" fill="#1a1712" stroke="#3d372c" stroke-width="1.5" />
+  <text x="772" y="278" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">
+    match &#8594; tailor &lt;job-key&gt;
+  </text>
+  <text x="772" y="297" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11.5" fill="#f0e6d2">
+    Maps literal / synonym / gap
+  </text>
+  <text x="772" y="314" font-family="IBM Plex Mono, monospace" font-size="10" fill="#9ccb5a">
+    +hunks gated by facts.json
+  </text>
+  <text x="772" y="329" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#a99b83">
+    claude -p | codex | API
+  </text>
+
+  <!-- Connector down to Human Hunk Approval Gate -->
+  <line x1="855" y1="340" x2="855" y2="372" stroke="#b86b11" stroke-width="2.5" />
+
+  <!-- Box 2: Human Hunk Approval Gate -->
+  <rect x="758" y="372" width="194" height="76" rx="8" fill="#2a1a0e" stroke="#ffb454" stroke-width="2" />
+  <text x="772" y="394" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">
+    approve --hunk 1,2
+  </text>
+  <text x="772" y="413" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11.5" fill="#f0e6d2">
+    Human reviews every hunk
+  </text>
+  <text x="772" y="432" font-family="IBM Plex Mono, monospace" font-size="10" fill="#a99b83">
+    CLI &#183; TUI (a/x) &#183; Web UI
+  </text>
+
+  <!-- Connecting Curve from Threshold (734,348) into Match/Tailor -->
+  <path d="M 744 348 L 752 348 L 752 298 L 758 298" stroke="#b86b11" stroke-width="2.5" fill="none" />
+
+  <!-- Divergence from Approved Branch (x=952, y=410) to 3 Final Outputs -->
+  <path d="M 952 410 C 968 410, 972 288, 990 288" stroke="#6f9440" stroke-width="2.2" fill="none" />
+  <path d="M 952 410 C 968 410, 972 378, 990 378" stroke="#6f9440" stroke-width="2.2" fill="none" />
+  <path d="M 952 410 C 968 410, 972 468, 990 468" stroke="#6f9440" stroke-width="2.2" fill="none" />
+
+  <!-- Output 1: Tailored PDF -->
+  <rect x="990" y="256" width="154" height="64" rx="7" fill="#9ccb5a" fill-opacity="0.16" stroke="#6f9440" stroke-width="1.5" />
+  <text x="1002" y="278" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#3b571c">build &lt;job-key&gt;</text>
+  <text x="1002" y="295" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11" fill="#1c1f25">LaTeX CV + Proof PDF</text>
+  <text x="1002" y="310" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#606772">output/YYYY-MM-DD-*.pdf</text>
+
+  <!-- Output 2: Application & Channel Stats -->
+  <rect x="990" y="346" width="154" height="64" rx="7" fill="#fbfaf7" stroke="#d8d4ca" stroke-width="1.5" />
+  <text x="1002" y="368" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">apply &amp; stats</text>
+  <text x="1002" y="385" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11" fill="#606772">Manual submit ledger</text>
+  <text x="1002" y="400" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#b86b11">reply rate / channel</text>
+
+  <!-- Output 3: Interview Prep Kit -->
+  <rect x="990" y="436" width="154" height="64" rx="7" fill="#fbfaf7" stroke="#d8d4ca" stroke-width="1.5" />
+  <text x="1002" y="458" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">interview kit</text>
+  <text x="1002" y="475" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="11" fill="#606772">45m drills &#183; 5-dim rubric</text>
+  <text x="1002" y="490" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#6f9440">facts-gated STAR bank</text>
+
+  <!-- Editorial Source Footer -->
+  <line x1="56" y1="616" x2="1144" y2="616" stroke="#e6e3db" stroke-width="1" />
+  <text x="56" y="638" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" fill="#8d929b">
+    Source: jobs/config.yaml (caps: 100/source, 500/scan) &#183; internal/risk/assess.go (9 rules, score 0-100) &#183; internal/interview/framework.go (5 frameworks)
+  </text>
+</svg>
