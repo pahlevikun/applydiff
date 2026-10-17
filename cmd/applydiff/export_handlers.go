@@ -23,7 +23,7 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "job id required", http.StatusBadRequest)
 		return
 	}
-	j, err := s.store.GetJob(r.Context(), jobID)
+	j, err := s.app.Store.GetJob(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "job not found", http.StatusNotFound)
@@ -32,12 +32,12 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	branch, err := s.store.LoadBranch(r.Context(), jobID)
+	branch, err := s.app.Store.LoadBranch(r.Context(), jobID)
 	if err != nil {
 		http.Error(w, "branch cv: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	facts, err := s.store.LoadFacts(r.Context())
+	facts, err := s.app.Store.LoadFacts(r.Context())
 	if err != nil {
 		facts = s.factsFromFile()
 	}
@@ -55,16 +55,16 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if _, err := s.store.CreateApplication(r.Context(), jobID); err != nil {
+	if _, err := s.app.Store.CreateApplication(r.Context(), jobID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if app, err := s.store.GetApplication(r.Context(), jobID); err == nil {
+	if app, err := s.app.Store.GetApplication(r.Context(), jobID); err == nil {
 		if application.CanTransition(app.Status, application.StatusReady) {
-			_, _ = s.store.TransitionApplication(r.Context(), jobID, application.StatusReady, "")
+			_, _ = s.app.Store.TransitionApplication(r.Context(), jobID, application.StatusReady, "")
 		}
 	}
-	if err := s.store.SetApplicationCVSnapshot(r.Context(), jobID, res.CVSnapshot); err != nil {
+	if err := s.app.Store.SetApplicationCVSnapshot(r.Context(), jobID, res.CVSnapshot); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

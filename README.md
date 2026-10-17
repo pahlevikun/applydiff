@@ -4,6 +4,30 @@ Git-style approval for job applications.
 
 Scan job boards, match each listing against your structured CV, let AI draft the tailoring edits, then review every edit as a diff and approve it hunk by hunk before a LaTeX PDF is built.
 
+## Three surfaces (one core)
+
+| Surface | Command |
+|---------|---------|
+| **CLI** | `applydiff <command>` — scriptable, `--json` / `--dry-run` |
+| **TUI** | `applydiff tui` — keyboard-driven review in the terminal |
+| **Web** | `applydiff serve` — embedded Nuxt UI + API (or `cd web && npm run dev` for local UI dev) |
+
+All surfaces call the same Go core in `internal/` and share one SQLite database.
+
+### Quick start
+
+```bash
+make cli
+./bin/applydiff scan
+./bin/applydiff jobs --json
+./bin/applydiff tui
+
+./bin/applydiff serve --port 8080   # API + embedded UI on :8080
+cd web && npm ci && npm run dev     # UI dev server only (proxies /api)
+```
+
+Palette: **Phosphor** tokens in `web/assets/tokens-root.css` (mirrored in `internal/theme/theme.css` for TUI).
+
 ## Why
 
 Most tools either auto-rewrite your CV or make you copy-paste. ApplyDiff treats your CV like a codebase: the AI proposes a change, you see exactly what changed and why, and you accept or reject each one.
@@ -11,17 +35,17 @@ Most tools either auto-rewrite your CV or make you copy-paste. ApplyDiff treats 
 ## Principles
 
 - **Local-first.** Runs on your machine. No account.
-- **Human-in-the-loop.** It never submits an application. You click.
+- **Human-in-the-loop.** It never submits an application. `apply` defaults to **manual**.
 - **Structured CV is the source of truth.** LaTeX is an export target.
 - **No fabricated numbers.** A metric that is not in your facts file cannot enter a diff.
 
 ## Stack
 
-Go + SQLite + Nuxt 3 + LaTeX (xelatex).
+Go + SQLite + Bubble Tea TUI + Nuxt 3 + LaTeX (xelatex).
 
 ## Install
 
-**Single binary (zero install at runtime).** Build once on a machine with Go and Node, then copy `bin/applydiff` anywhere. It serves the embedded web UI and API; users do not need Go, Node, or LaTeX on PATH unless they run `applydiff build` outside Docker.
+**Single binary (zero install at runtime).** Build once on a machine with Go and Node, then copy `bin/applydiff` anywhere. It serves the embedded web UI and API; users do not need Go or Node on PATH unless they develop the web app. PDF builds need `xelatex` on PATH unless you use Docker.
 
 ```bash
 make web && make cli
@@ -41,76 +65,41 @@ SQLite lives at `/data/applydiff.db` inside the container (`DATABASE_PATH`).
 
 **Release tarballs.** After `make web`, run `scripts/release.sh` for cross-compiled binaries under `dist/` plus `sha256sums.txt`.
 
-## Quick start
+## CLI commands
 
-```bash
-make web && make cli
-./bin/applydiff serve           # API + embedded UI on :8080
-cd web && npm run dev           # UI dev server only (proxies /api)
-```
+`scan`, `jobs`, `show`, `match`, `tailor`, `diff`, `approve`, `reject`, `build`, `apply`, `export`, `import`, `serve`, `tui`
 
-Environment:
+Exit codes: `0` ok · `2` no match · `3` needs approval · `4` LLM error · `5` LaTeX error.
+
+## Environment
 
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_PATH` | SQLite file (default `applydiff.db`) |
 | `JOBS_CONFIG` | Job sources YAML (default `jobs/config.yaml`) |
-| `PORT` | HTTP port (default `8080`) |
+| `PORT` | Default HTTP port when running without subcommand (default `8080`) |
+| `OUTPUT_ROOT` | PDF output directory (default `output/`) |
 | `FACTS_PATH` | JSON facts file (default `facts.json`) |
 
 ## LLM (CLI-first)
 
 Tailoring uses a pluggable LLM backend. **No API key is required** if you use a local agent CLI (Claude Code, Codex, etc.) with its own login.
 
-**Selection order**
-
-1. `LLM_PROVIDER` if set (`cli`, `api`, or `fake`)
-2. Else `LLM_CLI` if set → `cli`
-3. Else auto-detect the first binary on `PATH`: `claude`, `codex`, `cursor-agent`, `hermes`
-4. Else `LLM_API_KEY` if set → `api`
-5. Else **fake** runner (empty hunks; logs a clear message)
-
-**Supported agent CLIs** (auto-detected defaults):
-
-| Binary | Default command |
-|--------|-----------------|
-| `claude` | `claude -p` |
-| `codex` | `codex exec` |
-| `cursor-agent` | `cursor-agent` |
-| `hermes` | `hermes` |
-
-Override the command with `LLM_CLI` (stdin receives the prompt; stdout must be the model reply).
-
-**API fallback**
-
-| Variable | Default |
-|----------|---------|
-| `LLM_API_URL` | `https://api.openai.com/v1/chat/completions` |
-| `LLM_MODEL` | `gpt-4o-mini` |
-| `LLM_API_KEY` | (required for `api` provider) |
+See previous README section for `LLM_PROVIDER`, `LLM_CLI`, and API fallback variables.
 
 ## Database export / import
 
-Move your SQLite data between machines.
-
-**CLI**
-
 ```bash
-go run ./cmd/applydiff export-db -o backup.db
-go run ./cmd/applydiff import-db -i backup.db
+applydiff export backup.db
+applydiff import backup.db
 ```
 
-Uses `VACUUM INTO` for a consistent snapshot. Import replaces the target `DATABASE_PATH`.
-
-**HTTP**
-
-- `GET /api/db/export` — download the SQLite file
-- `POST /api/db/import` — request body is the SQLite file (replaces `DATABASE_PATH`; file-backed DB only)
+Legacy: `export-db` / `import-db` flags still work.
 
 ## Migrations
 
-SQL migrations live in `internal/store/migrations/` as `YYYYMMDDHHMMSS_<name>.sql`. They run in lexicographic filename order; applied names are stored in `schema_migrations` and skipped on restart.
+SQL migrations live in `internal/store/migrations/`.
 
 ## Status
 
-Active development on branch `cursor/applydiff-project-scaffolding-745c`. See `docs/plans/2026-10-14-applydiff.md` and `docs/wireframes/`.
+See `docs/plans/2026-10-17-cli-tui-web.md` and `docs/wireframes/`.

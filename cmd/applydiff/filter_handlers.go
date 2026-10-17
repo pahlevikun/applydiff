@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/pahlevikun/applydiff/internal/filter"
-	"github.com/pahlevikun/applydiff/internal/job"
 )
 
 type filtersPayload struct {
@@ -33,7 +32,7 @@ func (s *server) handleFilterPresets(w http.ResponseWriter, r *http.Request) {
 	if path == "" {
 		switch r.Method {
 		case http.MethodGet:
-			list, err := s.store.ListFilterPresets(r.Context())
+			list, err := s.app.Store.ListFilterPresets(r.Context())
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -54,7 +53,7 @@ func (s *server) handleFilterPresets(w http.ResponseWriter, r *http.Request) {
 			if body.Spec.Arrangement == nil && body.Spec.Regions == nil {
 				body.Spec = s.effectiveFilterSpec(r.Context())
 			}
-			p, err := s.store.SaveFilterPreset(r.Context(), body.Name, body.Spec)
+			p, err := s.app.Store.SaveFilterPreset(r.Context(), body.Name, body.Spec)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -72,7 +71,7 @@ func (s *server) handleFilterPresets(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
-		if err := s.store.SetActiveFilterPresetID(r.Context(), id); err != nil {
+		if err := s.app.Store.SetActiveFilterPresetID(r.Context(), id); err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
@@ -81,7 +80,7 @@ func (s *server) handleFilterPresets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodDelete {
-		if err := s.store.DeleteFilterPreset(r.Context(), path); err != nil {
+		if err := s.app.Store.DeleteFilterPreset(r.Context(), path); err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
@@ -93,10 +92,10 @@ func (s *server) handleFilterPresets(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) getFilters(w http.ResponseWriter, r *http.Request) {
 	spec := s.effectiveFilterSpec(r.Context())
-	activeID, _ := s.store.GetActiveFilterPresetID(r.Context())
+	activeID, _ := s.app.Store.GetActiveFilterPresetID(r.Context())
 	payload := filtersPayload{Spec: spec, ActivePresetID: activeID}
 	if activeID != "" {
-		if p, err := s.store.GetFilterPreset(r.Context(), activeID); err == nil {
+		if p, err := s.app.Store.GetFilterPreset(r.Context(), activeID); err == nil {
 			payload.ActivePresetName = p.Name
 			payload.Spec = p.Spec
 		}
@@ -110,12 +109,12 @@ func (s *server) putFilters(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	if err := s.store.SaveFilterSpecOverride(r.Context(), body.Spec); err != nil {
+	if err := s.app.Store.SaveFilterSpecOverride(r.Context(), body.Spec); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if body.ActivePresetID != "" {
-		if err := s.store.SetActiveFilterPresetID(r.Context(), body.ActivePresetID); err != nil {
+		if err := s.app.Store.SetActiveFilterPresetID(r.Context(), body.ActivePresetID); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -124,41 +123,7 @@ func (s *server) putFilters(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) effectiveFilterSpec(ctx context.Context) filter.Spec {
-	activeID, _ := s.store.GetActiveFilterPresetID(ctx)
-	if activeID != "" {
-		if p, err := s.store.GetFilterPreset(ctx, activeID); err == nil {
-			return p.Spec
-		}
-	}
-	if override, err := s.store.LoadFilterSpecOverride(ctx); err == nil && override != nil {
-		return *override
-	}
-	return s.cfg.Filters.EffectiveSpec()
-}
-
-func (s *server) jobsWithFilters(ctx context.Context) ([]job.JobView, error) {
-	jobs, err := s.store.ListJobs(ctx)
-	if err != nil {
-		return nil, err
-	}
-	spec := s.effectiveFilterSpec(ctx)
-	out := make([]job.JobView, 0, len(jobs))
-	for _, j := range jobs {
-		eval := filter.Evaluate(j, spec)
-		if j.Status == "skipped" && j.FilterSkipReason != "" {
-			eval.Keep = false
-			if len(eval.Reasons) == 0 {
-				eval.Reasons = []string{j.FilterSkipReason}
-			}
-		}
-		var v job.JobView
-		v.Job = j
-		v.Filter.Keep = eval.Keep
-		v.Filter.Score = eval.Score
-		v.Filter.Reasons = eval.Reasons
-		out = append(out, v)
-	}
-	return out, nil
+	return s.app.EffectiveFilterSpec(ctx)
 }
 
 func writeJSON(w http.ResponseWriter, v interface{}) {

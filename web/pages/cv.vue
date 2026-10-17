@@ -216,8 +216,8 @@ onMounted(() => {
 <style scoped>
 .cv-page {
   min-height: 100vh;
-  background: #0b0e13;
-  color: #e7eaf0;
+  background: var(--bg);
+  color: var(--fg);
   font-family: system-ui, sans-serif;
   display: flex;
   flex-direction: column;
@@ -227,8 +227,8 @@ onMounted(() => {
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #232a36;
-  background: #11151d;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 h1 {
   font-size: 1.2rem;
@@ -239,9 +239,9 @@ h1 {
   font-size: 0.75rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: #171c26;
-  border: 1px solid #232a36;
-  color: #8b95a5;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  color: var(--muted);
 }
 .mono {
   font-family: ui-monospace, monospace;
@@ -254,8 +254,8 @@ h1 {
 .tree {
   width: 250px;
   flex-shrink: 0;
-  border-right: 1px solid #232a36;
-  background: #11151d;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
   padding: 0.75rem;
   overflow: auto;
 }
@@ -263,7 +263,7 @@ h1 {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #5c6675;
+  color: var(--dim);
   font-weight: 600;
   margin: 0 0 0.5rem;
 }
@@ -273,19 +273,19 @@ h1 {
   text-align: left;
   border: none;
   background: transparent;
-  color: #8b95a5;
+  color: var(--muted);
   font-size: 0.8rem;
   padding: 0.4rem 0.5rem;
   border-radius: 7px;
   cursor: pointer;
 }
 .tree-item.on {
-  background: #171c26;
-  color: #e7eaf0;
+  background: var(--surface2);
+  color: var(--fg);
 }
 .tree-item.section {
   font-weight: 600;
-  color: #5c6675;
+  color: var(--dim);
   text-transform: uppercase;
   font-size: 0.68rem;
   letter-spacing: 0.05em;
@@ -302,7 +302,7 @@ h1 {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #5c6675;
+  color: var(--dim);
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -312,18 +312,18 @@ h1 {
   margin-left: auto;
   font-family: ui-monospace, monospace;
   font-size: 0.65rem;
-  color: #3fd0be;
+  color: var(--accent);
   text-transform: none;
   letter-spacing: 0;
 }
 .inp {
   width: 100%;
   box-sizing: border-box;
-  background: #171c26;
-  border: 1px solid #232a36;
+  background: var(--surface2);
+  border: 1px solid var(--line);
   border-radius: 7px;
   padding: 0.55rem 0.65rem;
-  color: #e7eaf0;
+  color: var(--fg);
   font-size: 0.85rem;
   line-height: 1.5;
   margin-top: 0.5rem;
@@ -338,19 +338,19 @@ h1 {
 .contact-block {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #232a36;
+  border-top: 1px solid var(--line);
 }
 .contact-block h3 {
   font-size: 0.7rem;
   text-transform: uppercase;
-  color: #5c6675;
+  color: var(--dim);
   margin: 0 0 0.35rem;
 }
 .meta-panel {
   width: 280px;
   flex-shrink: 0;
-  border-left: 1px solid #232a36;
-  background: #11151d;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
   padding: 0.75rem 1rem;
 }
 .prov {
@@ -358,17 +358,17 @@ h1 {
   padding: 0;
   margin: 0 0 1rem;
   font-size: 0.8rem;
-  color: #8b95a5;
+  color: var(--muted);
 }
 .prov li {
   padding: 0.25rem 0;
 }
 .hist-placeholder .dim {
   font-size: 0.8rem;
-  color: #5c6675;
+  color: var(--dim);
   margin: 0;
 }
 .meta {
-  color: #8b95a5;
+  color: var(--muted);
 }
 </style>

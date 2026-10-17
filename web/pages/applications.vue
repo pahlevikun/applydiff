@@ -88,21 +88,21 @@ onMounted(load)
 <style scoped>
 .wrap {
   min-height: 100vh;
-  background: var(--bg, #12151a);
-  color: var(--fg, #e9eaed);
+  background: var(--bg, var(--bg));
+  color: var(--fg, var(--fg));
 }
 .topbar {
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--line, #2a2f37);
+  border-bottom: 1px solid var(--line, var(--line));
 }
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--accent, #6bc9ba);
+  color: var(--accent, var(--accent));
   text-decoration: none;
   font-weight: 600;
 }
@@ -110,20 +110,20 @@ onMounted(load)
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent, #6bc9ba);
+  background: var(--accent, var(--accent));
 }
 .nav {
   display: flex;
   gap: 14px;
 }
 .nav a {
-  color: var(--muted, #9ba3ae);
+  color: var(--muted, var(--muted));
   text-decoration: none;
   font-size: 13px;
 }
 .nav a.on,
 .nav a:hover {
-  color: var(--fg, #e9eaed);
+  color: var(--fg, var(--fg));
 }
 .list {
   list-style: none;
@@ -132,11 +132,11 @@ onMounted(load)
   max-width: 960px;
 }
 .item {
-  border: 1px solid var(--line, #2a2f37);
+  border: 1px solid var(--line, var(--line));
   border-radius: var(--r-sm, 7px);
   padding: 12px 14px;
   margin-bottom: 10px;
-  background: var(--surface, #191d23);
+  background: var(--surface, var(--surface));
 }
 .main {
   display: flex;
@@ -150,17 +150,17 @@ onMounted(load)
   text-decoration: none;
 }
 .title:hover {
-  color: var(--accent, #6bc9ba);
+  color: var(--accent, var(--accent));
 }
 .muted {
-  color: var(--muted, #9ba3ae);
+  color: var(--muted, var(--muted));
 }
 .chip {
   margin-left: auto;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 4px;
-  background: var(--surface2, #20252c);
+  background: var(--surface2, var(--surface2));
   text-transform: lowercase;
 }
 .actions {
@@ -172,9 +172,9 @@ onMounted(load)
   font-size: 12px;
   padding: 6px 12px;
   border-radius: var(--r-sm, 7px);
-  border: 1px solid var(--line2, #353b44);
-  background: var(--accent-dim, #2c554d);
-  color: var(--fg, #e9eaed);
+  border: 1px solid var(--line2, var(--line2));
+  background: var(--accent-dim, var(--accent-dim));
+  color: var(--fg, var(--fg));
   cursor: pointer;
 }
 .btn.ghost {
@@ -190,15 +190,15 @@ onMounted(load)
 .follow {
   margin: 8px 0 0;
   font-size: 12px;
-  color: var(--amber, #d6ad6a);
+  color: var(--amber, var(--amber));
 }
 .err {
-  color: var(--del, #db8c7c);
+  color: var(--del, var(--del));
   padding: 8px 16px;
 }
 .note {
   padding: 8px 16px;
-  color: var(--muted, #9ba3ae);
+  color: var(--muted, var(--muted));
   font-size: 12px;
 }
 .empty {

@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'static',
   },
+  css: ['~/assets/theme.css'],
   vite: {
     server: {
       proxy: {
