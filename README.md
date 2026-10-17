@@ -1,58 +1,114 @@
 # ApplyDiff
 
-Git-style approval for job applications.
+**git diff for your CV.**
 
-Scan job boards, match each listing against your structured CV, let AI draft the tailoring edits, then review every edit as a diff and approve it hunk by hunk before a LaTeX PDF is built.
+You tailor your CV for every job. Then you can't remember what you changed, you
+can't compare versions, and next time you start from the same generic file.
 
-## Three surfaces (one core)
+ApplyDiff treats each application like a branch.
 
-| Surface | Command |
-|---------|---------|
-| **CLI** | `applydiff <command>` — scriptable, `--json` / `--dry-run` |
-| **TUI** | `applydiff tui` — keyboard-driven review in the terminal |
-| **Web** | `applydiff serve` — embedded Nuxt UI + API (or `cd web && npm run dev` for local UI dev) |
-
-All surfaces call the same Go core in `internal/` and share one SQLite database.
-
-### Quick start
-
-```bash
-make cli
-./bin/applydiff scan
-./bin/applydiff jobs --json
-./bin/applydiff tui
-
-./bin/applydiff serve --port 8080   # API + embedded UI on :8080
-cd web && npm ci && npm run dev     # UI dev server only (proxies /api)
-```
-
-Palette: **Phosphor** tokens in `web/assets/tokens-root.css` (mirrored in `internal/theme/theme.css` for TUI).
+<!-- DEMO GIF: scan -> diff -> approve -> build. 15s, no narration. -->
 
 ## Why
 
-Most tools either auto-rewrite your CV or make you copy-paste. ApplyDiff treats your CV like a codebase: the AI proposes a change, you see exactly what changed and why, and you accept or reject each one.
+Most AI job tools optimize for volume. Send more, faster. You end up with 300
+applications, no replies, and no memory of what you actually sent.
 
-## Principles
+ApplyDiff optimizes for control:
 
-- **Local-first.** Runs on your machine. No account.
-- **Human-in-the-loop.** It never submits an application. `apply` defaults to **manual**.
-- **Structured CV is the source of truth.** LaTeX is an export target.
-- **No fabricated numbers.** A metric that is not in your facts file cannot enter a diff.
+- Every edit is a diff.
+- Every diff is approved by you, hunk by hunk.
+- Every application keeps its own version of your CV, so you can see exactly
+  what went out.
+
+The model drafts. You decide. Then it builds the PDF.
+
+## Quick start
+
+```bash
+git clone https://github.com/pahlevikun/applydiff
+cd applydiff
+
+# one binary: CLI + TUI + web UI + API
+make web && make cli
+./bin/applydiff scan
+./bin/applydiff tui
+./bin/applydiff serve     # http://localhost:8080
+```
+
+No API key needed when you already have a coding-agent CLI logged in
+(`claude`, `codex`, or `cursor-agent`).
+
+PDF builds need `xelatex`, or Docker with the bundled image.
+
+## Three surfaces, one core
+
+| Surface | Command | Use it for |
+|---|---|---|
+| **CLI** | `applydiff <command>` | scripting, cron, pipes (`--json`, `--dry-run`) |
+| **TUI** | `applydiff tui` | reviewing diffs fast, keyboard only |
+| **Web** | `applydiff serve` | seeing the whole picture |
+
+All three call the same Go core in `internal/` and share one SQLite database.
+There is no business logic in the UI.
+
+## What it does
+
+- **Scan** job boards and drop duplicates and dead listings. Sources ship for
+  Greenhouse, Remotive, RemoteOK, Jobicy, We Work Remotely, and Working Nomads.
+- **Match** each listing against your structured CV, with reasons, not just a
+  score.
+- **Tailor** with line-level edits. Not a rewrite you have to proofread from
+  scratch.
+- **Review** each change as a hunk. Accept, reject, or edit. Same behavior in
+  the web UI, the terminal, and the CLI.
+- **Build** a LaTeX PDF from the approved version, into
+  `output/<date>-<company>-<role>.pdf`.
+- **Screen for scams** with deterministic rules: email domain mismatch,
+  pay-to-work, ID before interview, clone-and-run tests, contact with no
+  company domain. Hard flags mark the job, they never hide it.
+- **Track** each application: draft, ready, applied, plus the channel
+  (board, referral, inbound, LinkedIn) so reply rate per channel is measurable.
+- **Prepare for the interview** with a per-job kit: the likely loop, the six
+  timeboxed system design steps, a timed mock with a five-dimension rubric, and
+  a STAR story bank that cannot use numbers your CV can't back up.
+- **Export** the SQLite file and move it to another machine.
+
+Filters are first-class: work arrangement, region, timezone overlap, seniority,
+compensation, visa, freshness. Hard filters skip with a reason. Soft filters
+boost. A preset called `aggressive` keeps only jobs posted in the last five
+hours with low competition.
+
+## Safety
+
+- **No auto-submit.** Applying is a manual step by default.
+- Assisted and auto modes are opt-in, and auto stays limited to email and ATS
+  APIs.
+- No browser bots. Nothing behind a login gets scraped.
+- Every action is logged with actor, time, and the hunks involved.
+- The scam screen is a filter, not a guarantee. You always decide.
+
+## Privacy
+
+Local-first. Your CV, your applications, and your history live in one SQLite
+file on your machine. No account, no telemetry. Move it with
+`applydiff export backup.db`.
 
 ## Stack
 
-Go + SQLite + Bubble Tea TUI + Nuxt 3 + LaTeX (xelatex).
+Go for scanning and matching. SQLite for storage, so your data is one file.
+Bubble Tea for the TUI. Nuxt 3 for the web, embedded into the binary. LaTeX for
+the CV, because ATS still reads it best.
 
 ## Install
 
-**Single binary (zero install at runtime).** Build once on a machine with Go and Node, then copy `bin/applydiff` anywhere. It serves the embedded web UI and API; users do not need Go or Node on PATH unless they develop the web app. PDF builds need `xelatex` on PATH unless you use Docker.
+**Single binary.** Build once on a machine with Go and Node, then copy
+`bin/applydiff` anywhere. No Go, no Node at runtime.
 
 ```bash
 make web && make cli
 ./bin/applydiff serve
 ```
-
-Open `http://localhost:8080`. PDF builds write to `output/<date>-<company>-<role>.pdf`.
 
 **Docker (UI + API + TeX in one image).**
 
@@ -61,45 +117,46 @@ docker build -t applydiff .
 docker run -p 3000:3000 -v ~/.applydiff:/data applydiff
 ```
 
-SQLite lives at `/data/applydiff.db` inside the container (`DATABASE_PATH`).
-
-**Release tarballs.** After `make web`, run `scripts/release.sh` for cross-compiled binaries under `dist/` plus `sha256sums.txt`.
+**Release tarballs.** After `make web`, run `scripts/release.sh` for
+cross-compiled binaries under `dist/` plus `sha256sums.txt`.
 
 ## CLI commands
 
-`scan`, `jobs`, `show`, `match`, `tailor`, `diff`, `approve`, `reject`, `build`, `apply`, `export`, `import`, `serve`, `tui`
+`scan`, `jobs`, `show`, `match`, `tailor`, `diff`, `approve`, `reject`, `build`,
+`apply`, `stats`, `interview` (kit, mock, drill, story, score, list, export),
+`export`, `import`, `serve`, `tui`
 
-Exit codes: `0` ok · `2` no match · `3` needs approval · `4` LLM error · `5` LaTeX error.
+Exit codes: `0` ok · `2` no match · `3` needs approval · `4` LLM error ·
+`5` LaTeX error.
 
 ## Environment
 
 | Variable | Purpose |
-|----------|---------|
+|---|---|
 | `DATABASE_PATH` | SQLite file (default `applydiff.db`) |
 | `JOBS_CONFIG` | Job sources YAML (default `jobs/config.yaml`) |
-| `PORT` | Default HTTP port when running without subcommand (default `8080`) |
+| `PORT` | Default HTTP port (default `8080`) |
 | `OUTPUT_ROOT` | PDF output directory (default `output/`) |
 | `FACTS_PATH` | JSON facts file (default `facts.json`) |
 
-## LLM (CLI-first)
-
-Tailoring uses a pluggable LLM backend. **No API key is required** if you use a local agent CLI (Claude Code, Codex, etc.) with its own login.
-
-See previous README section for `LLM_PROVIDER`, `LLM_CLI`, and API fallback variables.
-
-## Database export / import
+## Development
 
 ```bash
-applydiff export backup.db
-applydiff import backup.db
+make cli        # build bin/applydiff
+make web        # build the Nuxt UI into the embed dir
+make test       # go test ./...
+make pdf        # print the PDF build usage
+make docker     # build the image
+make release    # cross-compiled binaries into dist/
 ```
 
-Legacy: `export-db` / `import-db` flags still work.
+Migrations are timestamped SQL files in `internal/store/migrations/`.
 
-## Migrations
+## Palette
 
-SQL migrations live in `internal/store/migrations/`.
+Phosphor: amber CRT on warm black. Tokens live in
+`web/assets/tokens-root.css` and `internal/theme/theme.css` (TUI).
 
-## Status
+## License
 
-See `docs/plans/2026-10-17-cli-tui-web.md` and `docs/wireframes/`.
+MIT.
