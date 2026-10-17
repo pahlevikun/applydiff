@@ -14,7 +14,7 @@ cat > "$ROOT/.cursor-plugin/plugin.json" <<'EOF'
 {
   "name": "applydiff",
   "version": "0.1.0",
-  "description": "ApplyDiff job tailoring with human approval gate"
+  "description": "Search jobs and draft CV edits. A person approves every change."
 }
 EOF
 
@@ -33,7 +33,7 @@ cat > "$ROOT/.claude-plugin/plugin.json" <<'EOF'
 {
   "name": "applydiff",
   "version": "0.1.0",
-  "description": "ApplyDiff job tailoring with human approval gate"
+  "description": "Search jobs and draft CV edits. A person approves every change."
 }
 EOF
 

@@ -15,6 +15,16 @@ export const FILTER_CATEGORY_OPTIONS: Record<string, string[]> = {
   benefits: ['4-day week', 'visa sponsorship', 'equity', 'remote-first', 'async-friendly'],
 }
 
+export const KEYWORD_SUGGESTIONS: Record<string, string[]> = {
+  must_have_keywords: ['go', 'golang', 'kubernetes', 'postgres', 'aws', 'typescript', 'python', 'react'],
+  nice_to_have_keywords: ['graphql', 'terraform', 'redis', 'kafka', 'docker'],
+  exclude_keywords: ['unpaid', 'commission-only', 'crypto', 'mlm'],
+}
+
+export function keywordOptions(key: string, selected: string[] = []): string[] {
+  return optionsForFilter(key, [...(KEYWORD_SUGGESTIONS[key] ?? []), ...selected])
+}
+
 export function optionsForFilter(key: string, selected: string[] = []): string[] {
   const preset = FILTER_CATEGORY_OPTIONS[key] ?? []
   const seen = new Set(preset)
