@@ -24,6 +24,7 @@ web:
 	cd web && npm ci && npm run generate
 	rm -rf internal/webembed/public
 	cp -a web/.output/public internal/webembed/public
+	printf 'Placeholder so //go:embed all:public compiles on a fresh clone.\nRun `make web` to fill this directory with the Nuxt build.\n' > internal/webembed/public/.gitkeep
 
 pdf: cli
 	@echo "Usage: ./$(BIN) build <job-key>  (requires xelatex or Docker)"

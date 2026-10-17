@@ -1,0 +1,2 @@
+Placeholder so //go:embed all:public compiles on a fresh clone.
+Run `make web` to fill this directory with the Nuxt build.
