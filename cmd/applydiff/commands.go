@@ -12,29 +12,43 @@ import (
 )
 
 func cmdScan() *cobra.Command {
-	var source, preset string
+	var sourceID, preset string
 	minRisk := -1
 	maxRisk := -1
 	c := &cobra.Command{
 		Use:   "scan",
 		Short: "Pull jobs from configured sources",
+		Long: `Pull jobs from configured sources.
+
+Use --source to limit to one board: greenhouse, remotive, remoteok, jobicy, weworkremotely, workingnomads.
+With --dry-run, prints planned HTTP requests without writing to the database.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			_ = source
-			opt := runtime.ScanOptions{Preset: preset, Source: source}
+			opt := runtime.ScanOptions{
+				SourceID: sourceID,
+				Preset:   preset,
+				DryRun:   globalDryRun,
+			}
 			if minRisk >= 0 {
 				opt.MinRisk = &minRisk
 			}
 			if maxRisk >= 0 {
 				opt.MaxRisk = &maxRisk
 			}
-			res, err := rootApp.Scan(cmd.Context(), globalDryRun, opt)
+			res, err := rootApp.Scan(cmd.Context(), opt)
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
+				if globalDryRun && len(res.Plans) > 0 {
+					var b strings.Builder
+					for _, p := range res.Plans {
+						b.WriteString(fmt.Sprintf("%s %s %s\n", p.Source, p.Method, p.URL))
+					}
+					return strings.TrimRight(b.String(), "\n")
+				}
 				return fmt.Sprintf("fetched=%d stored=%d skipped=%d", res.Fetched, res.Stored, res.Skipped)
 			}))
 		},
 	}
-	c.Flags().StringVar(&source, "source", "", "limit to one source id")
+	c.Flags().StringVar(&sourceID, "source", "", "limit to one source id (greenhouse, remotive, remoteok, jobicy, weworkremotely, workingnomads)")
 	c.Flags().StringVar(&preset, "preset", "", "apply filter preset before scan (e.g. aggressive)")
 	c.Flags().IntVar(&minRisk, "min-risk", -1, "only keep jobs with risk score >= N (0-100)")
 	c.Flags().IntVar(&maxRisk, "max-risk", -1, "only keep jobs with risk score <= N (0-100)")

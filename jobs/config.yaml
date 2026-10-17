@@ -8,6 +8,16 @@ sources:
         company: Stripe
       - token: gitlab
         company: GitLab
+  remotive:
+    enabled: true
+  remoteok:
+    enabled: true
+  jobicy:
+    enabled: true
+  weworkremotely:
+    enabled: true
+  workingnomads:
+    enabled: true
 
 queries:
   - backend
