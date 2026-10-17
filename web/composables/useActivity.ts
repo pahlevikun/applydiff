@@ -33,15 +33,17 @@ type RunRow = {
   updated_at?: string
 }
 
+import { msg } from '~/i18n'
+
 const TAILOR_TIMEOUT_MS = 12 * 60 * 1000
 const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000
 const MAX_LINES = 150
 
 function tailorPhase(elapsedMs: number): string {
-  if (elapsedMs < 2500) return 'Starting run…'
-  if (elapsedMs < 8000) return 'Loading job description and master CV'
-  if (elapsedMs < 120_000) return 'LLM tailoring (often 1–3 minutes)'
-  return 'Still working — large models can be slow'
+  if (elapsedMs < 2500) return msg('activity.phases.tailorStart')
+  if (elapsedMs < 8000) return msg('activity.phases.tailorLoad')
+  if (elapsedMs < 120_000) return msg('activity.phases.tailorLlm')
+  return msg('activity.phases.tailorSlow')
 }
 
 function tailorProgress(elapsedMs: number, serverStatus: string): number {
@@ -270,7 +272,7 @@ export function useActivity() {
       kind,
       startedAt,
       status: 'running',
-      phase: kind === 'tailor' ? tailorPhase(0) : 'Running…',
+      phase: kind === 'tailor' ? tailorPhase(0) : msg('activity.phases.running'),
       progress: 4,
       timeoutMs,
     }
@@ -286,7 +288,7 @@ export function useActivity() {
           if (activeRun.value?.id === runId) {
             activeRun.value = {
               ...activeRun.value,
-              phase: kind === 'tailor' ? tailorPhase(elapsed) : 'Running…',
+              phase: kind === 'tailor' ? tailorPhase(elapsed) : msg('activity.phases.running'),
               progress: kind === 'tailor' ? tailorProgress(elapsed, 'running') : Math.min(90, Math.round(elapsed / 1000)),
             }
           }

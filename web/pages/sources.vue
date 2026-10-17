@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { optionsForFilter, keywordOptions } from '~/utils/filterOptions'
-import { filterTitle, FILTER_META } from '~/utils/filterMeta'
+import { filterTitle, filterHint } from '~/utils/filterMeta'
+
+const { t } = useI18n()
 type SourceScan = {
   at: string
   fetched: number
@@ -61,16 +63,16 @@ function filterKind(key: string): FilterKind {
   return 'category'
 }
 
-const filterSections: { title: string; keys: string[] }[] = [
-  { title: 'Work arrangement', keys: ['arrangement', 'weekly_days', 'async_friendly', 'timezone_overlap_hours'] },
-  { title: 'Region & geography', keys: ['regions', 'countries', 'exclude_regions'] },
-  { title: 'Employment & seniority', keys: ['employment_type', 'exclude_employment', 'seniority', 'min_seniority'] },
-  { title: 'Compensation', keys: ['salary_min', 'salary_disclosed', 'equity'] },
-  { title: 'Company', keys: ['company_stage', 'company_size'] },
-  { title: 'Visa & logistics', keys: ['visa_sponsorship', 'relocation', 'eor_friendly'] },
-  { title: 'Role & stack', keys: ['archetype', 'must_have_keywords', 'nice_to_have_keywords', 'exclude_keywords'] },
-  { title: 'Freshness', keys: ['max_posted_days'] },
-  { title: 'Benefits', keys: ['benefits'] },
+const filterSections: { titleKey: string; keys: string[] }[] = [
+  { titleKey: 'filters.groups.work', keys: ['arrangement', 'weekly_days', 'async_friendly', 'timezone_overlap_hours'] },
+  { titleKey: 'filters.groups.region', keys: ['regions', 'countries', 'exclude_regions'] },
+  { titleKey: 'filters.groups.employment', keys: ['employment_type', 'exclude_employment', 'seniority', 'min_seniority'] },
+  { titleKey: 'filters.groups.compensation', keys: ['salary_min', 'salary_disclosed', 'equity'] },
+  { titleKey: 'filters.groups.company', keys: ['company_stage', 'company_size'] },
+  { titleKey: 'filters.groups.visa', keys: ['visa_sponsorship', 'relocation', 'eor_friendly'] },
+  { titleKey: 'filters.groups.role', keys: ['archetype', 'must_have_keywords', 'nice_to_have_keywords', 'exclude_keywords'] },
+  { titleKey: 'filters.groups.freshness', keys: ['max_posted_days'] },
+  { titleKey: 'filters.groups.benefits', keys: ['benefits'] },
 ]
 
 function ruleLabel(key: string, rule: FilterRule | boolean | undefined): string {
@@ -108,7 +110,7 @@ async function load() {
     config.value = await $fetch<ConfigView>('/api/config')
     syncDrafts()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load config'
+    error.value = e instanceof Error ? e.message : t('errors.loadConfig')
   }
 }
 
@@ -117,7 +119,7 @@ async function toggleSource(id: string, enabled: boolean) {
   error.value = ''
   const name = config.value?.sources.find((s) => s.id === id)?.name ?? id
   try {
-    config.value = await track(`${enabled ? 'Enable' : 'Disable'} source · ${name}`, () =>
+    config.value = await track(t(enabled ? 'actions.enableSource' : 'actions.disableSource', { name }), () =>
       $fetch<ConfigView>('/api/config', {
         method: 'PUT',
         body: { source_id: id, enabled },
@@ -144,15 +146,21 @@ async function saveQueries() {
   notice.value = ''
   const queries = queryDraft.value.map((q) => q.trim()).filter(Boolean)
   try {
-    config.value = await track('Save scan queries', () =>
+    config.value = await track(t('actions.saveScanQueries'), () =>
       $fetch<ConfigView>('/api/config', {
         method: 'PUT',
         body: { queries },
       }),
-      { successDetail: () => `${queries.length} quer${queries.length === 1 ? 'y' : 'ies'}` },
+      {
+        successDetail: () =>
+          t('actions.saveScanQueriesDetail', {
+            count: queries.length,
+            suffix: queries.length === 1 ? 'y' : 'ies',
+          }),
+      },
     )
     syncDrafts()
-    notice.value = 'Queries saved to config.yaml'
+    notice.value = t('sources.queriesSaved')
   } catch (e) {
     error.value = actionErrorMessage(e)
   } finally {
@@ -231,14 +239,14 @@ async function saveFilters() {
   error.value = ''
   notice.value = ''
   try {
-    config.value = await track('Save filters', () =>
+    config.value = await track(t('actions.saveFilters'), () =>
       $fetch<ConfigView>('/api/config', {
         method: 'PUT',
         body: { filters: filterDraft.value },
       }),
     )
     syncDrafts()
-    notice.value = 'Filters saved to config.yaml'
+    notice.value = t('sources.filtersSaved')
   } catch (e) {
     error.value = actionErrorMessage(e)
   } finally {
@@ -250,11 +258,11 @@ const configPathLabel = computed(() => config.value?.config_path ?? 'config.yaml
 
 type SettingsSection = 'sources' | 'queries' | 'filters' | 'llm'
 
-const navItems: { id: SettingsSection; label: string }[] = [
-  { id: 'sources', label: 'Sources' },
-  { id: 'queries', label: 'Queries' },
-  { id: 'filters', label: 'Filters' },
-  { id: 'llm', label: 'LLM runner' },
+const navItems: { id: SettingsSection; labelKey: string }[] = [
+  { id: 'sources', labelKey: 'sources.sections.sources' },
+  { id: 'queries', labelKey: 'sources.sections.queries' },
+  { id: 'filters', labelKey: 'sources.sections.filters' },
+  { id: 'llm', labelKey: 'sources.sections.llm' },
 ]
 
 const section = ref<SettingsSection>('sources')
@@ -270,13 +278,12 @@ onMounted(load)
   <div class="page">
     <header class="bar">
       <div class="head">
-        <h1>Sources</h1>
+        <h1>{{ t('sources.title') }}</h1>
         <p class="lede">
-          Job boards, search queries, filters, and scan policy. Changes save to
-          <span class="mono">{{ configPathLabel }}</span>.
+          {{ t('sources.lede', { path: configPathLabel }) }}
         </p>
       </div>
-      <NuxtLink to="/jobs" class="btn ghost">Run scan</NuxtLink>
+      <NuxtLink to="/jobs" class="btn ghost">{{ t('sources.runScan') }}</NuxtLink>
     </header>
 
     <p v-if="error" class="err">{{ error }}</p>
@@ -285,7 +292,7 @@ onMounted(load)
     <div v-if="config" class="cfg">
       <aside class="side">
         <nav class="side-nav" aria-label="Settings sections">
-          <div class="lbl">On this page</div>
+          <div class="lbl">{{ t('sources.onThisPage') }}</div>
           <button
             v-for="item in navItems"
             :key="item.id"
@@ -295,19 +302,19 @@ onMounted(load)
             :aria-current="section === item.id ? 'page' : undefined"
             @click="selectSection(item.id)"
           >
-            {{ item.label }}
+            {{ t(item.labelKey) }}
           </button>
         </nav>
         <div class="hr" />
-        <div class="lbl">Scan policy</div>
-        <div class="flow"><span class="dot-sm" /> no-token scan first</div>
-        <div class="flow"><span class="dot-sm" /> drop dead postings</div>
-        <div class="flow"><span class="dot-sm" /> dedupe URL + id</div>
+        <div class="lbl">{{ t('sources.scanPolicy') }}</div>
+        <div class="flow"><span class="dot-sm" /> {{ t('sources.policyNoToken') }}</div>
+        <div class="flow"><span class="dot-sm" /> {{ t('sources.policyDropDead') }}</div>
+        <div class="flow"><span class="dot-sm" /> {{ t('sources.policyDedupe') }}</div>
       </aside>
 
       <main class="cfg-main">
         <section v-show="section === 'sources'" class="panel" aria-labelledby="panel-sources">
-          <h2 id="panel-sources" class="panel-title">Sources · enabled</h2>
+          <h2 id="panel-sources" class="panel-title">{{ t('sources.sourcesPanel') }}</h2>
           <div class="grid">
             <div v-for="src in config.sources" :key="src.id" class="card">
               <div class="h">
@@ -336,40 +343,40 @@ onMounted(load)
 
         <section v-show="section === 'queries'" class="panel" aria-labelledby="panel-queries">
           <div class="panel-head">
-            <h2 id="panel-queries" class="panel-title">Shared queries</h2>
+            <h2 id="panel-queries" class="panel-title">{{ t('sources.queriesPanel') }}</h2>
             <button type="button" class="btn primary" :disabled="saving === 'queries'" @click="saveQueries">
-              {{ saving === 'queries' ? 'Saving…' : 'Save queries' }}
+              {{ saving === 'queries' ? t('common.saving') : t('sources.saveQueries') }}
             </button>
           </div>
-          <p class="panel-hint">One search string per line when scanning job boards (unless a source overrides queries).</p>
+          <p class="panel-hint">{{ t('sources.queriesHint') }}</p>
           <div v-for="(q, i) in queryDraft" :key="i" class="q-edit">
             <input v-model="queryDraft[i]" type="text" class="inp" :aria-label="`Query ${i + 1}`" />
             <button type="button" class="btn ghost sm" @click="removeQueryRow(i)">Remove</button>
           </div>
-          <button type="button" class="btn ghost" @click="addQueryRow">Add query</button>
+          <button type="button" class="btn ghost" @click="addQueryRow">{{ t('sources.addQuery') }}</button>
         </section>
 
         <section v-show="section === 'filters'" class="panel" aria-labelledby="panel-filters">
           <div class="panel-head">
-            <h2 id="panel-filters" class="panel-title">Filter taxonomy</h2>
+            <h2 id="panel-filters" class="panel-title">{{ t('sources.filtersPanel') }}</h2>
             <button type="button" class="btn primary" :disabled="saving === 'filters'" @click="saveFilters">
-              {{ saving === 'filters' ? 'Saving…' : 'Save filters' }}
+              {{ saving === 'filters' ? t('common.saving') : t('sources.saveFilters') }}
             </button>
           </div>
           <div class="filter-help" role="note">
-            <p><strong>Hard</strong> — if a job fails the rule, it is skipped (hidden from your feed).</p>
-            <p><strong>Soft + boost</strong> — jobs that match earn extra ranking points; higher boost floats them up on the Jobs list.</p>
-            <p class="dim">AND across categories; OR within each chip group (e.g. remote <em>or</em> hybrid).</p>
+            <p>{{ t('filters.help.hard') }}</p>
+            <p>{{ t('filters.help.soft') }}</p>
+            <p class="dim">{{ t('filters.help.andOr') }}</p>
           </div>
 
           <div class="filter-card">
             <div class="filter-card-head">
               <div>
                 <h3 class="filter-name">{{ filterTitle('remote_only') }}</h3>
-                <p class="filter-sub">{{ FILTER_META.remote_only?.hint }}</p>
+                <p class="filter-sub">{{ filterHint('remote_only') }}</p>
               </div>
               <FilterChip
-                label="Enabled"
+                :label="t('common.enabled')"
                 :checked="filterDraft.remote_only === true"
                 @toggle="setRemoteOnly(filterDraft.remote_only !== true)"
               />
@@ -377,16 +384,16 @@ onMounted(load)
           </div>
 
           <template v-for="group in filterSections" :key="group.title">
-            <h3 class="group-title">{{ group.title }}</h3>
+            <h3 class="group-title">{{ t(group.titleKey) }}</h3>
             <div v-for="key in group.keys" :key="key" class="filter-card" :class="{ on: isFilterActive(key) }">
               <div class="filter-card-head">
                 <div>
                   <h3 class="filter-name">{{ filterTitle(key) }}</h3>
-                  <p v-if="FILTER_META[key]?.hint" class="filter-sub">{{ FILTER_META[key].hint }}</p>
+                  <p v-if="filterHint(key)" class="filter-sub">{{ filterHint(key) }}</p>
                   <p v-if="!isFilterActive(key)" class="filter-id mono">{{ key }}</p>
                 </div>
                 <FilterChip
-                  :label="isFilterActive(key) ? 'On' : 'Off'"
+                  :label="isFilterActive(key) ? t('common.on') : t('common.off')"
                   :checked="isFilterActive(key)"
                   @toggle="isFilterActive(key) ? disableFilter(key) : enableFilter(key)"
                 />
@@ -408,15 +415,15 @@ onMounted(load)
                     v-model="customKw[key]"
                     type="text"
                     class="inp"
-                    placeholder="Custom keyword"
+                    :placeholder="t('common.customKeyword')"
                     :aria-label="`Add keyword for ${key}`"
                     @keydown.enter.prevent="addCustomKeyword(key)"
                   />
-                  <button type="button" class="btn ghost sm" @click="addCustomKeyword(key)">Add</button>
+                  <button type="button" class="btn ghost sm" @click="addCustomKeyword(key)">{{ t('common.addKeyword') }}</button>
                 </div>
                 <label v-if="filterKind(key) === 'keyword'" class="chk inline">
                   <input type="checkbox" :checked="!!ruleDraft(key).all" @change="patchRule(key, { all: ($event.target as HTMLInputElement).checked })" />
-                  Match all keywords (AND)
+                  {{ t('common.matchAllKeywords') }}
                 </label>
                 <FilterRuleMode
                   :hard="!!ruleDraft(key).hard"
@@ -429,7 +436,7 @@ onMounted(load)
 
               <div v-else-if="isFilterActive(key) && filterKind(key) === 'bool'" class="filter-card-body">
                 <FilterChip
-                  label="Require on listing"
+                  :label="t('common.requireOnListing')"
                   :checked="!!ruleDraft(key).require"
                   @toggle="patchRule(key, { require: !ruleDraft(key).require })"
                 />
@@ -476,12 +483,12 @@ onMounted(load)
         </section>
 
         <section v-show="section === 'llm'" class="panel" aria-labelledby="panel-llm">
-          <h2 id="panel-llm" class="panel-title">LLM runner</h2>
-          <p class="panel-hint">How scan and evaluation call models.</p>
+          <h2 id="panel-llm" class="panel-title">{{ t('sources.llmPanel') }}</h2>
+          <p class="panel-hint">{{ t('sources.llmHint') }}</p>
           <div class="llm-card">
-            <div class="flow"><span class="dot-sm" /> {{ config.llm.mode === 'cli' ? 'CLI agent (Claude/Codex)' : 'Direct API fallback' }}</div>
-            <div class="flow muted">model · <span class="mono">{{ config.llm.model }}</span></div>
-            <div class="flow muted">Uses the cheapest configured model for scan and eval passes.</div>
+            <div class="flow"><span class="dot-sm" /> {{ config.llm.mode === 'cli' ? t('sources.llmCli') : t('sources.llmApi') }}</div>
+            <div class="flow muted">{{ t('sources.llmModel', { model: config.llm.model }) }}</div>
+            <div class="flow muted">{{ t('sources.llmCheap') }}</div>
           </div>
         </section>
       </main>

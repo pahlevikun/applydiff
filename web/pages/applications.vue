@@ -44,17 +44,23 @@ const error = ref('')
 const exporting = ref<string | null>(null)
 const lastExport = ref<ExportResult | null>(null)
 const { track, actionErrorMessage } = useActivity()
+const { t } = useI18n()
 
-const tabs: { id: Tab; label: string; hint: string }[] = [
-  { id: 'all', label: 'All', hint: 'Every role with an application record (not the whole Jobs feed)' },
-  { id: 'matched', label: 'Matched', hint: 'Scored on Match (application status matched)' },
-  { id: 'shortlisted', label: 'Shortlisted', hint: 'You clicked Shortlist on Match' },
-  { id: 'tailoring', label: 'Tailoring', hint: 'Tailor in progress' },
-  { id: 'ready', label: 'Ready', hint: 'Tailored / ready to apply' },
-  { id: 'with_proposal', label: 'With CV diff', hint: 'Has a tailoring proposal on Diff' },
-]
+const tabIds: Tab[] = ['all', 'matched', 'shortlisted', 'tailoring', 'ready', 'with_proposal']
 
-const activeHint = computed(() => tabs.find((t) => t.id === tab.value)?.hint ?? '')
+const tabLabel = (id: Tab) => {
+  const key =
+    id === 'with_proposal' ? 'applications.tabs.withProposal' : `applications.tabs.${id}`
+  return t(key)
+}
+
+const tabHint = (id: Tab) => {
+  const key =
+    id === 'with_proposal' ? 'applications.tabHints.withProposal' : `applications.tabHints.${id}`
+  return t(key)
+}
+
+const activeHint = computed(() => tabHint(tab.value))
 
 const pipelineRows = computed((): PipelineJob[] => {
   if (!pipeline.value) return []
@@ -86,7 +92,7 @@ async function load() {
       with_proposal: [],
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load applications'
+    error.value = e instanceof Error ? e.message : t('errors.loadApplications')
   }
 }
 
@@ -94,10 +100,10 @@ async function runExport(jobId: string) {
   exporting.value = jobId
   error.value = ''
   const row = rows.value.find((r) => r.job_id === jobId)
-  const label = row ? `Export · ${row.title}` : 'Export application'
+  const label = row ? t('actions.exportApplication', { title: row.title }) : t('actions.exportGeneric')
   try {
     lastExport.value = await track(label, () => $fetch<ExportResult>(`/api/export/${encodeURIComponent(jobId)}`, { method: 'POST' }), {
-      successDetail: (r) => (r.pdf_compiled ? 'PDF ready' : 'LaTeX written'),
+      successDetail: (r) => (r.pdf_compiled ? t('actions.exportPdfReady') : t('actions.exportLatex')),
     })
     await load()
   } catch (e) {
@@ -113,37 +119,33 @@ onMounted(load)
 <template>
   <div class="page">
     <header class="bar">
-      <h1>Applications</h1>
-      <p class="lede">
-        <strong>Skip</strong> closes the application and marks the job discarded.
-        <strong>Shortlist</strong> keeps the role in your pipeline.
-        <strong>Tailor</strong> runs CV tailoring and opens Diff when done — watch the Activity panel below.
-      </p>
+      <h1>{{ t('applications.title') }}</h1>
+      <p class="lede">{{ t('applications.lede') }}</p>
     </header>
 
     <nav class="tabs" aria-label="Pipeline filters">
       <button
-        v-for="t in tabs"
-        :key="t.id"
+        v-for="id in tabIds"
+        :key="id"
         type="button"
         class="tab"
-        :class="{ active: tab === t.id }"
-        @click="tab = t.id"
+        :class="{ active: tab === id }"
+        @click="tab = id"
       >
-        {{ t.label }}
-        <span v-if="t.id !== 'all' && pipeline" class="count">
+        {{ tabLabel(id) }}
+        <span v-if="id !== 'all' && pipeline" class="count">
           {{
-            t.id === 'matched'
+            id === 'matched'
               ? pipeline.matched.length
-              : t.id === 'shortlisted'
-              ? pipeline.shortlisted.length
-              : t.id === 'tailoring'
-                ? pipeline.tailoring.length
-                : t.id === 'ready'
-                  ? pipeline.ready.length
-                  : t.id === 'with_proposal'
-                    ? pipeline.with_proposal.length
-                    : ''
+              : id === 'shortlisted'
+                ? pipeline.shortlisted.length
+                : id === 'tailoring'
+                  ? pipeline.tailoring.length
+                  : id === 'ready'
+                    ? pipeline.ready.length
+                    : id === 'with_proposal'
+                      ? pipeline.with_proposal.length
+                      : ''
           }}
         </span>
       </button>
@@ -160,18 +162,18 @@ onMounted(load)
           <span class="muted">{{ row.company }}</span>
           <span class="chip">{{ row.status }}</span>
           <span v-if="row.channel" class="chip channel">{{ row.channel }}</span>
-          <span v-if="row.referrer" class="muted">via {{ row.referrer }}</span>
+          <span v-if="row.referrer" class="muted">{{ t('applications.via', { referrer: row.referrer }) }}</span>
         </div>
         <div class="actions">
-          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">Match</NuxtLink>
-          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">Diff</NuxtLink>
+          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">{{ t('common.match') }}</NuxtLink>
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">{{ t('common.diff') }}</NuxtLink>
           <button
             type="button"
             class="btn"
             :disabled="exporting === row.job_id"
             @click="runExport(row.job_id)"
           >
-            {{ exporting === row.job_id ? 'Exporting…' : 'Export' }}
+            {{ exporting === row.job_id ? t('applications.exporting') : t('applications.export') }}
           </button>
         </div>
         <p v-if="row.follow_up_note" class="follow">{{ row.follow_up_note }}</p>
@@ -184,19 +186,17 @@ onMounted(load)
           <NuxtLink :to="jobRoute('diff', row.job_id)" class="title">{{ row.title }}</NuxtLink>
           <span class="muted">{{ row.company }}</span>
           <span class="chip">{{ row.status }}</span>
-          <span v-if="row.has_proposal" class="chip diff">diff</span>
+          <span v-if="row.has_proposal" class="chip diff">{{ t('applications.chipDiff') }}</span>
         </div>
         <div class="actions">
-          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">Match</NuxtLink>
-          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">Diff</NuxtLink>
+          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">{{ t('common.match') }}</NuxtLink>
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">{{ t('common.diff') }}</NuxtLink>
         </div>
       </li>
     </ul>
 
-    <p v-if="tab === 'all' && !rows.length && !error" class="muted empty">
-      No applications yet — from Jobs open Match, then Shortlist or Tailor (or Export) to add a role here.
-    </p>
-    <p v-else-if="tab !== 'all' && !pipelineRows.length && !error" class="muted empty">Nothing in this stage yet.</p>
+    <p v-if="tab === 'all' && !rows.length && !error" class="muted empty">{{ t('applications.emptyAll') }}</p>
+    <p v-else-if="tab !== 'all' && !pipelineRows.length && !error" class="muted empty">{{ t('applications.emptyStage') }}</p>
   </div>
 </template>
 

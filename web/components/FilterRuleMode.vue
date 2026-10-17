@@ -10,6 +10,8 @@ const emit = defineEmits<{
   'update:boost': [value: number]
 }>()
 
+const { t } = useI18n()
+
 const boostVal = computed({
   get: () => props.boost ?? 5,
   set: (v: number) => emit('update:boost', v),
@@ -18,17 +20,21 @@ const boostVal = computed({
 
 <template>
   <div class="mode">
-    <div class="seg" role="group" aria-label="Rule strictness">
-      <button type="button" class="seg-btn" :class="{ on: hard }" @click="emit('update:hard', true)">Hard</button>
-      <button type="button" class="seg-btn" :class="{ on: !hard }" @click="emit('update:hard', false)">Soft</button>
+    <div class="seg" role="group" :aria-label="t('filters.mode.hard')">
+      <button type="button" class="seg-btn" :class="{ on: hard }" @click="emit('update:hard', true)">
+        {{ t('filters.mode.hard') }}
+      </button>
+      <button type="button" class="seg-btn" :class="{ on: !hard }" @click="emit('update:hard', false)">
+        {{ t('filters.mode.soft') }}
+      </button>
     </div>
     <p class="mode-hint">
-      <template v-if="hard">Hard — listings that fail this rule are <strong>hidden</strong> (skipped in the feed).</template>
-      <template v-else>Soft — matches add to your <strong>ranking score</strong> instead of being removed.</template>
+      <template v-if="hard">{{ t('filters.mode.hardHint') }}</template>
+      <template v-else>{{ t('filters.mode.softHint') }}</template>
     </p>
     <div v-if="showBoost && !hard" class="boost">
       <label class="boost-label">
-        <span>Boost</span>
+        <span>{{ t('filters.mode.boost') }}</span>
         <span class="boost-val">{{ boostVal }}</span>
       </label>
       <input
@@ -38,9 +44,9 @@ const boostVal = computed({
         max="15"
         step="1"
         class="boost-range"
-        aria-label="Boost points when rule matches"
+        :aria-label="t('filters.mode.boostHint')"
       />
-      <p class="boost-hint">Higher boost moves matching jobs up in the Jobs list.</p>
+      <p class="boost-hint">{{ t('filters.mode.boostHint') }}</p>
     </div>
   </div>
 </template>
@@ -81,11 +87,6 @@ const boostVal = computed({
   line-height: 1.45;
   color: var(--dim);
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
-}
-
-.mode-hint strong {
-  color: var(--muted);
-  font-weight: 600;
 }
 
 .boost {

@@ -1,16 +1,13 @@
 <script setup lang="ts">
 const jobId = useJobIdFromRoute()
+const { t } = useI18n()
 </script>
 
 <template>
   <DiffJobWorkspace v-if="jobId" :key="jobId" :job-id="jobId" />
   <div v-else class="page muted">
-    Open <strong>Diff</strong> from a job row on <NuxtLink to="/jobs">Jobs</NuxtLink>, or after you
-    <strong>Tailor</strong> on the Match screen.
-    <p class="hint">
-      Diff shows CV hunks once tailoring has run. You can also click <strong>Generate hunks</strong> here if you already
-      shortlisted the role.
-    </p>
+    {{ t('diff.emptyLead') }}
+    <p class="hint">{{ t('diff.emptyHint') }}</p>
   </div>
 </template>
 
@@ -24,8 +21,5 @@ const jobId = useJobIdFromRoute()
 .hint {
   margin-top: 0.75rem;
   font-size: 0.9rem;
-}
-a {
-  color: var(--accent);
 }
 </style>
