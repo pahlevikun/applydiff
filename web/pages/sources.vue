@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { optionsForFilter } from '~/utils/filterOptions'
+import { optionsForFilter, keywordOptions } from '~/utils/filterOptions'
+import { filterTitle, FILTER_META } from '~/utils/filterMeta'
 type SourceScan = {
   at: string
   fetched: number
@@ -91,6 +92,7 @@ const toggling = ref<string | null>(null)
 const saving = ref<'queries' | 'filters' | null>(null)
 const queryDraft = ref<string[]>([])
 const filterDraft = ref<FilterSpec>({})
+const customKw = ref<Record<string, string>>({})
 const { track, actionErrorMessage } = useActivity()
 
 function syncDrafts() {
@@ -196,18 +198,17 @@ function ruleDraft(key: string): FilterRule {
   return {}
 }
 
-function valuesText(key: string): string {
-  const r = ruleDraft(key)
-  return (r.values ?? []).join(', ')
-}
-
-function setValuesText(key: string, raw: string) {
-  const parts = raw.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean)
-  filterDraft.value = { ...filterDraft.value, [key]: { ...ruleDraft(key), values: parts } }
-}
-
 function filterValueOptions(key: string): string[] {
-  return optionsForFilter(key, ruleDraft(key).values ?? [])
+  const selected = ruleDraft(key).values ?? []
+  if (filterKind(key) === 'keyword') return keywordOptions(key, selected)
+  return optionsForFilter(key, selected)
+}
+
+function addCustomKeyword(key: string) {
+  const word = (customKw.value[key] ?? '').trim()
+  if (!word) return
+  toggleFilterValue(key, word, true)
+  customKw.value = { ...customKw.value, [key]: '' }
 }
 
 function isValueChecked(key: string, value: string): boolean {
@@ -355,59 +356,93 @@ onMounted(load)
               {{ saving === 'filters' ? 'Saving…' : 'Save filters' }}
             </button>
           </div>
-          <p class="panel-hint">Hard rules drop listings; soft rules adjust score. Toggle a rule on to edit it.</p>
+          <div class="filter-help" role="note">
+            <p><strong>Hard</strong> — if a job fails the rule, it is skipped (hidden from your feed).</p>
+            <p><strong>Soft + boost</strong> — jobs that match earn extra ranking points; higher boost floats them up on the Jobs list.</p>
+            <p class="dim">AND across categories; OR within each chip group (e.g. remote <em>or</em> hybrid).</p>
+          </div>
 
-          <div class="filter-block">
-            <div class="filter-row head">
-              <span class="mono">remote_only</span>
-              <label class="chk">
-                <input
-                  type="checkbox"
-                  :checked="filterDraft.remote_only === true"
-                  @change="setRemoteOnly(($event.target as HTMLInputElement).checked)"
-                />
-                enabled
-              </label>
+          <div class="filter-card">
+            <div class="filter-card-head">
+              <div>
+                <h3 class="filter-name">{{ filterTitle('remote_only') }}</h3>
+                <p class="filter-sub">{{ FILTER_META.remote_only?.hint }}</p>
+              </div>
+              <FilterChip
+                label="Enabled"
+                :checked="filterDraft.remote_only === true"
+                @toggle="setRemoteOnly(filterDraft.remote_only !== true)"
+              />
             </div>
           </div>
 
           <template v-for="group in filterSections" :key="group.title">
-            <div class="lbl sub">{{ group.title }}</div>
-            <div v-for="key in group.keys" :key="key" class="filter-block">
-              <div class="filter-row head">
-                <span class="mono">{{ key }}</span>
-                <label class="chk">
-                  <input type="checkbox" :checked="isFilterActive(key)" @change="($event.target as HTMLInputElement).checked ? enableFilter(key) : disableFilter(key)" />
-                  active
-                </label>
-                <span v-if="!isFilterActive(key)" class="chip dim">{{ ruleLabel(key, config.filters[key]) }}</span>
-              </div>
-              <div v-if="isFilterActive(key) && filterKind(key) === 'category'" class="filter-body">
-                <div class="value-grid" role="group" :aria-label="`${key} values`">
-                  <label v-for="opt in filterValueOptions(key)" :key="opt" class="chk value-opt">
-                    <input
-                      type="checkbox"
-                      :checked="isValueChecked(key, opt)"
-                      @change="toggleFilterValue(key, opt, ($event.target as HTMLInputElement).checked)"
-                    />
-                    {{ opt }}
-                  </label>
+            <h3 class="group-title">{{ group.title }}</h3>
+            <div v-for="key in group.keys" :key="key" class="filter-card" :class="{ on: isFilterActive(key) }">
+              <div class="filter-card-head">
+                <div>
+                  <h3 class="filter-name">{{ filterTitle(key) }}</h3>
+                  <p v-if="FILTER_META[key]?.hint" class="filter-sub">{{ FILTER_META[key].hint }}</p>
+                  <p v-if="!isFilterActive(key)" class="filter-id mono">{{ key }}</p>
                 </div>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).hard" @change="patchRule(key, { hard: ($event.target as HTMLInputElement).checked })" /> hard</label>
-                <label class="field narrow">
-                  <span>Boost</span>
-                  <input class="inp" type="number" :value="ruleDraft(key).boost ?? ''" @input="patchRule(key, { boost: Number(($event.target as HTMLInputElement).value) || 0 })" />
-                </label>
+                <FilterChip
+                  :label="isFilterActive(key) ? 'On' : 'Off'"
+                  :checked="isFilterActive(key)"
+                  @toggle="isFilterActive(key) ? disableFilter(key) : enableFilter(key)"
+                />
               </div>
-              <div v-else-if="isFilterActive(key) && filterKind(key) === 'bool'" class="filter-body">
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).require" @change="patchRule(key, { require: ($event.target as HTMLInputElement).checked })" /> require</label>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).hard" @change="patchRule(key, { hard: ($event.target as HTMLInputElement).checked })" /> hard</label>
-                <label class="field narrow">
-                  <span>Boost</span>
-                  <input class="inp" type="number" :value="ruleDraft(key).boost ?? ''" @input="patchRule(key, { boost: Number(($event.target as HTMLInputElement).value) || 0 })" />
+              <p v-if="!isFilterActive(key) && config" class="filter-summary">{{ ruleLabel(key, config.filters[key]) }}</p>
+
+              <div v-if="isFilterActive(key) && (filterKind(key) === 'category' || filterKind(key) === 'keyword')" class="filter-card-body">
+                <div class="chip-grid" role="group" :aria-label="`${filterTitle(key)} values`">
+                  <FilterChip
+                    v-for="opt in filterValueOptions(key)"
+                    :key="opt"
+                    :label="opt"
+                    :checked="isValueChecked(key, opt)"
+                    @toggle="toggleFilterValue(key, opt, !isValueChecked(key, opt))"
+                  />
+                </div>
+                <div v-if="filterKind(key) === 'keyword'" class="custom-kw">
+                  <input
+                    v-model="customKw[key]"
+                    type="text"
+                    class="inp"
+                    placeholder="Custom keyword"
+                    :aria-label="`Add keyword for ${key}`"
+                    @keydown.enter.prevent="addCustomKeyword(key)"
+                  />
+                  <button type="button" class="btn ghost sm" @click="addCustomKeyword(key)">Add</button>
+                </div>
+                <label v-if="filterKind(key) === 'keyword'" class="chk inline">
+                  <input type="checkbox" :checked="!!ruleDraft(key).all" @change="patchRule(key, { all: ($event.target as HTMLInputElement).checked })" />
+                  Match all keywords (AND)
                 </label>
+                <FilterRuleMode
+                  :hard="!!ruleDraft(key).hard"
+                  :boost="ruleDraft(key).boost"
+                  show-boost
+                  @update:hard="patchRule(key, { hard: $event })"
+                  @update:boost="patchRule(key, { boost: $event })"
+                />
               </div>
-              <div v-else-if="isFilterActive(key) && filterKind(key) === 'int'" class="filter-body">
+
+              <div v-else-if="isFilterActive(key) && filterKind(key) === 'bool'" class="filter-card-body">
+                <FilterChip
+                  label="Require on listing"
+                  :checked="!!ruleDraft(key).require"
+                  @toggle="patchRule(key, { require: !ruleDraft(key).require })"
+                />
+                <FilterRuleMode
+                  :hard="!!ruleDraft(key).hard"
+                  :boost="ruleDraft(key).boost"
+                  show-boost
+                  @update:hard="patchRule(key, { hard: $event })"
+                  @update:boost="patchRule(key, { boost: $event })"
+                />
+              </div>
+
+              <div v-else-if="isFilterActive(key) && filterKind(key) === 'int'" class="filter-card-body row-fields">
                 <label class="field narrow">
                   <span>Min</span>
                   <input class="inp" type="number" :value="ruleDraft(key).min ?? ''" @input="patchRule(key, { min: Number(($event.target as HTMLInputElement).value) })" />
@@ -416,26 +451,25 @@ onMounted(load)
                   <span>Max</span>
                   <input class="inp" type="number" :value="ruleDraft(key).max ?? ''" @input="patchRule(key, { max: Number(($event.target as HTMLInputElement).value) })" />
                 </label>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).hard" @change="patchRule(key, { hard: ($event.target as HTMLInputElement).checked })" /> hard</label>
+                <FilterRuleMode :hard="!!ruleDraft(key).hard" @update:hard="patchRule(key, { hard: $event })" />
               </div>
-              <div v-else-if="isFilterActive(key) && filterKind(key) === 'keyword'" class="filter-body">
-                <label class="field">
-                  <span>Keywords</span>
-                  <input class="inp" :value="valuesText(key)" @input="setValuesText(key, ($event.target as HTMLInputElement).value)" />
-                </label>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).all" @change="patchRule(key, { all: ($event.target as HTMLInputElement).checked })" /> match all</label>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).hard" @change="patchRule(key, { hard: ($event.target as HTMLInputElement).checked })" /> hard</label>
-              </div>
-              <div v-else-if="isFilterActive(key) && filterKind(key) === 'salary'" class="filter-body">
+
+              <div v-else-if="isFilterActive(key) && filterKind(key) === 'salary'" class="filter-card-body row-fields">
                 <label class="field narrow">
-                  <span>Min</span>
+                  <span>Min annual</span>
                   <input class="inp" type="number" :value="ruleDraft(key).min ?? ''" @input="patchRule(key, { min: Number(($event.target as HTMLInputElement).value) })" />
                 </label>
                 <label class="field narrow">
                   <span>Currency</span>
-                  <input class="inp" :value="ruleDraft(key).currency ?? ''" @input="patchRule(key, { currency: ($event.target as HTMLInputElement).value })" />
+                  <input class="inp" :value="ruleDraft(key).currency ?? 'USD'" @input="patchRule(key, { currency: ($event.target as HTMLInputElement).value })" />
                 </label>
-                <label class="chk"><input type="checkbox" :checked="!!ruleDraft(key).hard" @change="patchRule(key, { hard: ($event.target as HTMLInputElement).checked })" /> hard</label>
+                <FilterRuleMode
+                  :hard="!!ruleDraft(key).hard"
+                  :boost="ruleDraft(key).boost"
+                  show-boost
+                  @update:hard="patchRule(key, { hard: $event })"
+                  @update:boost="patchRule(key, { boost: $event })"
+                />
               </div>
             </div>
           </template>
@@ -822,15 +856,105 @@ onMounted(load)
   color: var(--muted);
   white-space: nowrap;
 }
-.value-grid {
+.filter-help {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+.filter-help p {
+  margin: 0 0 6px;
+}
+.filter-help p:last-child {
+  margin-bottom: 0;
+}
+.filter-help .dim {
+  color: var(--dim);
+  font-size: 12px;
+}
+.group-title {
+  margin: 18px 0 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  font-weight: 600;
+}
+.filter-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.filter-card.on {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 1px var(--amber-bg);
+}
+.filter-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.filter-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+.filter-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--dim);
+  line-height: 1.4;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+}
+.filter-id {
+  margin: 6px 0 0;
+  font-size: 10px;
+  color: var(--dim);
+}
+.filter-summary {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.filter-card-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.filter-card-body.row-fields {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.chip-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  width: 100%;
-  padding: 4px 0 6px;
+  gap: 8px;
 }
-.value-opt {
-  min-width: 7rem;
+.custom-kw {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 20rem;
+}
+.custom-kw .inp {
+  flex: 1;
+}
+.chk.inline {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
 }
 .chip.dim {
   margin-left: auto;

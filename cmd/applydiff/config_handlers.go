@@ -36,28 +36,56 @@ func (s *server) handleConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) putConfig(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		SourceID *string       `json:"source_id"`
-		Enabled  *bool         `json:"enabled"`
-		Queries  *[]string     `json:"queries"`
-		Filters  *filter.Spec  `json:"filters"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	var raw map[string]json.RawMessage
+	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	hasSource := body.SourceID != nil && *body.SourceID != ""
-	hasQueries := body.Queries != nil
-	hasFilters := body.Filters != nil
+	patch := runtime.ConfigPatch{}
+	if b, ok := raw["source_id"]; ok {
+		var id string
+		if err := json.Unmarshal(b, &id); err != nil {
+			http.Error(w, "invalid source_id", http.StatusBadRequest)
+			return
+		}
+		if id != "" {
+			patch.SourceID = &id
+		}
+	}
+	if b, ok := raw["enabled"]; ok && patch.SourceID != nil {
+		var enabled bool
+		if err := json.Unmarshal(b, &enabled); err != nil {
+			http.Error(w, "invalid enabled", http.StatusBadRequest)
+			return
+		}
+		patch.Enabled = &enabled
+	}
+	if b, ok := raw["queries"]; ok {
+		var queries []string
+		if err := json.Unmarshal(b, &queries); err != nil {
+			http.Error(w, "queries must be a JSON array of strings", http.StatusBadRequest)
+			return
+		}
+		patch.Queries = &queries
+	}
+	if b, ok := raw["filters"]; ok {
+		var spec filter.Spec
+		if err := json.Unmarshal(b, &spec); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		patch.Filters = &spec
+	}
+	hasSource := patch.SourceID != nil && *patch.SourceID != ""
+	hasQueries := patch.Queries != nil
+	hasFilters := patch.Filters != nil
 	if !hasSource && !hasQueries && !hasFilters {
-		http.Error(w, "source_id, queries, or filters required", http.StatusBadRequest)
+		http.Error(w, "send queries, filters, or source_id+enabled", http.StatusBadRequest)
 		return
 	}
-	patch := runtime.ConfigPatch{
-		SourceID: body.SourceID,
-		Enabled:  body.Enabled,
-		Queries:  body.Queries,
-		Filters:  body.Filters,
+	if hasSource && patch.Enabled == nil {
+		http.Error(w, "enabled required when source_id is set", http.StatusBadRequest)
+		return
 	}
 	if err := s.app.ApplyConfigPatch(r.Context(), patch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
