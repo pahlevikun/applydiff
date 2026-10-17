@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { interviewPrepEnabled } from '~/utils/features'
+
 const route = useRoute()
 const isMatchNav = computed(() => route.path === '/match' || route.path.startsWith('/match/'))
 const isDiffNav = computed(() => route.path === '/diff' || route.path.startsWith('/diff/'))
@@ -14,7 +16,7 @@ const isDiffNav = computed(() => route.path === '/diff' || route.path.startsWith
         <NuxtLink to="/diff" class="nav-link" :class="{ 'router-link-active': isDiffNav }">Diff</NuxtLink>
         <NuxtLink to="/cv" class="nav-link">CV editor</NuxtLink>
         <NuxtLink to="/applications" class="nav-link">Applications</NuxtLink>
-        <NuxtLink to="/interview" class="nav-link">Interview</NuxtLink>
+        <NuxtLink v-if="interviewPrepEnabled" to="/interview" class="nav-link">Interview</NuxtLink>
         <NuxtLink to="/sources" class="nav-link">Sources</NuxtLink>
       </nav>
     </header>

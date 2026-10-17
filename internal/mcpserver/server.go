@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/tailor"
 )
@@ -92,10 +93,12 @@ func Run(ctx context.Context, app *runtime.App) error {
 		return jsonResult(map[string]string{"url": url}, nil)
 	})
 
-	mcp.AddTool(server, &mcp.Tool{Name: "interview_kit", Description: "Interview prep surface for job"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		kit, err := app.GenerateInterviewKit(ctx, args.JobKey)
-		return jsonResult(kit, err)
-	})
+	if features.InterviewPrepEnabled {
+		mcp.AddTool(server, &mcp.Tool{Name: "interview_kit", Description: "Interview prep surface for job"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
+			kit, err := app.GenerateInterviewKit(ctx, args.JobKey)
+			return jsonResult(kit, err)
+		})
+	}
 
 	mcp.AddTool(server, &mcp.Tool{Name: "doctor", Description: "Environment diagnostics"}, func(ctx context.Context, _ *mcp.CallToolRequest, _ empty) (*mcp.CallToolResult, any, error) {
 		rep, err := runtime.Doctor(ctx, app)
