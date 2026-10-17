@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pahlevikun/applydiff/internal/interview"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/store"
@@ -17,12 +18,15 @@ import (
 type screen int
 
 const (
-	screenFeed screen = 0
-	screenJob  screen = 1
-	screenDiff screen = 2
-	screenSrc  screen = 3
-	screenApps screen = 4
+	screenFeed      screen = 0
+	screenJob       screen = 1
+	screenDiff      screen = 2
+	screenSrc       screen = 3
+	screenApps      screen = 4
+	screenInterview screen = 5
 )
+
+const screenCount = 6
 
 type model struct {
 	app      *runtime.App
@@ -43,6 +47,19 @@ type model struct {
 	viewport viewport.Model
 	status   string
 	err      string
+	ivMockType   string
+	ivLoop       []string
+	ivTopics     []string
+	ivFramework  *interview.Framework
+	ivStepIdx    int
+	ivRemainSec  []int
+	ivOutput     []string
+	ivNote       []string
+	ivWeak       []bool
+	ivTimerOn    bool
+	ivRubric     map[string]int
+	ivRubricFocus int
+	ivLoadErr    string
 	styles   struct {
 		bg, surface, surface2, line, fg, muted, dim, accent, add, del lipgloss.Style
 	}
@@ -54,11 +71,13 @@ func initialModel(app *runtime.App) model {
 	return model{
 		app:     app,
 		ctx:     context.Background(),
-		screen:  screenFeed,
-		hunkSel: map[int]bool{},
-		viewport: vp,
-		styles:  baseStyles(),
-		status:  "Feed",
+		screen:       screenFeed,
+		hunkSel:        map[int]bool{},
+		viewport:       vp,
+		styles:         baseStyles(),
+		status:         "Feed",
+		ivMockType:     "system-design",
+		ivRubric:       map[string]int{},
 	}
 }
 
@@ -102,6 +121,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		m.err = msg.err.Error()
 		return m, nil
+	case ivLoadMsg:
+		if msg.err != nil {
+			m.ivLoadErr = msg.err.Error()
+			m.ivFramework = nil
+			return m, nil
+		}
+		m.ivLoadErr = ""
+		m.ivLoop = msg.loop
+		m.ivTopics = msg.topics
+		m.ivFramework = msg.fw
+		m.ensureIVSteps(msg.fw)
+		return m, nil
+	case tickMsg:
+		if m.screen == screenInterview {
+			return m.tickInterview()
+		}
+		return m, nil
 	case tea.KeyMsg:
 		if m.help {
 			if msg.String() == "?" || msg.String() == "esc" {
@@ -116,12 +152,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.help = true
 			return m, nil
 		case "tab":
-			m.screen = screen((int(m.screen) + 1) % 5)
+			m.screen = screen((int(m.screen) + 1) % screenCount)
 			m.status = screenName(m.screen)
+			if m.screen == screenInterview {
+				return m, m.loadInterviewCmd()
+			}
 			return m, nil
 		case "shift+tab":
-			m.screen = screen((int(m.screen) + 4) % 5)
+			m.screen = screen((int(m.screen) + screenCount - 1) % screenCount)
 			m.status = screenName(m.screen)
+			if m.screen == screenInterview {
+				return m, m.loadInterviewCmd()
+			}
 			return m, nil
 		}
 		switch m.screen {
@@ -129,6 +171,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.updateFeed(msg)
 		case screenDiff:
 			return m.updateDiff(msg)
+		case screenInterview:
+			return m.updateInterview(msg)
 		default:
 			return m, nil
 		}
@@ -262,6 +306,8 @@ func screenName(s screen) string {
 		return "Sources"
 	case screenApps:
 		return "Applications"
+	case screenInterview:
+		return "Interview"
 	default:
 		return "ApplyDiff"
 	}
@@ -295,6 +341,8 @@ func (m model) View() string {
 		b.WriteString(m.viewSources())
 	case screenApps:
 		b.WriteString(m.viewApplications())
+	case screenInterview:
+		b.WriteString(m.viewInterview())
 	}
 	b.WriteString("\n")
 	b.WriteString(m.styles.surface2.Width(m.width).Render(m.statusBar()))
@@ -314,6 +362,7 @@ func (m model) helpOverlay() string {
 ? close help
 Feed: j/k g/G move · enter job · / filter
 Diff: j/k hunk · space toggle · a accept · x reject · b build PDF
+Interview: space timer · n/p step · d rubric focus · 1-5 score · enter save · r reload
 tab / shift+tab: switch screen`)
 }
 
@@ -427,6 +476,18 @@ func Run(app *runtime.App) error {
 	}
 	m := initialModel(app)
 	if !isInteractive() {
+		if os.Getenv("APPLYDIFF_TUI_SNAPSHOT") != "" {
+			m.screen = screenInterview
+			m.status = "Interview"
+			m.width = 100
+			m.height = 24
+			if fw := interview.FrameworkByID("system-design"); fw != nil {
+				m.ivFramework = fw
+				m.ivLoop = []string{"recruiter screen", "technical screen", "coding"}
+				m.ivTopics = []string{"caching", "scalability"}
+				m.ensureIVSteps(fw)
+			}
+		}
 		fmt.Println(m.View())
 		return nil
 	}

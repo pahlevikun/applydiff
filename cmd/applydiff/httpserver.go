@@ -34,6 +34,8 @@ func runHTTPServer(port string, app *runtime.App) {
 	mux.HandleFunc("/api/db/import", srv.handleDBImport)
 	mux.HandleFunc("/api/config", srv.handleConfig)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
+	mux.HandleFunc("/api/interview/stories/", srv.handleInterviewStory)
+	mux.HandleFunc("/api/interview/", srv.handleInterview)
 	mountWebUI(mux)
 
 	addr := ":" + port

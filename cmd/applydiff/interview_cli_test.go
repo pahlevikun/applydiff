@@ -21,7 +21,7 @@ func TestInterviewHelpListsSubcommands(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	for _, sub := range []string{"kit", "mock", "drill", "story", "score", "list"} {
+	for _, sub := range []string{"kit", "mock", "drill", "story", "score", "list", "export"} {
 		if !containsWord(out, sub) {
 			t.Fatalf("interview help missing %q:\n%s", sub, out)
 		}

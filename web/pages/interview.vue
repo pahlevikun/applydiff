@@ -1,19 +1,32 @@
 <script setup lang="ts">
-const note = ref('')
-const saved = ref(false)
+type Job = { id: string; title: string; company: string }
 
-function save() {
-  saved.value = true
-}
+const jobs = ref<Job[]>([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const rows = await $fetch<{ job: Job }[]>('/api/jobs')
+    jobs.value = rows.map((r) => r.job)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
   <div class="page">
     <h1>Interview prep</h1>
-    <p class="muted">Notes stay local in this session. No auto-submit.</p>
-    <textarea v-model="note" class="editor mono" rows="16" placeholder="STAR stories, questions to ask…" />
-    <button type="button" class="btn" @click="save">Save notes</button>
-    <p v-if="saved" class="dim">Saved locally.</p>
+    <p class="muted">Pick a job to open kit, mock runner, rubric, and story bank. No auto-submit.</p>
+    <p v-if="loading" class="dim">Loading jobs…</p>
+    <ul v-else class="jobs">
+      <li v-for="j in jobs" :key="j.id">
+        <NuxtLink :to="`/interview/${j.id}`" class="job-link">
+          {{ j.title }} <span class="dim">@ {{ j.company }}</span>
+        </NuxtLink>
+      </li>
+      <li v-if="!jobs.length" class="dim">No jobs yet — run a scan from Jobs.</li>
+    </ul>
   </div>
 </template>
 
@@ -31,26 +44,25 @@ h1 {
   color: var(--muted);
   margin-bottom: 16px;
 }
-.editor {
-  width: 100%;
-  background: var(--surface2);
+.jobs {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.job-link {
+  display: block;
+  padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--r-sm);
+  margin-bottom: 8px;
+  text-decoration: none;
   color: var(--fg);
-  padding: 12px;
-  margin-bottom: 12px;
+  background: var(--surface);
 }
-.btn {
-  background: var(--accent);
-  color: var(--ink);
-  border: none;
-  border-radius: var(--r-sm);
-  padding: 8px 14px;
-  font-weight: 600;
-  cursor: pointer;
+.job-link:hover {
+  border-color: var(--accent-dim);
 }
 .dim {
   color: var(--dim);
-  margin-top: 8px;
 }
 </style>
