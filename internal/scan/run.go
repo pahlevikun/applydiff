@@ -3,7 +3,9 @@ package scan
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
+	"time"
 
 	"github.com/pahlevikun/applydiff/internal/extract"
 	"github.com/pahlevikun/applydiff/internal/filter"
@@ -14,12 +16,24 @@ import (
 	"github.com/pahlevikun/applydiff/internal/store"
 )
 
+type FetchPlan struct {
+	Source string `json:"source"`
+	Method string `json:"method"`
+	URL    string `json:"url"`
+}
+
 type Result struct {
-	Fetched int `json:"fetched"`
-	Deduped int `json:"deduped"`
-	Dead    int `json:"dead"`
-	Stored  int `json:"stored"`
-	Skipped int `json:"skipped"`
+	Fetched int         `json:"fetched"`
+	Deduped int         `json:"deduped"`
+	Dead    int         `json:"dead"`
+	Stored  int         `json:"stored"`
+	Skipped int         `json:"skipped"`
+	Plans   []FetchPlan `json:"plans,omitempty"`
+}
+
+type Options struct {
+	SourceID string
+	DryRun   bool
 }
 
 type Runner struct {
@@ -31,9 +45,14 @@ type Runner struct {
 	Preset  string
 }
 
-func (r *Runner) Run(ctx context.Context) (Result, error) {
+func (r *Runner) Run(ctx context.Context, opt Options) (Result, error) {
 	var res Result
 	if r.Config == nil || r.Store == nil {
+		return res, nil
+	}
+
+	if opt.DryRun {
+		res.Plans = BuildFetchPlans(r.Config, opt.SourceID)
 		return res, nil
 	}
 
@@ -49,21 +68,32 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 	}
 	hashIndex, _ := r.Store.ListJobDescriptionHashes(ctx)
 
-	queries := r.Config.Queries
 	var fetched []job.Job
 	for _, src := range source.List() {
-		jobs, err := src.Fetch(ctx, queries)
+		if opt.SourceID != "" && src.ID() != opt.SourceID {
+			continue
+		}
+		q := queriesFor(r.Config, src.ID())
+		jobs, err := src.Fetch(ctx, q)
+		srcResult := store.SourceScanResult{
+			At:      time.Now().UTC().Format(time.RFC3339),
+			Fetched: len(jobs),
+		}
 		if err != nil {
+			srcResult.Error = err.Error()
+			_ = r.Store.SaveSourceScanResult(ctx, src.ID(), srcResult)
 			return res, err
 		}
 		if cap := r.Config.Caps.PerSource; cap > 0 && len(jobs) > cap {
 			jobs = jobs[:cap]
 		}
+		srcResult.Fetched = len(jobs)
 		fetched = append(fetched, jobs...)
+		_ = r.Store.SaveSourceScanResult(ctx, src.ID(), srcResult)
 	}
 	res.Fetched = len(fetched)
 
-	deduped := job.Dedupe(fetched)
+	deduped := job.MergeByDedupeKey(fetched)
 	res.Deduped = len(deduped)
 
 	candidates := deduped
@@ -132,6 +162,91 @@ func flagsToJob(flags []risk.Flag) []job.JobRiskFlag {
 		out = append(out, job.JobRiskFlag{Code: f.Code, Severity: f.Severity, Message: f.Message})
 	}
 	return out
+}
+
+func queriesFor(cfg *jobconfig.Config, sourceID string) []string {
+	if cfg == nil {
+		return nil
+	}
+	switch sourceID {
+	case "greenhouse":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.Greenhouse.Queries)
+	case "remotive":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.Remotive.Queries)
+	case "remoteok":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.RemoteOK.Queries)
+	case "jobicy":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.Jobicy.Queries)
+	case "weworkremotely":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.WeWorkRemotely.Queries)
+	case "workingnomads":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.WorkingNomads.Queries)
+	default:
+		return cfg.Queries
+	}
+}
+
+// BuildFetchPlans describes outbound HTTP calls without hitting the network.
+func BuildFetchPlans(cfg *jobconfig.Config, onlySource string) []FetchPlan {
+	if cfg == nil {
+		return nil
+	}
+	var plans []FetchPlan
+	add := func(id string, enabled bool, urls ...string) {
+		if !enabled || (onlySource != "" && onlySource != id) {
+			return
+		}
+		for _, u := range urls {
+			if u == "" {
+				continue
+			}
+			plans = append(plans, FetchPlan{Source: id, Method: "GET", URL: u})
+		}
+	}
+	if cfg.Sources.Greenhouse.Enabled {
+		for _, b := range cfg.Sources.Greenhouse.Boards {
+			if b.Token == "" {
+				continue
+			}
+			add("greenhouse", true, "https://boards-api.greenhouse.io/v1/boards/"+b.Token+"/jobs")
+		}
+	}
+	qs := cfg.Sources.Remotive.Queries
+	if len(qs) == 0 {
+		qs = cfg.Queries
+	}
+	if len(qs) == 0 {
+		qs = []string{""}
+	}
+	for _, q := range qs {
+		u := "https://remotive.com/api/remote-jobs"
+		if strings.TrimSpace(q) != "" {
+			u += "?search=" + url.QueryEscape(strings.TrimSpace(q))
+		}
+		add("remotive", cfg.Sources.Remotive.Enabled, u)
+	}
+	add("remoteok", cfg.Sources.RemoteOK.Enabled, "https://remoteok.com/api")
+	jq := cfg.Sources.Jobicy.Queries
+	if len(jq) == 0 {
+		jq = cfg.Queries
+	}
+	if len(jq) == 0 {
+		jq = []string{""}
+	}
+	for _, q := range jq {
+		u := "https://jobicy.com/api/v2/remote-jobs"
+		if strings.TrimSpace(q) != "" {
+			u += "?tag=" + url.QueryEscape(strings.TrimSpace(q))
+		}
+		add("jobicy", cfg.Sources.Jobicy.Enabled, u)
+	}
+	feed := cfg.Sources.WeWorkRemotely.FeedURL
+	if feed == "" {
+		feed = "https://weworkremotely.com/categories/remote-programming-jobs.rss"
+	}
+	add("weworkremotely", cfg.Sources.WeWorkRemotely.Enabled, feed)
+	add("workingnomads", cfg.Sources.WorkingNomads.Enabled, "https://www.workingnomads.com/api/exposed_jobs/")
+	return plans
 }
 
 func firstSkipReason(reasons []string) string {

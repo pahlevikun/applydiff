@@ -56,6 +56,7 @@ func newRootCmd() *cobra.Command {
 		cmdStats(),
 		cmdExport(),
 		cmdImport(),
+		cmdCV(),
 		cmdServe(),
 		cmdTUI(),
 		cmdInterview(),

@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/risk"
@@ -17,16 +18,18 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 	}
 	kw, _ := json.Marshal(j.Keywords)
 	ben, _ := json.Marshal(j.Benefits)
+	origins, _ := json.Marshal(j.Origins)
+	mergedOrigins, _ := s.mergeJobOrigins(ctx, dedupeKey, origins)
 	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO jobs (id, company, title, url, source, posted_at, remote, region, status, dedupe_key,
 			description, salary_post, salary_ats,
 			arrangement, days_onsite, weekly_days, async_friendly, timezone_overlap_hours, country,
 			employment_type, seniority, salary_min, salary_currency, salary_disclosed, equity,
 			company_stage, company_size, visa_sponsorship, relocation, eor_friendly, archetype,
-			keywords_json, benefits_json, filter_skip_reason,
+			keywords_json, benefits_json, filter_skip_reason, origins_json,
 			risk, flags, applicant_count)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?)
 		ON CONFLICT(dedupe_key) DO UPDATE SET
 			company = excluded.company,
@@ -61,6 +64,7 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 			keywords_json = CASE WHEN excluded.keywords_json != '[]' THEN excluded.keywords_json ELSE jobs.keywords_json END,
 			benefits_json = CASE WHEN excluded.benefits_json != '[]' THEN excluded.benefits_json ELSE jobs.benefits_json END,
 			filter_skip_reason = excluded.filter_skip_reason,
+			origins_json = excluded.origins_json,
 			risk = excluded.risk,
 			flags = excluded.flags,
 			applicant_count = CASE WHEN excluded.applicant_count > 0 THEN excluded.applicant_count ELSE jobs.applicant_count END
@@ -69,7 +73,7 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 		j.Arrangement, j.DaysOnsite, j.WeeklyDays, boolInt(j.AsyncFriendly), j.TimezoneOverlapHours, j.Country,
 		j.EmploymentType, j.Seniority, j.SalaryMin, j.SalaryCurrency, boolInt(j.SalaryDisclosed), boolInt(j.Equity),
 		j.CompanyStage, j.CompanySize, boolInt(j.VisaSponsorship), boolInt(j.Relocation), boolInt(j.EORFriendly), j.Archetype,
-		string(kw), string(ben), j.FilterSkipReason,
+		string(kw), string(ben), j.FilterSkipReason, string(mergedOrigins),
 		j.Risk, flagsJSON(j), j.ApplicantCount)
 	return err
 }
@@ -86,6 +90,39 @@ func flagsJSON(j job.Job) string {
 		return "[]"
 	}
 	return string(raw)
+}
+
+func (s *Store) mergeJobOrigins(ctx context.Context, dedupeKey string, incoming []byte) ([]byte, error) {
+	var existing []string
+	var raw string
+	err := s.db.QueryRowContext(ctx, `SELECT origins_json FROM jobs WHERE dedupe_key = ?`, dedupeKey).Scan(&raw)
+	if err == nil && raw != "" {
+		_ = json.Unmarshal([]byte(raw), &existing)
+	}
+	var add []string
+	_ = json.Unmarshal(incoming, &add)
+	merged := mergeOriginStrings(existing, add)
+	out, err := json.Marshal(merged)
+	return out, err
+}
+
+func mergeOriginStrings(a, b []string) []string {
+	seen := make(map[string]struct{}, len(a)+len(b))
+	var out []string
+	for _, list := range [][]string{a, b} {
+		for _, v := range list {
+			v = strings.TrimSpace(v)
+			if v == "" {
+				continue
+			}
+			if _, ok := seen[v]; ok {
+				continue
+			}
+			seen[v] = struct{}{}
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 func (s *Store) ListJobs(ctx context.Context) ([]job.Job, error) {
@@ -130,7 +167,7 @@ const jobSelectSQL = `
 		arrangement, days_onsite, weekly_days, async_friendly, timezone_overlap_hours, country,
 		employment_type, seniority, salary_min, salary_currency, salary_disclosed, equity,
 		company_stage, company_size, visa_sponsorship, relocation, eor_friendly, archetype,
-		keywords_json, benefits_json, filter_skip_reason,
+		keywords_json, benefits_json, filter_skip_reason, origins_json,
 		risk, flags, applicant_count
 	FROM jobs`
 
@@ -140,14 +177,14 @@ func scanJobRow(scanner interface {
 	var j job.Job
 	var desc, salaryPost, salaryATS string
 	var async, salDisc, equity, visa, reloc, eor int
-	var kwJSON, benJSON, flagsRaw string
+	var kwJSON, benJSON, originsJSON, flagsRaw string
 	err := scanner.Scan(
 		&j.ID, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.Remote, &j.Region, &j.Status,
 		&desc, &salaryPost, &salaryATS,
 		&j.Arrangement, &j.DaysOnsite, &j.WeeklyDays, &async, &j.TimezoneOverlapHours, &j.Country,
 		&j.EmploymentType, &j.Seniority, &j.SalaryMin, &j.SalaryCurrency, &salDisc, &equity,
 		&j.CompanyStage, &j.CompanySize, &visa, &reloc, &eor, &j.Archetype,
-		&kwJSON, &benJSON, &j.FilterSkipReason,
+		&kwJSON, &benJSON, &j.FilterSkipReason, &originsJSON,
 		&j.Risk, &flagsRaw, &j.ApplicantCount,
 	)
 	if err != nil {
@@ -164,6 +201,7 @@ func scanJobRow(scanner interface {
 	j.EORFriendly = eor != 0
 	_ = json.Unmarshal([]byte(kwJSON), &j.Keywords)
 	_ = json.Unmarshal([]byte(benJSON), &j.Benefits)
+	_ = json.Unmarshal([]byte(originsJSON), &j.Origins)
 	j.FlagsJSON = flagsRaw
 	j.Flags = decodeJobFlags(flagsRaw)
 	return j, nil

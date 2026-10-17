@@ -5,7 +5,8 @@ type Job struct {
 	Company     string `json:"company"`
 	Title       string `json:"title"`
 	URL         string `json:"url"`
-	Source      string `json:"source"`
+	Source      string   `json:"source"`
+	Origins     []string `json:"origins,omitempty"`
 	PostedAt    string `json:"posted_at"`
 	Remote      string `json:"remote"`
 	Region      string `json:"region"`
