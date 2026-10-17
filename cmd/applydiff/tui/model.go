@@ -480,7 +480,7 @@ func (m model) viewApplications() string {
 	}
 	var b strings.Builder
 	for _, a := range items {
-		b.WriteString(fmt.Sprintf("%s  %s @ %s  [%s]\n", a.JobID, a.Title, a.Company, a.Status))
+		b.WriteString(fmt.Sprintf("%s  %s @ %s  [%s]  %s\n", a.JobID, a.Title, a.Company, a.Status, a.Channel))
 	}
 	if len(items) == 0 {
 		b.WriteString(m.styles.muted.Render("No applications yet"))
