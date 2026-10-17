@@ -1,8 +1,14 @@
 applydiff.db
 node_modules/
 dist/
-.output/
+bin/
+output/
+exports/
+web/.output/
+web/node_modules/
 .nuxt/
+internal/webembed/public/*
+!internal/webembed/public/.gitkeep
 .env
 *.aux
 *.log

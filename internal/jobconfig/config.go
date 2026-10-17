@@ -28,14 +28,9 @@ type BoardConfig struct {
 	Company string `yaml:"company"`
 }
 
-// Filters wraps the filter spec plus legacy flat keys from early config files.
+// Filters is the filter spec from jobs/config.yaml (inline categories).
 type Filters struct {
 	Spec filter.Spec `yaml:",inline"`
-
-	Regions       []string `yaml:"regions"`
-	RemoteOnly    bool     `yaml:"remote_only"`
-	MinSeniority  string   `yaml:"min_seniority"`
-	MaxPostedDays int      `yaml:"max_posted_days"`
 }
 
 type Caps struct {
@@ -59,11 +54,11 @@ func Load(path string) (*Config, error) {
 // EffectiveSpec returns the filter spec with legacy yaml fields applied.
 func (f Filters) EffectiveSpec() filter.Spec {
 	spec := f.Spec.Clone()
-	filter.NormalizeLegacy(&spec, f.Regions, f.RemoteOnly, f.MinSeniority, f.MaxPostedDays)
+	filter.NormalizeLegacy(&spec, nil, spec.RemoteOnly, "", 0)
 	return spec
 }
 
-// MergeLegacy copies top-level legacy keys into Spec when categories are unset.
+// MergeLegacy applies remote_only shorthand into arrangement when needed.
 func (f *Filters) MergeLegacy() {
-	filter.NormalizeLegacy(&f.Spec, f.Regions, f.RemoteOnly, f.MinSeniority, f.MaxPostedDays)
+	filter.NormalizeLegacy(&f.Spec, nil, f.Spec.RemoteOnly, "", 0)
 }
