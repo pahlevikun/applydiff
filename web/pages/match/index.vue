@@ -1,13 +1,13 @@
 <script setup lang="ts">
 const jobId = useJobIdFromRoute()
+const { t } = useI18n()
 </script>
 
 <template>
   <MatchJobWorkspace v-if="jobId" :key="jobId" :job-id="jobId" />
   <div v-else class="page muted">
-    Select a job from <NuxtLink to="/jobs">Jobs</NuxtLink> and click <strong>Match</strong>, or open
-    <NuxtLink to="/applications">Applications</NuxtLink> for roles already in your pipeline.
-    <p class="hint">Flow: Jobs → Match → Shortlist → Tailor → Diff → Apply.</p>
+    {{ t('match.emptyLead') }}
+    <p class="hint">{{ t('match.emptyHint') }}</p>
   </div>
 </template>
 
@@ -21,8 +21,5 @@ const jobId = useJobIdFromRoute()
 .hint {
   margin-top: 0.75rem;
   font-size: 0.9rem;
-}
-a {
-  color: var(--accent);
 }
 </style>

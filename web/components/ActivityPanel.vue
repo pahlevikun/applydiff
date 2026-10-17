@@ -2,6 +2,7 @@
 import { useActivity } from '~/composables/useActivity'
 
 const { open, lines, activeRun, elapsedMs, clear, formatDuration, refreshHistory } = useActivity()
+const { t } = useI18n()
 
 let historyTimer: ReturnType<typeof setInterval> | null = null
 
@@ -28,10 +29,10 @@ function formatTime(at: number) {
 
 const statusLabel = computed(() => {
   const s = activeRun.value?.status
-  if (!s || s === 'running') return 'running'
-  if (s === 'success') return 'success'
-  if (s === 'timeout') return 'timed out'
-  return 'failed'
+  if (!s || s === 'running') return t('activity.running')
+  if (s === 'success') return t('activity.success')
+  if (s === 'timeout') return t('activity.timedOut')
+  return t('activity.failed')
 })
 
 const statusClass = computed(() => activeRun.value?.status ?? 'idle')
@@ -42,7 +43,7 @@ const timeLine = computed(() => {
   const elapsed = formatDuration(elapsedMs.value)
   if (run.status === 'running') {
     const left = Math.max(0, run.timeoutMs - elapsedMs.value)
-    return `${elapsed} · timeout ${formatDuration(left)}`
+    return t('activity.timeoutLeft', { elapsed, left: formatDuration(left) })
   }
   return run.phase
 })
@@ -52,11 +53,11 @@ const timeLine = computed(() => {
   <section class="panel" :class="{ collapsed: !open }" aria-label="Activity">
     <header class="bar" @click="toggle">
       <span class="grip" aria-hidden="true" />
-      <span class="title">Activity</span>
+      <span class="title">{{ t('activity.title') }}</span>
       <span v-if="activeRun" class="pill" :class="statusClass">{{ statusLabel }}</span>
       <span v-if="activeRun?.status === 'running'" class="bar-elapsed">{{ formatDuration(elapsedMs) }}</span>
       <span class="grow" />
-      <button type="button" class="icon-btn" @click.stop="clear">Clear</button>
+      <button type="button" class="icon-btn" @click.stop="clear">{{ t('common.clear') }}</button>
       <span class="chev" aria-hidden="true">{{ open ? '▾' : '▴' }}</span>
     </header>
     <div v-show="open" class="body" :style="{ height: `${height}px` }">
@@ -76,9 +77,7 @@ const timeLine = computed(() => {
         <p v-if="activeRun.error && activeRun.status !== 'success'" class="current-detail err">{{ activeRun.error }}</p>
       </div>
 
-      <p v-if="!lines.length && !activeRun" class="empty">
-        Pipeline actions (scan, match, tailor, export, settings) appear here — newest first. Server runs reload on refresh.
-      </p>
+      <p v-if="!lines.length && !activeRun" class="empty">{{ t('activity.empty') }}</p>
       <ul v-else class="log">
         <li v-for="line in lines" :key="line.id" :class="['line', line.level]">
           <span class="ts">{{ formatTime(line.at) }}</span>

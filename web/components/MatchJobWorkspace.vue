@@ -51,6 +51,7 @@ const decision = ref<string | null>(null)
 const tailoring = ref(false)
 const router = useRouter()
 const { track, tailorJob, actionErrorMessage } = useActivity()
+const { t } = useI18n()
 
 const dimensionRows = computed(() => {
   if (!match.value) return []
@@ -85,7 +86,7 @@ function messageFromFetchError(e: unknown): string {
 }
 
 function matchLabel() {
-  return job.value ? `Match · ${job.value.title}` : 'Match job'
+  return job.value ? t('actions.matchJob', { title: job.value.title }) : t('actions.matchGeneric')
 }
 
 async function runMatch() {
@@ -95,7 +96,7 @@ async function runMatch() {
     await loadJob()
     match.value = await track(matchLabel(), () =>
       $fetch<MatchResult>(`/api/match/${encodeJobIdForApi(jobId.value)}`, { method: 'POST' }),
-      { successDetail: (r) => `score ${r.total}/25` },
+      { successDetail: (r) => t('actions.matchScore', { total: r.total }) },
     )
   } catch (e) {
     const msg = messageFromFetchError(e)
@@ -113,7 +114,11 @@ async function runMatch() {
 async function setDecision(status: string) {
   const who = job.value?.company ?? 'job'
   const verb =
-    status === 'discarded' ? `Skip · ${who}` : status === 'shortlisted' ? `Shortlist · ${who}` : `Pipeline · ${who} → ${status}`
+    status === 'discarded'
+      ? t('actions.skipJob', { who })
+      : status === 'shortlisted'
+        ? t('actions.shortlistJob', { who })
+        : t('actions.pipelineJob', { who, status })
   await track(verb, () =>
     $fetch(`/api/jobs/${encodeJobIdForApi(jobId.value)}`, {
       method: 'PUT',
