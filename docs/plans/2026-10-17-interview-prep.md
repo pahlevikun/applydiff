@@ -32,11 +32,41 @@ Aturan: **adopsi struktur, tulis konten sendiri.** Jangan copy teks berbayar.
 
 ## Framework yang di-ship sebagai data
 
-Bukan prosa. Tiap framework = langkah + timebox + rubrik + pertanyaan probe,
-disimpan di DB, dipakai TUI/Web/CLI.
+Bukan prosa. Tiap framework = langkah + timebox + **output yang diharapkan** +
+pertanyaan probe + rubrik. Disimpan di DB, dipakai TUI/Web/CLI.
 
-1. **System design** — 6 langkah: requirements → sizing → arsitektur → data
-   model → deep dive 1–3 → failure/observability → tradeoff recap.
+### System design — 6 langkah, 45 menit
+
+Urutan ini penting: **API & data model sebelum arsitektur**. Kontrak dulu,
+komponen belakangan.
+
+| Menit | Langkah | Output wajib |
+|---|---|---|
+| 0–5 | Clarify requirements | scope + functional/non-functional |
+| 5–10 | Estimate scale | 3 angka: QPS, storage, bandwidth |
+| 10–15 | API & data model | endpoint + entitas utama |
+| 15–25 | High-level architecture | diagram + request flow end-to-end |
+| 25–40 | Deep dive 1–2 area | problem → solusi → trade-off |
+| 40–45 | Wrap up | ringkasan + gap + 1 pertanyaan |
+
+Aturan tiap langkah punya **timer** dan **indikator output**. Kalau timer habis
+sebelum output ada, mock menandai langkah itu sebagai lemah.
+
+### Mindset — 7 pelajaran sebelum framework
+
+Modul terpisah, bukan basa-basi. Tiap pelajaran = 1 konsep + 1 contoh
+salah/benar:
+
+1. Interview itu rapat dengan client, bukan ujian.
+2. Jangan takut bertanya.
+3. Think out loud — diam = interviewer buta.
+4. Gak harus pernah pakai teknologinya.
+5. Defend your decisions (dan tahu kapan berubah).
+6. Jangan tunggu desain sempurna.
+7. "Lulus" = interviewer yakin bisa kerja sama sama elu.
+
+### Framework lainnya
+
 2. **Coding** — clarify → contoh → brute force → optimasi → kode → tes →
    kompleksitas.
 3. **Behavioral** — STAR dengan Action 70%, wajib 2 cerita per kategori
