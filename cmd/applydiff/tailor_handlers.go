@@ -27,7 +27,7 @@ func (s *server) handleTailor(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string) {
-	j, err := s.store.GetJob(r.Context(), jobID)
+	j, err := s.app.Store.GetJob(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "job not found", http.StatusNotFound)
@@ -36,35 +36,35 @@ func (s *server) postTailor(w http.ResponseWriter, r *http.Request, jobID string
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	master, err := s.store.LoadMaster(r.Context())
+	master, err := s.app.Store.LoadMaster(r.Context())
 	if err != nil {
 		http.Error(w, "no master cv saved", http.StatusNotFound)
 		return
 	}
-	facts, err := s.store.LoadFacts(r.Context())
+	facts, err := s.app.Store.LoadFacts(r.Context())
 	if err != nil {
 		facts = s.factsFromFile()
 	}
-	eng := &tailor.Engine{Runner: s.llm}
+	eng := &tailor.Engine{Runner: s.app.LLM}
 	hunks, err := eng.Generate(r.Context(), *j, master, facts)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	prop, err := s.store.SaveProposal(r.Context(), jobID, hunks)
+	prop, err := s.app.Store.SaveProposal(r.Context(), jobID, hunks)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if j.Status == "discovered" || j.Status == "matched" {
-		_ = s.store.UpdateJobStatus(r.Context(), jobID, "tailoring")
+		_ = s.app.Store.UpdateJobStatus(r.Context(), jobID, "tailoring")
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(prop)
 }
 
 func (s *server) getTailor(w http.ResponseWriter, r *http.Request, jobID string) {
-	prop, err := s.store.LoadProposal(r.Context(), jobID)
+	prop, err := s.app.Store.LoadProposal(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "no proposal", http.StatusNotFound)
@@ -100,7 +100,7 @@ func (s *server) handleHunkAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown action", http.StatusBadRequest)
 		return
 	}
-	h, err := s.store.GetHunk(r.Context(), hunkID)
+	h, err := s.app.Store.GetHunk(r.Context(), hunkID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "hunk not found", http.StatusNotFound)
@@ -113,16 +113,16 @@ func (s *server) handleHunkAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "hunk blocked by facts gate", http.StatusConflict)
 		return
 	}
-	if err := s.store.SetHunkStatus(r.Context(), hunkID, status); err != nil {
+	if err := s.app.Store.SetHunkStatus(r.Context(), hunkID, status); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	jobID, err := s.store.JobIDForHunk(r.Context(), hunkID)
+	jobID, err := s.app.Store.JobIDForHunk(r.Context(), hunkID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	prop, err := s.store.LoadProposal(r.Context(), jobID)
+	prop, err := s.app.Store.LoadProposal(r.Context(), jobID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -7,3 +7,4 @@ dist/
 *.aux
 *.log
 *.out
+bin/

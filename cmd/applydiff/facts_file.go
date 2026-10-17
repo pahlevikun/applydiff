@@ -1,26 +1,15 @@
 package main
 
 import (
-	"os"
+	"context"
 
 	"github.com/pahlevikun/applydiff/internal/cv"
 )
 
 func (s *server) factsFromFile() *cv.Facts {
-	if s.facts != nil {
-		return s.facts
+	f := s.app.FactsOrFile(context.Background())
+	if f != nil {
+		return f
 	}
-	path := os.Getenv("FACTS_PATH")
-	if path == "" {
-		path = "facts.json"
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return &cv.Facts{Facts: map[string]string{}}
-	}
-	f, err := cv.LoadFactsJSON(data)
-	if err != nil {
-		return &cv.Facts{Facts: map[string]string{}}
-	}
-	return f
+	return &cv.Facts{Facts: map[string]string{}}
 }

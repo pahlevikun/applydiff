@@ -28,7 +28,7 @@ func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) computeMatch(w http.ResponseWriter, r *http.Request, jobID string) {
-	j, err := s.store.GetJob(r.Context(), jobID)
+	j, err := s.app.Store.GetJob(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "job not found", http.StatusNotFound)
@@ -37,25 +37,25 @@ func (s *server) computeMatch(w http.ResponseWriter, r *http.Request, jobID stri
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	doc, err := s.store.LoadMaster(r.Context())
+	doc, err := s.app.Store.LoadMaster(r.Context())
 	if err != nil {
 		http.Error(w, "no master cv saved", http.StatusNotFound)
 		return
 	}
 	res := match.Evaluate(match.Input{Job: *j, CV: doc})
-	if err := s.store.SaveMatchResult(r.Context(), res); err != nil {
+	if err := s.app.Store.SaveMatchResult(r.Context(), res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if j.Status == "discovered" {
-		_ = s.store.UpdateJobStatus(r.Context(), jobID, "matched")
+		_ = s.app.Store.UpdateJobStatus(r.Context(), jobID, "matched")
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(res)
 }
 
 func (s *server) getMatch(w http.ResponseWriter, r *http.Request, jobID string) {
-	res, err := s.store.LoadMatchResult(r.Context(), jobID)
+	res, err := s.app.Store.LoadMatchResult(r.Context(), jobID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "no match result", http.StatusNotFound)
@@ -90,7 +90,7 @@ func (s *server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "status required", http.StatusBadRequest)
 		return
 	}
-	if err := s.store.UpdateJobStatus(r.Context(), rest, body.Status); err != nil {
+	if err := s.app.Store.UpdateJobStatus(r.Context(), rest, body.Status); err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "job not found", http.StatusNotFound)
 			return

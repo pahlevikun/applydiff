@@ -167,8 +167,8 @@ onMounted(() => {
   margin: 0 auto;
   padding: 1.5rem 1rem 4rem;
   font-family: system-ui, sans-serif;
-  color: #e7eaf0;
-  background: #0b0e13;
+  color: var(--fg);
+  background: var(--bg);
   min-height: 100vh;
 }
 .bar {
@@ -179,12 +179,12 @@ onMounted(() => {
   margin-bottom: 1.25rem;
 }
 .back {
-  color: #8b95a5;
+  color: var(--muted);
   text-decoration: none;
   font-size: 0.9rem;
 }
 .back:hover {
-  color: #3fd0be;
+  color: var(--accent);
 }
 .headline h1 {
   margin: 0;
@@ -192,7 +192,7 @@ onMounted(() => {
 }
 .sub {
   margin: 0.25rem 0 0;
-  color: #8b95a5;
+  color: var(--muted);
   font-size: 0.9rem;
 }
 .score {
@@ -202,16 +202,16 @@ onMounted(() => {
 .score-num {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #3fd0be;
+  color: var(--accent);
 }
 .score-max {
-  color: #5c6675;
+  color: var(--dim);
 }
 .error {
-  color: #f0553f;
+  color: var(--del);
 }
 .meta {
-  color: #8b95a5;
+  color: var(--muted);
 }
 .legit {
   display: flex;
@@ -223,27 +223,27 @@ onMounted(() => {
   font-size: 0.75rem;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  border: 1px solid #232a36;
+  border: 1px solid var(--line);
 }
 .flag.ok {
-  background: #0e2a17;
-  color: #3fb950;
+  background: var(--add-bg);
+  color: var(--add);
 }
 .flag.warn {
-  background: #2a220e;
-  color: #d9a441;
+  background: var(--amber-bg);
+  color: var(--amber);
 }
 .fit {
   margin-bottom: 1.25rem;
   padding: 1rem;
-  background: #11151d;
-  border: 1px solid #232a36;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
 }
 .fit h2 {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
-  color: #8b95a5;
+  color: var(--muted);
   font-weight: 600;
 }
 .fit-row {
@@ -258,18 +258,18 @@ onMounted(() => {
 }
 .fit-track {
   height: 8px;
-  background: #171c26;
+  background: var(--surface2);
   border-radius: 4px;
   overflow: hidden;
 }
 .fit-fill {
   height: 100%;
-  background: #3fd0be;
+  background: var(--accent);
   border-radius: 4px;
 }
 .fit-score {
   font-size: 0.8rem;
-  color: #8b95a5;
+  color: var(--muted);
   text-align: right;
 }
 .split {
@@ -283,8 +283,8 @@ onMounted(() => {
   }
 }
 .panel {
-  background: #11151d;
-  border: 1px solid #232a36;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
   padding: 1rem;
   min-height: 12rem;
@@ -292,7 +292,7 @@ onMounted(() => {
 .panel h2 {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
-  color: #8b95a5;
+  color: var(--muted);
 }
 .jd {
   margin: 0;
@@ -300,7 +300,7 @@ onMounted(() => {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
-  color: #c5cdd8;
+  color: var(--muted);
 }
 .reqs {
   list-style: none;
@@ -309,7 +309,7 @@ onMounted(() => {
 }
 .req {
   padding: 0.65rem 0;
-  border-bottom: 1px solid #232a36;
+  border-bottom: 1px solid var(--line);
 }
 .req:last-child {
   border-bottom: none;
@@ -330,34 +330,34 @@ onMounted(() => {
   border-radius: 4px;
 }
 .req.match .badge {
-  background: #0e2a17;
-  color: #3fb950;
+  background: var(--add-bg);
+  color: var(--add);
 }
 .req.partial .badge {
-  background: #2a220e;
-  color: #d9a441;
+  background: var(--amber-bg);
+  color: var(--amber);
 }
 .req.gap .badge {
-  background: #2a1210;
-  color: #f0553f;
+  background: var(--del-bg);
+  color: var(--del);
 }
 .field {
   font-family: ui-monospace, monospace;
   font-size: 0.7rem;
-  color: #5c6675;
+  color: var(--dim);
 }
 .cv-snippet {
   margin: 0.35rem 0 0;
   font-size: 0.78rem;
-  color: #8b95a5;
+  color: var(--muted);
 }
 .actions {
   position: sticky;
   bottom: 0;
   margin-top: 1.5rem;
   padding: 1rem;
-  background: #11151d;
-  border: 1px solid #232a36;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
   display: flex;
   flex-wrap: wrap;
@@ -372,20 +372,20 @@ onMounted(() => {
   cursor: pointer;
 }
 .skip {
-  background: #171c26;
-  color: #8b95a5;
+  background: var(--surface2);
+  color: var(--muted);
 }
 .shortlist {
-  background: #0e2a17;
-  color: #3fb950;
+  background: var(--add-bg);
+  color: var(--add);
 }
 .tailor {
-  background: #3fd0be;
-  color: #0b0e13;
+  background: var(--accent);
+  color: var(--bg);
 }
 .decision-note {
   margin-left: auto;
   font-size: 0.85rem;
-  color: #8b95a5;
+  color: var(--muted);
 }
 </style>

@@ -23,7 +23,7 @@ func (s *server) handleDBExport(w http.ResponseWriter, r *http.Request) {
 	tmp.Close()
 	defer os.Remove(tmpPath)
 
-	if err := s.store.ExportDB(r.Context(), tmpPath); err != nil {
+	if err := s.app.Store.ExportDB(r.Context(), tmpPath); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -64,7 +64,7 @@ func (s *server) handleDBImport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := s.store.Close(); err != nil {
+	if err := s.app.Store.Close(); err != nil {
 		os.Remove(tmpPath)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,7 +75,7 @@ func (s *server) handleDBImport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	s.store = st
+	s.app.Store = st
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(`{"status":"imported"}`))
 }
