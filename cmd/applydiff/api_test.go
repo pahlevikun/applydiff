@@ -9,13 +9,34 @@ import (
 	"testing"
 
 	"github.com/pahlevikun/applydiff/internal/cv"
+	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/llm"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
+	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/store"
 )
+
+func testServer(st *store.Store, cfg *jobconfig.Config, runner *scan.Runner, llmRunner llm.Runner) *server {
+	if cfg == nil {
+		cfg = &jobconfig.Config{}
+	}
+	app := &runtime.App{
+		Store:  st,
+		Config: cfg,
+		Runner: runner,
+		LLM:    llmRunner,
+	}
+	if app.Runner == nil {
+		app.Runner = &scan.Runner{Store: st, Config: cfg}
+	}
+	if app.LLM == nil {
+		app.LLM = llm.FakeRunner{Response: `{"hunks":[]}`}
+	}
+	return &server{app: app}
+}
 
 type stubSource struct {
 	jobs []job.Job
@@ -52,17 +73,16 @@ func TestAPIJobsAndScan(t *testing.T) {
 
 	cfg := &jobconfig.Config{
 		Queries: []string{},
-		Filters: jobconfig.Filters{Regions: []string{"global"}, MaxPostedDays: 30},
+		Filters: jobconfig.Filters{Spec: filter.Spec{
+			Regions:       &filter.CategoryRule{Hard: true, Values: []string{"global"}},
+			MaxPostedDays: &filter.IntRule{Hard: true, Max: 30},
+		}},
 	}
-	srv := &server{
-		store: st,
-		cfg:   cfg,
-		runner: &scan.Runner{
-			Store:  st,
-			Config: cfg,
-			Client: &alwaysAliveClient{},
-		},
-	}
+	srv := testServer(st, cfg, &scan.Runner{
+		Store:  st,
+		Config: cfg,
+		Client: &alwaysAliveClient{},
+	}, nil)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/jobs", srv.handleJobs)
@@ -103,7 +123,7 @@ func TestAPIFilterPresetsRoundTrip(t *testing.T) {
 	if err := st.Migrate(ctx); err != nil {
 		t.Fatal(err)
 	}
-	srv := &server{store: st, cfg: &jobconfig.Config{}}
+	srv := testServer(st, &jobconfig.Config{}, nil, nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/filters/presets", srv.handleFilterPresets)
 	mux.HandleFunc("/api/filters/presets/", srv.handleFilterPresets)
@@ -173,7 +193,7 @@ func TestAPIMatchRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	srv := &server{store: st, cfg: &jobconfig.Config{}}
+	srv := testServer(st, &jobconfig.Config{}, nil, nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/match/", srv.handleMatch)
 
@@ -250,11 +270,7 @@ func TestAPITailorRoundTrip(t *testing.T) {
 	}
 
 	canned := `{"hunks":[{"field_id":"exp.1.b1","section":"experience","before":"Built APIs","after":"Architected distributed Go APIs","rationale":"JD fit","evidence":[]}]}`
-	srv := &server{
-		store: st,
-		cfg:   &jobconfig.Config{},
-		llm:   llm.FakeRunner{Response: canned},
-	}
+	srv := testServer(st, &jobconfig.Config{}, nil, llm.FakeRunner{Response: canned})
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/tailor/", srv.handleTailor)
 	mux.HandleFunc("/api/hunks/", srv.handleHunkAction)
@@ -335,10 +351,7 @@ func TestAPIApplicationsAndExport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	srv := &server{
-		store: st,
-		cfg:   &jobconfig.Config{Queries: []string{"golang remote"}},
-	}
+	srv := testServer(st, &jobconfig.Config{Queries: []string{"golang remote"}}, nil, nil)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/applications", srv.handleApplicationsList)
 	mux.HandleFunc("/api/applications/", srv.handleApplicationStatus)
