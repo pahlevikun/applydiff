@@ -1,19 +1,30 @@
+<script setup lang="ts">
+import { interviewPrepEnabled } from '~/utils/features'
+
+const route = useRoute()
+const { t } = useI18n()
+const isMatchNav = computed(() => route.path === '/match' || route.path.startsWith('/match/'))
+const isDiffNav = computed(() => route.path === '/diff' || route.path.startsWith('/diff/'))
+</script>
+
 <template>
   <div class="shell">
     <header class="topbar">
-      <div class="brand">ApplyDiff</div>
+      <div class="brand">{{ t('brand') }}</div>
       <nav class="nav" aria-label="Main">
-        <NuxtLink to="/jobs" class="nav-link">Jobs</NuxtLink>
-        <NuxtLink to="/match" class="nav-link">Match</NuxtLink>
-        <NuxtLink to="/diff" class="nav-link">Diff</NuxtLink>
-        <NuxtLink to="/cv" class="nav-link">My CV</NuxtLink>
-        <NuxtLink to="/interview" class="nav-link">Interview</NuxtLink>
-        <NuxtLink to="/sources" class="nav-link">Sources</NuxtLink>
+        <NuxtLink to="/jobs" class="nav-link">{{ t('nav.jobs') }}</NuxtLink>
+        <NuxtLink to="/match" class="nav-link" :class="{ 'router-link-active': isMatchNav }">{{ t('nav.match') }}</NuxtLink>
+        <NuxtLink to="/diff" class="nav-link" :class="{ 'router-link-active': isDiffNav }">{{ t('nav.diff') }}</NuxtLink>
+        <NuxtLink to="/cv" class="nav-link">{{ t('nav.cv') }}</NuxtLink>
+        <NuxtLink to="/applications" class="nav-link">{{ t('nav.applications') }}</NuxtLink>
+        <NuxtLink v-if="interviewPrepEnabled" to="/interview" class="nav-link">{{ t('nav.interview') }}</NuxtLink>
+        <NuxtLink to="/sources" class="nav-link">{{ t('nav.sources') }}</NuxtLink>
       </nav>
     </header>
     <main class="main">
       <NuxtPage />
     </main>
+    <ActivityPanel />
   </div>
 </template>
 
@@ -21,7 +32,7 @@
 @import url('~/assets/theme.css');
 
 .shell {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -66,5 +77,6 @@
 .main {
   flex: 1;
   min-height: 0;
+  overflow: auto;
 }
 </style>

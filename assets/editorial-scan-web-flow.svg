@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="1200" height="680" fill="none" role="img" aria-label="What happens when you click Scan on the Jobs page">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#b86b11"/>
+    </marker>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="678" rx="12" fill="#fbfaf7" stroke="#e6e3db" stroke-width="2"/>
+
+  <text x="56" y="52" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#b86b11" letter-spacing="1.2">04 / PROGRESSION &#183; WEB SCAN BUTTON (0 LLM TOKENS)</text>
+  <text x="56" y="88" font-family="IBM Plex Sans, -apple-system, sans-serif" font-size="28" font-weight="700" fill="#1c1f25" letter-spacing="-0.5">Click Scan &#8594; the server fetches boards, filters in Go, then refreshes your job list</text>
+  <text x="56" y="116" font-family="IBM Plex Sans, sans-serif" font-size="15" fill="#606772">Synchronous POST (up to 5 min). Same pipeline as applydiff scan &#183; no model calls.</text>
+
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="#e6e3db" stroke-width="1.5"/>
+
+  <rect x="56" y="150" width="520" height="28" rx="5" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="70" y="168" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">PHASE A &#183; BROWSER (Jobs page)</text>
+  <rect x="592" y="150" width="552" height="28" rx="5" fill="#1c1f25" stroke="#b86b11"/>
+  <text x="606" y="168" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">PHASE B &#183; applydiff serve &#8594; scan.Runner.Run</text>
+
+  <rect x="56" y="196" width="200" height="88" rx="8" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="70" y="220" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="#1c1f25">Scan button</text>
+  <text x="70" y="240" font-family="IBM Plex Mono, monospace" font-size="11" fill="#606772">scanning = true</text>
+  <text x="70" y="258" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#606772">disabled while busy</text>
+  <text x="70" y="274" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="#9098a3">web/pages/jobs.vue</text>
+
+  <path d="M256 240 L300 240" stroke="#b86b11" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="300" y="196" width="276" height="88" rx="8" fill="#ffffff" stroke="#b86b11" stroke-width="1.5"/>
+  <text x="314" y="220" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#1c1f25">POST /api/scan</text>
+  <text x="314" y="240" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">Blocks until JSON returns</text>
+  <text x="314" y="258" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#606772">ctx timeout: 5 minutes</text>
+  <text x="314" y="274" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="#9098a3">cmd/applydiff/httpserver.go</text>
+
+  <path d="M576 240 L620 240" stroke="#b86b11" stroke-width="2"/>
+
+  <text x="620" y="192" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">PER SOURCE (enabled in config)</text>
+
+  <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#606772">
+    <text x="620" y="214">01 fetch</text>
+    <text x="700" y="214">02 cap</text>
+    <text x="760" y="214">03 dedupe</text>
+    <text x="840" y="214">04 extract</text>
+    <text x="920" y="214">05 risk</text>
+    <text x="1000" y="214">06 filter</text>
+    <text x="1080" y="214">07 live?</text>
+  </g>
+
+  <line x1="620" y1="222" x2="1144" y2="222" stroke="#e6e3db"/>
+
+  <rect x="620" y="234" width="160" height="120" rx="6" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="632" y="254" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#1c1f25">HTTP fetch</text>
+  <text x="632" y="272" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">greenhouse</text>
+  <text x="632" y="288" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">remotive, remoteok</text>
+  <text x="632" y="304" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">jobicy, wwr, nomads</text>
+  <text x="632" y="340" font-family="IBM Plex Mono, monospace" font-size="9" fill="#9098a3">last_scan in SQLite</text>
+
+  <path d="M780 294 L820 294" stroke="#d8d4ca" stroke-width="1.5"/>
+
+  <rect x="820" y="234" width="130" height="52" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="832" y="254" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#1c1f25">caps</text>
+  <text x="832" y="272" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">per_source, max/scan</text>
+
+  <rect x="820" y="296" width="130" height="58" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="832" y="316" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#1c1f25">dedupe</text>
+  <text x="832" y="334" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">URL + description hash</text>
+
+  <path d="M950 294 L990 294" stroke="#d8d4ca" stroke-width="1.5"/>
+
+  <rect x="990" y="234" width="154" height="120" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="1002" y="254" font-family="IBM Plex Mono, monospace" font-size="10" font-weight="600" fill="#1c1f25">per job</text>
+  <text x="1002" y="272" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">extract fields from JD</text>
+  <text x="1002" y="288" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">risk rules (scam screen)</text>
+  <text x="1002" y="304" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">hard/soft filters</text>
+  <text x="1002" y="320" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">URL liveness check</text>
+  <text x="1002" y="340" font-family="IBM Plex Mono, monospace" font-size="9" fill="#9098a3">internal/scan/run.go</text>
+
+  <line x1="56" y1="380" x2="1144" y2="380" stroke="#e6e3db" stroke-width="1.5"/>
+  <text x="56" y="408" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">WRITES TO SQLite (app-data applydiff.db)</text>
+
+  <rect x="56" y="424" width="240" height="72" rx="8" fill="#9ccb5a" fill-opacity="0.14" stroke="#6f9440"/>
+  <text x="70" y="448" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#3b571c">stored</text>
+  <text x="70" y="468" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#1c1f25">status: discovered</text>
+  <text x="70" y="484" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">shown in job feed</text>
+
+  <rect x="312" y="424" width="240" height="72" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="326" y="448" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">skipped</text>
+  <text x="326" y="468" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">filter or risk bounds</text>
+  <text x="326" y="484" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">filter_skip_reason set</text>
+
+  <rect x="568" y="424" width="240" height="72" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="582" y="448" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">dead</text>
+  <text x="582" y="468" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">listing URL not alive</text>
+  <text x="582" y="484" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">counted, not stored</text>
+
+  <path d="M824 460 C900 460, 900 320, 56 320" stroke="#b86b11" stroke-width="1.5" fill="none" stroke-dasharray="6 4"/>
+  <rect x="824" y="424" width="320" height="100" rx="8" fill="#2a1a0e" stroke="#ffb454" stroke-width="1.5"/>
+  <text x="838" y="448" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">JSON to UI</text>
+  <text x="838" y="468" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#f0e6d2">{ fetched, stored, skipped, dead }</text>
+  <text x="838" y="488" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#a99b83">then GET /api/jobs, reload list</text>
+  <text x="838" y="508" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#a99b83">Last scan summary line on Jobs</text>
+
+  <rect x="56" y="548" width="1088" height="56" rx="8" fill="#ffffff" stroke="#e6e3db"/>
+  <text x="70" y="572" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#606772">NOT ON THIS PATH</text>
+  <text x="70" y="590" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">LLM tailor, MCP async scan, auto-approve, Docker, Match (run Match separately)</text>
+
+  <text x="56" y="638" font-family="IBM Plex Mono, monospace" font-size="10" fill="#9098a3">Source: jobs.vue runScan, httpserver handleScan, internal/scan/run.go, verified Oct 2026</text>
+</svg>

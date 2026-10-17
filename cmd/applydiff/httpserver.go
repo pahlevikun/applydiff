@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/scan"
 )
@@ -34,9 +35,17 @@ func runHTTPServer(port string, app *runtime.App) {
 	mux.HandleFunc("/api/db/export", srv.handleDBExport)
 	mux.HandleFunc("/api/db/import", srv.handleDBImport)
 	mux.HandleFunc("/api/config", srv.handleConfig)
+	mux.HandleFunc("/api/runs/", srv.handleRuns)
+	mux.HandleFunc("/api/runs", srv.handleRuns)
+	mux.HandleFunc("/api/pipeline", srv.handlePipeline)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
-	mux.HandleFunc("/api/interview/stories/", srv.handleInterviewStory)
-	mux.HandleFunc("/api/interview/", srv.handleInterview)
+	if features.InterviewPrepEnabled {
+		mux.HandleFunc("/api/interview/stories/", srv.handleInterviewStory)
+		mux.HandleFunc("/api/interview/", srv.handleInterview)
+	} else {
+		mux.HandleFunc("/api/interview/stories/", interviewPrepDisabled)
+		mux.HandleFunc("/api/interview/", interviewPrepDisabled)
+	}
 	mountWebUI(mux)
 
 	addr := ":" + port

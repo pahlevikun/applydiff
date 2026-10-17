@@ -10,6 +10,24 @@ type ApplicationRow = {
   referrer: string
 }
 
+type PipelineJob = {
+  job_id: string
+  company: string
+  title: string
+  url: string
+  status: string
+  job_feed_status: string
+  has_proposal: boolean
+}
+
+type PipelineView = {
+  matched: PipelineJob[]
+  shortlisted: PipelineJob[]
+  tailoring: PipelineJob[]
+  ready: PipelineJob[]
+  with_proposal: PipelineJob[]
+}
+
 type ExportResult = {
   dir: string
   cv_tex: string
@@ -17,28 +35,79 @@ type ExportResult = {
   compile_note?: string
 }
 
+type Tab = 'all' | 'matched' | 'shortlisted' | 'tailoring' | 'ready' | 'with_proposal'
+
+const tab = ref<Tab>('all')
 const rows = ref<ApplicationRow[]>([])
+const pipeline = ref<PipelineView | null>(null)
 const error = ref('')
 const exporting = ref<string | null>(null)
 const lastExport = ref<ExportResult | null>(null)
+const { track, actionErrorMessage } = useActivity()
+const { t } = useI18n()
+
+const tabIds: Tab[] = ['all', 'matched', 'shortlisted', 'tailoring', 'ready', 'with_proposal']
+
+const tabLabel = (id: Tab) => {
+  const key =
+    id === 'with_proposal' ? 'applications.tabs.withProposal' : `applications.tabs.${id}`
+  return t(key)
+}
+
+const tabHint = (id: Tab) => {
+  const key =
+    id === 'with_proposal' ? 'applications.tabHints.withProposal' : `applications.tabHints.${id}`
+  return t(key)
+}
+
+const activeHint = computed(() => tabHint(tab.value))
+
+const pipelineRows = computed((): PipelineJob[] => {
+  if (!pipeline.value) return []
+  switch (tab.value) {
+    case 'matched':
+      return pipeline.value.matched
+    case 'shortlisted':
+      return pipeline.value.shortlisted
+    case 'tailoring':
+      return pipeline.value.tailoring
+    case 'ready':
+      return pipeline.value.ready
+    case 'with_proposal':
+      return pipeline.value.with_proposal
+    default:
+      return []
+  }
+})
 
 async function load() {
   error.value = ''
   try {
-    rows.value = await $fetch<ApplicationRow[]>('/api/applications')
+    rows.value = (await $fetch<ApplicationRow[]>('/api/applications')) ?? []
+    pipeline.value = (await $fetch<PipelineView>('/api/pipeline')) ?? {
+      matched: [],
+      shortlisted: [],
+      tailoring: [],
+      ready: [],
+      with_proposal: [],
+    }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to load applications'
+    error.value = e instanceof Error ? e.message : t('errors.loadApplications')
   }
 }
 
 async function runExport(jobId: string) {
   exporting.value = jobId
   error.value = ''
+  const row = rows.value.find((r) => r.job_id === jobId)
+  const label = row ? t('actions.exportApplication', { title: row.title }) : t('actions.exportGeneric')
   try {
-    lastExport.value = await $fetch<ExportResult>(`/api/export/${jobId}`, { method: 'POST' })
+    lastExport.value = await track(label, () => $fetch<ExportResult>(`/api/export/${encodeURIComponent(jobId)}`, { method: 'POST' }), {
+      successDetail: (r) => (r.pdf_compiled ? t('actions.exportPdfReady') : t('actions.exportLatex')),
+    })
     await load()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Export failed'
+    error.value = actionErrorMessage(e)
   } finally {
     exporting.value = null
   }
@@ -48,92 +117,148 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="wrap">
-    <header class="topbar">
-      <NuxtLink to="/jobs" class="brand"><span class="dot" /> ApplyDiff</NuxtLink>
-      <nav class="nav">
-        <NuxtLink to="/jobs">Jobs</NuxtLink>
-        <NuxtLink to="/applications" class="on">Applications</NuxtLink>
-        <NuxtLink to="/cv">My CV</NuxtLink>
-        <NuxtLink to="/sources">Sources</NuxtLink>
-      </nav>
+  <div class="page">
+    <header class="bar">
+      <h1>{{ t('applications.title') }}</h1>
+      <p class="lede">{{ t('applications.lede') }}</p>
     </header>
+
+    <nav class="tabs" aria-label="Pipeline filters">
+      <button
+        v-for="id in tabIds"
+        :key="id"
+        type="button"
+        class="tab"
+        :class="{ active: tab === id }"
+        @click="tab = id"
+      >
+        {{ tabLabel(id) }}
+        <span v-if="id !== 'all' && pipeline" class="count">
+          {{
+            id === 'matched'
+              ? pipeline.matched.length
+              : id === 'shortlisted'
+                ? pipeline.shortlisted.length
+                : id === 'tailoring'
+                  ? pipeline.tailoring.length
+                  : id === 'ready'
+                    ? pipeline.ready.length
+                    : id === 'with_proposal'
+                      ? pipeline.with_proposal.length
+                      : ''
+          }}
+        </span>
+      </button>
+    </nav>
+    <p class="hint">{{ activeHint }}</p>
 
     <p v-if="error" class="err">{{ error }}</p>
     <p v-if="lastExport?.compile_note" class="note">{{ lastExport.compile_note }}</p>
 
-    <ul class="list">
+    <ul v-if="tab === 'all'" class="list">
       <li v-for="row in rows" :key="row.job_id" class="item">
         <div class="main">
-          <NuxtLink :to="`/diff/${row.job_id}`" class="title">{{ row.title }}</NuxtLink>
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="title">{{ row.title }}</NuxtLink>
           <span class="muted">{{ row.company }}</span>
           <span class="chip">{{ row.status }}</span>
           <span v-if="row.channel" class="chip channel">{{ row.channel }}</span>
-          <span v-if="row.referrer" class="muted">via {{ row.referrer }}</span>
+          <span v-if="row.referrer" class="muted">{{ t('applications.via', { referrer: row.referrer }) }}</span>
         </div>
         <div class="actions">
-          <NuxtLink :to="`/diff/${row.job_id}`" class="btn ghost">Diff</NuxtLink>
+          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">{{ t('common.match') }}</NuxtLink>
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">{{ t('common.diff') }}</NuxtLink>
           <button
             type="button"
             class="btn"
             :disabled="exporting === row.job_id"
             @click="runExport(row.job_id)"
           >
-            {{ exporting === row.job_id ? 'Exporting…' : 'Export' }}
+            {{ exporting === row.job_id ? t('applications.exporting') : t('applications.export') }}
           </button>
         </div>
         <p v-if="row.follow_up_note" class="follow">{{ row.follow_up_note }}</p>
       </li>
     </ul>
-    <p v-if="!rows.length && !error" class="muted empty">No applications yet — scan jobs and match roles first.</p>
+
+    <ul v-else class="list">
+      <li v-for="row in pipelineRows" :key="row.job_id" class="item">
+        <div class="main">
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="title">{{ row.title }}</NuxtLink>
+          <span class="muted">{{ row.company }}</span>
+          <span class="chip">{{ row.status }}</span>
+          <span v-if="row.has_proposal" class="chip diff">{{ t('applications.chipDiff') }}</span>
+        </div>
+        <div class="actions">
+          <NuxtLink :to="jobRoute('match', row.job_id)" class="btn ghost">{{ t('common.match') }}</NuxtLink>
+          <NuxtLink :to="jobRoute('diff', row.job_id)" class="btn ghost">{{ t('common.diff') }}</NuxtLink>
+        </div>
+      </li>
+    </ul>
+
+    <p v-if="tab === 'all' && !rows.length && !error" class="muted empty">{{ t('applications.emptyAll') }}</p>
+    <p v-else-if="tab !== 'all' && !pipelineRows.length && !error" class="muted empty">{{ t('applications.emptyStage') }}</p>
   </div>
 </template>
 
 <style scoped>
-.wrap {
-  min-height: 100vh;
-  background: var(--bg, var(--bg));
-  color: var(--fg, var(--fg));
+.page {
+  color: var(--fg);
+  background: var(--bg);
+  min-height: 100%;
 }
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--line, var(--line));
+.bar {
+  padding: 1.25rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--accent, var(--accent));
-  text-decoration: none;
+.bar h1 {
+  margin: 0;
+  font-size: 1.35rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent, var(--accent));
-}
-.nav {
-  display: flex;
-  gap: 14px;
-}
-.nav a {
-  color: var(--muted, var(--muted));
-  text-decoration: none;
+.lede {
+  margin: 0.5rem 0 0;
   font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 42rem;
 }
-.nav a.on,
-.nav a:hover {
-  color: var(--fg, var(--fg));
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0.75rem 1.25rem 0;
+}
+.tab {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: var(--r-sm, 7px);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tab.active {
+  color: var(--fg);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+.count {
+  margin-left: 6px;
+  opacity: 0.75;
+}
+.hint {
+  margin: 0;
+  padding: 0.35rem 1.25rem 0.5rem;
+  font-size: 12px;
+  color: var(--dim);
 }
 .list {
   list-style: none;
   margin: 0;
-  padding: 16px;
-  max-width: 960px;
+  padding: 1rem 1.25rem 2rem;
+  max-width: 56rem;
 }
 .item {
   border: 1px solid var(--line, var(--line));
@@ -150,22 +275,27 @@ onMounted(load)
 }
 .title {
   font-weight: 600;
-  color: inherit;
+  color: var(--fg);
   text-decoration: none;
 }
 .title:hover {
-  color: var(--accent, var(--accent));
+  text-decoration: underline;
 }
 .muted {
-  color: var(--muted, var(--muted));
+  color: var(--muted);
+  font-size: 13px;
 }
 .chip {
-  margin-left: auto;
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--surface2, var(--surface2));
+  border-radius: 999px;
+  background: var(--surface2);
+  color: var(--muted);
   text-transform: lowercase;
+}
+.chip.diff {
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 .actions {
   display: flex;
@@ -176,36 +306,37 @@ onMounted(load)
   font-size: 12px;
   padding: 6px 12px;
   border-radius: var(--r-sm, 7px);
-  border: 1px solid var(--line2, var(--line2));
-  background: var(--accent-dim, var(--accent-dim));
-  color: var(--fg, var(--fg));
+  border: 1px solid var(--line);
+  background: var(--fg);
+  color: var(--bg);
   cursor: pointer;
 }
 .btn.ghost {
   background: transparent;
+  color: var(--fg);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
 }
 .btn:disabled {
-  opacity: 0.6;
-  cursor: default;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 .follow {
   margin: 8px 0 0;
   font-size: 12px;
-  color: var(--amber, var(--amber));
+  color: var(--muted);
 }
 .err {
-  color: var(--del, var(--del));
-  padding: 8px 16px;
+  color: #c0392b;
+  padding: 0 1.25rem;
 }
 .note {
-  padding: 8px 16px;
-  color: var(--muted, var(--muted));
+  padding: 0 1.25rem;
   font-size: 12px;
+  color: var(--muted);
 }
 .empty {
-  padding: 24px;
+  padding: 1rem 1.25rem;
 }
 </style>

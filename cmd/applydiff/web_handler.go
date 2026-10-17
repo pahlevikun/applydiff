@@ -36,9 +36,12 @@ func serveEmbedded(w http.ResponseWriter, r *http.Request) {
 	}
 	data, err := fs.ReadFile(sub, name)
 	if err != nil {
-		data, err = fs.ReadFile(sub, "index.html")
-		if err != nil {
+		// SPA fallback: dynamic routes (e.g. /interview/<encoded-job-id>) have no static file.
+		if !strings.Contains(path.Base(name), ".") {
 			data, err = fs.ReadFile(sub, "200.html")
+		}
+		if err != nil {
+			data, err = fs.ReadFile(sub, "index.html")
 		}
 	}
 	if err != nil {

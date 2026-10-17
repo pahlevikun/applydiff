@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/pahlevikun/applydiff/internal/interview"
@@ -211,10 +209,7 @@ func (a *App) ExportInterviewPrep(ctx context.Context, key string, withPDF bool)
 		WeakSteps: weak,
 	}
 	md := interview.RenderPrepMarkdown(doc)
-	outRoot := os.Getenv("OUTPUT_ROOT")
-	if outRoot == "" {
-		outRoot = filepath.Join("output")
-	}
+	outRoot := a.OutputRoot()
 	at := time.Now().UTC()
 	mdPath := interview.PrepOutputPath(outRoot, *j, at)
 	if err := interview.WritePrepMarkdown(mdPath, md); err != nil {

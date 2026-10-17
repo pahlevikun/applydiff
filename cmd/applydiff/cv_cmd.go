@@ -17,7 +17,7 @@ func cmdCV() *cobra.Command {
 
 func cmdCVImport() *cobra.Command {
 	c := &cobra.Command{
-		Use:   "import <master.json>",
+		Use:   "import <master_cv.json>",
 		Short: "Import structured master CV (and sibling facts.json when present)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

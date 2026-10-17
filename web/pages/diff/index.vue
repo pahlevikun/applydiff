@@ -1,5 +1,14 @@
+<script setup lang="ts">
+const jobId = useJobIdFromRoute()
+const { t } = useI18n()
+</script>
+
 <template>
-  <div class="page muted">Select a job from <NuxtLink to="/jobs">Jobs</NuxtLink> to review diffs.</div>
+  <DiffJobWorkspace v-if="jobId" :key="jobId" :job-id="jobId" />
+  <div v-else class="page muted">
+    {{ t('diff.emptyLead') }}
+    <p class="hint">{{ t('diff.emptyHint') }}</p>
+  </div>
 </template>
 
 <style scoped>
@@ -9,7 +18,8 @@
 .muted {
   color: var(--muted);
 }
-a {
-  color: var(--accent);
+.hint {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
 }
 </style>

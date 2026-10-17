@@ -19,6 +19,7 @@ func TestCLIHelpListsSubcommands(t *testing.T) {
 	}
 	out := buf.String()
 	for _, sub := range []string{
+		"doctor", "init", "open",
 		"scan", "jobs", "show", "match", "tailor", "diff", "approve", "reject",
 		"build", "apply", "stats", "export", "import", "serve", "tui",
 	} {

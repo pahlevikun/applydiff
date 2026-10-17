@@ -1,0 +1,20 @@
+{
+  "jobs": [
+    {
+      "id": "test-job-1",
+      "title": "Backend Engineer",
+      "company_name": "Acme",
+      "work_arrangement": "remote",
+      "schedule_type": "4_day_week",
+      "salary": "$120k",
+      "category": "engineering",
+      "level": "senior",
+      "inserted": "2026-10-17T12:00:00Z",
+      "is_expired": false,
+      "locations": [{ "city": "Berlin", "country": "Germany" }]
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "has_more": false
+}

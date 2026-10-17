@@ -12,7 +12,9 @@ func (a *App) SourcesConfigView(ctx context.Context) jobconfig.ConfigView {
 		return jobconfig.ConfigView{}
 	}
 	last, _ := a.Store.LoadSourceScanResults(ctx)
-	return a.Config.BuildView(ctx, func(ctx context.Context, key string) (string, error) {
+	view := a.Config.BuildView(ctx, func(ctx context.Context, key string) (string, error) {
 		return a.Store.GetSetting(ctx, key)
 	}, last)
+	view.ConfigPath = a.CfgPath
+	return view
 }

@@ -44,10 +44,11 @@ func (a *App) ComputeMatch(ctx context.Context, key string, dryRun bool) (*match
 	if err != nil {
 		return nil, err
 	}
-	doc, err := a.Store.LoadMaster(ctx)
+	load, err := a.LoadMasterCV(ctx)
 	if err != nil {
 		return nil, err
 	}
+	doc := load.Document
 	res := match.Evaluate(match.Input{Job: *j, CV: doc})
 	if res.Total < 8 {
 		return &res, ErrNoMatch{Reason: "match score below threshold"}
@@ -79,5 +80,9 @@ func (a *App) LoadMatch(ctx context.Context, key string) (*match.Result, error) 
 
 // MasterCV loads the structured master document.
 func (a *App) MasterCV(ctx context.Context) (*cv.Document, error) {
-	return a.Store.LoadMaster(ctx)
+	load, err := a.LoadMasterCV(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return load.Document, nil
 }

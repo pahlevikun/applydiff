@@ -11,7 +11,7 @@ import (
 )
 
 func TestTexRoundTripPreservesMetrics(t *testing.T) {
-	texPath := filepath.Join("..", "..", "fixtures", "resume_ats_v2.tex")
+	texPath := filepath.Join("..", "..", "cv", "master_cv.tex")
 	doc, facts, err := importer.ImportTex(texPath)
 	if err != nil {
 		t.Fatal(err)

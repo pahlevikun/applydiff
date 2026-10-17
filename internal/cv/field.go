@@ -12,6 +12,10 @@ func (doc *Document) Field(id string) (string, bool) {
 		return doc.Contact.Name, true
 	case "contact.headline":
 		return doc.Contact.Headline, true
+	case "contact.subtitle":
+		return doc.Contact.Subtitle, true
+	case "contact.stack_line":
+		return doc.Contact.StackLine, true
 	case "contact.email":
 		return doc.Contact.Email, true
 	case "contact.site":
@@ -47,6 +51,11 @@ func (doc *Document) Field(id string) (string, bool) {
 		if ed.ID == id {
 			return fmt.Sprintf("%s, %s (%s)", ed.Degree, ed.School, ed.Year), true
 		}
+		for _, b := range ed.Bullets {
+			if b.ID == id {
+				return b.Text, true
+			}
+		}
 	}
 	for _, ach := range doc.Achievements {
 		if ach.ID == id {
@@ -64,6 +73,12 @@ func (doc *Document) SetField(id, value string) error {
 		return nil
 	case "contact.headline":
 		doc.Contact.Headline = value
+		return nil
+	case "contact.subtitle":
+		doc.Contact.Subtitle = value
+		return nil
+	case "contact.stack_line":
+		doc.Contact.StackLine = value
 		return nil
 	case "contact.email":
 		doc.Contact.Email = value
@@ -108,6 +123,12 @@ func (doc *Document) SetField(id, value string) error {
 	for i := range doc.Education {
 		if doc.Education[i].ID == id {
 			return fmt.Errorf("cv: cannot set composite education field %q", id)
+		}
+		for j := range doc.Education[i].Bullets {
+			if doc.Education[i].Bullets[j].ID == id {
+				doc.Education[i].Bullets[j].Text = value
+				return nil
+			}
 		}
 	}
 	for i := range doc.Achievements {

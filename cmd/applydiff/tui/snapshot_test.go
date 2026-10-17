@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/interview"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
@@ -51,6 +52,9 @@ func TestFeedScreenSnapshot(t *testing.T) {
 }
 
 func TestInterviewScreenSnapshot(t *testing.T) {
+	if !features.InterviewPrepEnabled {
+		t.Skip("interview prep disabled")
+	}
 	ctx := context.Background()
 	st, err := store.New(":memory:")
 	if err != nil {

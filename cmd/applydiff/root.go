@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/spf13/cobra"
 )
@@ -41,8 +42,12 @@ func newRootCmd() *cobra.Command {
 	}
 	root.PersistentFlags().BoolVar(&globalJSON, "json", false, "emit JSON on stdout")
 	root.PersistentFlags().BoolVar(&globalDryRun, "dry-run", false, "do not write changes")
+	root.PersistentFlags().BoolVar(&globalConfirm, "confirm", false, "skip interactive approval gate")
 
 	root.AddCommand(
+		cmdDoctor(),
+		cmdInit(),
+		cmdOpen(),
 		cmdScan(),
 		cmdJobs(),
 		cmdShow(),
@@ -59,10 +64,19 @@ func newRootCmd() *cobra.Command {
 		cmdCV(),
 		cmdServe(),
 		cmdTUI(),
-		cmdInterview(),
+		cmdDoctor(),
+		cmdInit(),
+		cmdOpen(),
+		cmdAdd(),
+		cmdPropose(),
+		cmdRuns(),
+		cmdMCP(),
 	)
 	// Legacy entrypoints
 	root.AddCommand(cmdExportDBLegacy(), cmdImportDBLegacy())
+	if features.InterviewPrepEnabled {
+		root.AddCommand(cmdInterview())
+	}
 	return root
 }
 

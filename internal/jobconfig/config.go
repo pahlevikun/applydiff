@@ -21,6 +21,7 @@ type SourcesConfig struct {
 	Jobicy          JobicyConfig          `yaml:"jobicy"`
 	WeWorkRemotely  WeWorkRemotelyConfig  `yaml:"weworkremotely"`
 	WorkingNomads   WorkingNomadsConfig   `yaml:"workingnomads"`
+	FourDayWeek     FourDayWeekConfig     `yaml:"fourdayweek"`
 }
 
 // SourceToggle is shared yaml for simple JSON/RSS boards.
@@ -58,6 +59,10 @@ type WeWorkRemotelyConfig struct {
 }
 
 type WorkingNomadsConfig struct {
+	SourceToggle `yaml:",inline"`
+}
+
+type FourDayWeekConfig struct {
 	SourceToggle `yaml:",inline"`
 }
 

@@ -53,6 +53,8 @@ const presets = ref<Preset[]>([])
 const loading = ref(false)
 const scanning = ref(false)
 const error = ref<string | null>(null)
+const { track, actionErrorMessage } = useActivity()
+const { t } = useI18n()
 const lastScan = ref<ScanResult | null>(null)
 const showFilters = ref(true)
 const searchEl = ref<HTMLInputElement | null>(null)
@@ -61,22 +63,22 @@ const selectedJob = ref(0)
 useSearchFocus(searchEl)
 useListKeys(selectedJob, computed(() => jobs.value.length))
 
-const filterCategories = [
-  { key: 'arrangement', label: 'Work arrangement' },
-  { key: 'weekly_days', label: 'Weekly schedule' },
-  { key: 'async_friendly', label: 'Async / flexible' },
-  { key: 'timezone_overlap_hours', label: 'Timezone overlap' },
-  { key: 'regions', label: 'Region' },
-  { key: 'countries', label: 'Country' },
-  { key: 'employment_type', label: 'Employment type' },
-  { key: 'seniority', label: 'Seniority' },
-  { key: 'salary_min', label: 'Compensation' },
-  { key: 'visa_sponsorship', label: 'Visa' },
-  { key: 'eor_friendly', label: 'EOR / contractor' },
-  { key: 'archetype', label: 'Role archetype' },
-  { key: 'must_have_keywords', label: 'Must-have keywords' },
-  { key: 'benefits', label: 'Benefits' },
-]
+const filterCategoryKeys = [
+  'arrangement',
+  'weekly_days',
+  'async_friendly',
+  'timezone_overlap_hours',
+  'regions',
+  'countries',
+  'employment_type',
+  'seniority',
+  'salary_min',
+  'visa_sponsorship',
+  'eor_friendly',
+  'archetype',
+  'must_have_keywords',
+  'benefits',
+] as const
 
 async function loadFilters() {
   try {
@@ -101,12 +103,15 @@ async function loadJobs() {
 
 async function applyPreset(id: string) {
   error.value = null
+  const name = presets.value.find((p) => p.id === id)?.name ?? id
   try {
-    await $fetch(`/api/filters/presets/${id}/apply`, { method: 'POST' })
-    await loadFilters()
-    await loadJobs()
+    await track(t('actions.applyPreset', { name }), async () => {
+      await $fetch(`/api/filters/presets/${id}/apply`, { method: 'POST' })
+      await loadFilters()
+      await loadJobs()
+    })
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Failed to apply preset'
+    error.value = actionErrorMessage(e)
   }
 }
 
@@ -114,10 +119,13 @@ async function runScan() {
   scanning.value = true
   error.value = null
   try {
-    lastScan.value = await $fetch<ScanResult>('/api/scan', { method: 'POST' })
+    lastScan.value = await track(t('actions.jobScan'), () => $fetch<ScanResult>('/api/scan', { method: 'POST' }), {
+      successDetail: (s) =>
+        t('actions.jobScanDetail', { fetched: s.fetched, stored: s.stored, skipped: s.skipped }),
+    })
     await loadJobs()
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Scan failed'
+    error.value = actionErrorMessage(e)
   } finally {
     scanning.value = false
   }
@@ -151,52 +159,51 @@ onMounted(async () => {
 <template>
   <main class="page">
     <header class="bar">
-      <h1>Jobs</h1>
+      <h1>{{ t('jobs.title') }}</h1>
       <input
         ref="searchEl"
         class="search"
         type="search"
-        placeholder="Search (/)"
-        aria-label="Search jobs"
+        :placeholder="t('jobs.searchPlaceholder')"
+        :aria-label="t('jobs.searchAria')"
       />
       <div class="actions">
         <button class="ghost" type="button" @click="showFilters = !showFilters">
-          {{ showFilters ? 'Hide filters' : 'Filters' }}
+          {{ showFilters ? t('jobs.hideFilters') : t('jobs.showFilters') }}
         </button>
         <button class="scan" type="button" :disabled="scanning" @click="runScan">
-          {{ scanning ? 'Scanning…' : 'Scan' }}
+          {{ scanning ? t('common.scanning') : t('common.scan') }}
         </button>
       </div>
     </header>
 
     <aside v-if="showFilters && filters" class="filter-panel">
       <div class="panel-head">
-        <span class="panel-title">Filter preset</span>
+        <span class="panel-title">{{ t('jobs.filterPreset') }}</span>
         <select
           class="preset-select"
           :value="filters.active_preset_id || ''"
           @change="applyPreset(($event.target as HTMLSelectElement).value)"
         >
-          <option value="">Default (config.yaml)</option>
+          <option value="">{{ t('jobs.presetDefault') }}</option>
           <option v-for="p in presets" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </div>
-      <p v-if="filters.active_preset_name" class="active-name">Active: {{ filters.active_preset_name }}</p>
+      <p v-if="filters.active_preset_name" class="active-name">{{ t('jobs.presetActive', { name: filters.active_preset_name }) }}</p>
       <ul class="cat-list">
-        <li v-for="cat in filterCategories" :key="cat.key">
-          <span class="cat-label">{{ cat.label }}</span>
-          <span class="cat-val">{{ categorySummary(cat.key) }}</span>
+        <li v-for="key in filterCategoryKeys" :key="key">
+          <span class="cat-label">{{ t(`jobs.filterCategories.${key}`) }}</span>
+          <span class="cat-val">{{ categorySummary(key) }}</span>
         </li>
       </ul>
-      <NuxtLink to="/sources" class="edit-link">Edit full filter set →</NuxtLink>
+      <NuxtLink to="/sources" class="edit-link">{{ t('jobs.editFilters') }}</NuxtLink>
     </aside>
 
     <p v-if="error" class="error">{{ error }}</p>
     <p v-if="lastScan" class="meta">
-      Last scan: fetched {{ lastScan.fetched }}, stored {{ lastScan.stored }}, skipped {{ lastScan.skipped }}, dead
-      {{ lastScan.dead }}
+      {{ t('jobs.lastScan', { fetched: lastScan.fetched, stored: lastScan.stored, skipped: lastScan.skipped, dead: lastScan.dead }) }}
     </p>
-    <p v-if="loading && !jobs.length" class="meta">Loading…</p>
+    <p v-if="loading && !jobs.length" class="meta">{{ t('common.loading') }}</p>
 
     <ul v-if="jobs.length" class="feed">
       <li v-for="row in jobs" :key="row.job.id" class="row" :class="{ skipped: !row.filter.keep }">
@@ -204,17 +211,18 @@ onMounted(async () => {
           <div class="title-row">
             <a class="title" :href="row.job.url" target="_blank" rel="noopener noreferrer">{{ row.job.title }}</a>
             <span v-if="row.filter.score > 0" class="score">+{{ row.filter.score }}</span>
-            <NuxtLink class="match-link" :to="`/match/${encodeURIComponent(row.job.id)}`">Match</NuxtLink>
+            <NuxtLink class="job-action" :to="jobRoute('match', row.job.id)">{{ t('common.match') }}</NuxtLink>
+            <NuxtLink class="job-action" :to="jobRoute('diff', row.job.id)">{{ t('common.diff') }}</NuxtLink>
           </div>
           <div class="sub">
             <span>{{ row.job.company }}</span>
             <span class="dot">·</span>
             <span class="source">{{ row.job.source }}</span>
-            <span v-if="row.job.arrangement === 'remote' || row.job.remote === 'yes'" class="badge remote">Remote</span>
+            <span v-if="row.job.arrangement === 'remote' || row.job.remote === 'yes'" class="badge remote">{{ t('jobs.remote') }}</span>
             <span v-if="row.job.risk" :class="['badge', row.job.flags?.some((f) => f.severity === 'hard') ? 'risk-hard' : 'risk-soft']">
-              Risk {{ row.job.risk }}
+              {{ t('jobs.risk', { score: row.job.risk }) }}
             </span>
-            <span v-if="row.job.status === 'skipped'" class="badge skip">Skipped</span>
+            <span v-if="row.job.status === 'skipped'" class="badge skip">{{ t('jobs.skipped') }}</span>
             <span class="posted">{{ formatPosted(row.job.posted_at) }}</span>
           </div>
           <p v-if="row.filter.reasons.length" class="reasons">
@@ -223,7 +231,7 @@ onMounted(async () => {
         </div>
       </li>
     </ul>
-    <p v-else-if="!loading" class="meta">No jobs yet. Run a scan to fetch listings.</p>
+    <p v-else-if="!loading" class="meta">{{ t('jobs.empty') }}</p>
   </main>
 </template>
 
@@ -374,7 +382,7 @@ h1 {
   color: var(--amber);
   font-variant-numeric: tabular-nums;
 }
-.match-link {
+.job-action {
   font-size: 0.75rem;
   color: var(--accent);
   text-decoration: none;
@@ -382,7 +390,7 @@ h1 {
   padding: 0.15rem 0.5rem;
   border-radius: 6px;
 }
-.match-link:hover {
+.job-action:hover {
   background: var(--surface2);
 }
 .title:hover {

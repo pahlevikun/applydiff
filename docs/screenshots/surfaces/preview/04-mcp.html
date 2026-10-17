@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>MCP surface</title>
+<style>
+  body { margin: 0; background: #0d0f12; color: #e8e6e1; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  .wrap { padding: 40px; max-width: 1000px; }
+  .label { color: #b86b11; font-size: 11px; letter-spacing: 0.12em; }
+  h1 { font-family: "IBM Plex Sans", sans-serif; color: #ffb454; font-size: 22px; }
+  pre { background: #141820; border: 1px solid #2a3140; border-radius: 10px; padding: 16px; overflow-x: auto; }
+  .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+  .tool { background: #141820; border: 1px solid #2a3140; padding: 8px 10px; border-radius: 6px; font-size: 12px; }
+  .no { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">SURFACE 04 · MCP STDIO</div>
+  <h1>applydiff mcp · Cursor mcp.json</h1>
+  <pre>{
+  "mcpServers": {
+    "applydiff": {
+      "command": "applydiff",
+      "args": ["mcp"]
+    }
+  }
+}</pre>
+  <p>Tools (no approve / build / apply):</p>
+  <div class="tools">
+    <div class="tool">list_jobs</div><div class="tool">show_job</div>
+    <div class="tool">add_job</div><div class="tool">scan (async)</div>
+    <div class="tool">match (async)</div><div class="tool">tailor_context</div>
+    <div class="tool">propose_hunks</div><div class="tool">get_run</div>
+    <div class="tool">review_link</div><div class="tool">interview_kit</div>
+    <div class="tool">doctor</div><div class="tool no">approve ✗</div>
+  </div>
+  <p style="margin-top:16px;color:#7a8494">Install: applydiff mcp install cursor</p>
+</div>
+</body>
+</html>

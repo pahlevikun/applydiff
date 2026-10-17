@@ -16,7 +16,7 @@ func (a *App) Tailor(ctx context.Context, key string, dryRun bool) (*store.Propo
 	if err != nil {
 		return nil, err
 	}
-	master, err := a.Store.LoadMaster(ctx)
+	master, err := a.MasterCV(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func PendingHunks(hunks []tailor.Hunk) int {
 }
 
 // ApproveHunks sets accepted status on listed indices (1-based) or all with all=true.
-func (a *App) ApproveHunks(ctx context.Context, key string, indices []int, all bool, dryRun bool) (*store.Proposal, error) {
+func (a *App) ApproveHunks(ctx context.Context, key string, indices []int, all bool, dryRun bool, actor Actor) (*store.Proposal, error) {
 	prop, err := a.LoadProposal(ctx, key)
 	if err != nil {
 		return nil, err
@@ -102,11 +102,15 @@ func (a *App) ApproveHunks(ctx context.Context, key string, indices []int, all b
 			return nil, err
 		}
 	}
-	return a.LoadProposal(ctx, key)
+	prop, err = a.LoadProposal(ctx, key)
+	if err == nil {
+		a.recordAction(ctx, prop.JobID, "approve", actor, "")
+	}
+	return prop, err
 }
 
 // RejectHunks rejects listed indices (1-based).
-func (a *App) RejectHunks(ctx context.Context, key string, indices []int, dryRun bool) (*store.Proposal, error) {
+func (a *App) RejectHunks(ctx context.Context, key string, indices []int, dryRun bool, actor Actor) (*store.Proposal, error) {
 	prop, err := a.LoadProposal(ctx, key)
 	if err != nil {
 		return nil, err
@@ -135,7 +139,11 @@ func (a *App) RejectHunks(ctx context.Context, key string, indices []int, dryRun
 			return nil, err
 		}
 	}
-	return a.LoadProposal(ctx, key)
+	prop, err = a.LoadProposal(ctx, key)
+	if err == nil {
+		a.recordAction(ctx, prop.JobID, "reject", actor, "")
+	}
+	return prop, err
 }
 
 // RequireAllDecided returns ErrNeedsApproval when pending hunks remain.

@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	prepareDesktopEnv()
 	// Default: serve on PORT for backward compatibility when no subcommand is given.
 	if len(os.Args) == 1 {
 		port := os.Getenv("PORT")

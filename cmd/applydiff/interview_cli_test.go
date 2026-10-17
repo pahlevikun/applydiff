@@ -8,10 +8,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 )
 
 func TestInterviewHelpListsSubcommands(t *testing.T) {
+	if !features.InterviewPrepEnabled {
+		t.Skip("interview prep disabled")
+	}
 	cmd := newRootCmd()
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
@@ -29,6 +33,9 @@ func TestInterviewHelpListsSubcommands(t *testing.T) {
 }
 
 func TestInterviewListHelp(t *testing.T) {
+	if !features.InterviewPrepEnabled {
+		t.Skip("interview prep disabled")
+	}
 	cmd := newRootCmd()
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)
@@ -60,6 +67,9 @@ func moduleRoot(t *testing.T) string {
 }
 
 func TestInterviewKitMissingJobExits2(t *testing.T) {
+	if !features.InterviewPrepEnabled {
+		t.Skip("interview prep disabled")
+	}
 	root := moduleRoot(t)
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "applydiff.db")

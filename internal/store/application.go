@@ -42,22 +42,22 @@ func (s *Store) GetApplication(ctx context.Context, jobID string) (*application.
 func (s *Store) ListApplications(ctx context.Context) ([]application.ListItem, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT j.id, j.company, j.title, j.url,
-		       COALESCE(a.status, 'discovered'),
-		       COALESCE(a.follow_up_note, ''),
-		       COALESCE(a.channel, 'board'),
-		       COALESCE(a.referrer, ''),
-		       COALESCE(a.notes, ''),
-		       COALESCE(a.updated_at, '')
-		FROM jobs j
-		LEFT JOIN applications a ON a.job_id = j.id
+		       a.status,
+		       a.follow_up_note,
+		       a.channel,
+		       a.referrer,
+		       a.notes,
+		       a.updated_at
+		FROM applications a
+		INNER JOIN jobs j ON j.id = a.job_id
 		WHERE j.status != 'dead'
-		ORDER BY COALESCE(a.updated_at, j.posted_at) DESC, j.title ASC
+		ORDER BY a.updated_at DESC, j.title ASC
 	`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var out []application.ListItem
+	out := make([]application.ListItem, 0)
 	for rows.Next() {
 		var item application.ListItem
 		var updated string
