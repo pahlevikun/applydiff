@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 904 256" width="904" height="256" fill="none" role="img" aria-label="ApplyDiff - git diff for your CV">
+  <!-- Solid Flat Application Background (bg: #12100c, line: #2f2a21) -->
+  <rect x="2" y="2" width="900" height="252" rx="18" fill="#12100c" stroke="#2f2a21" stroke-width="2" />
+
+  <!-- LEFT: ICON MARK -->
+  <g transform="translate(28, 60)">
+    <rect x="0" y="0" width="136" height="136" rx="32" fill="#1a1712" stroke="#2f2a21" stroke-width="2" />
+
+    <!-- Mini CV Document -->
+    <path d="M 48 18 H 98 L 116 36 V 108 A 8 8 0 0 1 108 116 H 48 A 8 8 0 0 1 40 108 V 26 A 8 8 0 0 1 48 18 Z"
+          fill="#221e17" stroke="#3d372c" stroke-width="2" stroke-linejoin="round" />
+    <path d="M 98 18 V 30 A 6 6 0 0 0 104 36 H 116 Z"
+          fill="#2f2a21" stroke="#3d372c" stroke-width="1.5" stroke-linejoin="round" />
+
+    <!-- CV Header lines -->
+    <circle cx="53" cy="31" r="2.5" fill="#ffb454" />
+    <rect x="59" y="28.5" width="32" height="5" rx="2.5" fill="#f0e6d2" />
+    <rect x="50" y="37" width="24" height="3.5" rx="1.75" fill="#a99b83" opacity="0.7" />
+    <line x1="48" y1="45" x2="108" y2="45" stroke="#2f2a21" stroke-width="1.5" stroke-linecap="round" />
+
+    <!-- Deleted Hunk (-) (del-bg: #2a1712, del: #e5644e) -->
+    <rect x="48" y="51" width="60" height="16" rx="4" fill="#2a1712" stroke="#e5644e" stroke-opacity="0.5" stroke-width="1" />
+    <rect x="48" y="54" width="2.5" height="10" rx="1.25" fill="#e5644e" />
+    <rect x="54" y="58" width="5" height="2" rx="1" fill="#e5644e" />
+    <rect x="63" y="57" width="38" height="4" rx="2" fill="#e5644e" opacity="0.5" />
+    <line x1="62" y1="59" x2="102" y2="59" stroke="#e5644e" stroke-width="1.2" stroke-linecap="round" />
+
+    <!-- Added Hunk (+) (add-bg: #1d2412, add: #9ccb5a, accent: #ffb454) -->
+    <rect x="48" y="72" width="60" height="18" rx="4" fill="#1d2412" stroke="#9ccb5a" stroke-opacity="0.8" stroke-width="1.2" />
+    <rect x="48" y="75" width="2.5" height="12" rx="1.25" fill="#9ccb5a" />
+    <rect x="53.5" y="80" width="6" height="2" rx="1" fill="#9ccb5a" />
+    <rect x="55.5" y="78" width="2" height="6" rx="1" fill="#9ccb5a" />
+    <rect x="63" y="79" width="30" height="4" rx="2" fill="#9ccb5a" />
+    <rect x="96" y="79" width="7" height="4" rx="2" fill="#ffb454" />
+
+    <!-- Context lines -->
+    <rect x="50" y="96" width="42" height="3.5" rx="1.75" fill="#6f6555" opacity="0.6" />
+    <rect x="50" y="103" width="28" height="3.5" rx="1.75" fill="#6f6555" opacity="0.4" />
+
+    <!-- Git Branch Graph -->
+    <line x1="22" y1="32" x2="22" y2="104" stroke="#3d372c" stroke-width="4" stroke-linecap="round" />
+    <path d="M 22 32 L 22 52 C 22 69, 33 81, 48 81" stroke="#ffb454" stroke-width="4.2" stroke-linecap="round" fill="none" />
+    <circle cx="22" cy="32" r="5.5" fill="#1a1712" stroke="#ffb454" stroke-width="3" />
+    <circle cx="22" cy="52" r="4" fill="#ffb454" stroke="#1a1712" stroke-width="1.5" />
+    <circle cx="48" cy="81" r="3.8" fill="#9ccb5a" stroke="#1a1712" stroke-width="1.5" />
+    <circle cx="22" cy="104" r="4.5" fill="#1a1712" stroke="#3d372c" stroke-width="2.5" />
+
+    <!-- Approval Seal -->
+    <circle cx="110" cy="108" r="9.5" fill="#1a1712" stroke="#ffb454" stroke-width="2" />
+    <path d="M 106 108 L 109 111 L 114.5 105" stroke="#ffb454" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- MIDDLE: BRAND WORDMARK, TAGLINE & FEATURE PILLS -->
+  <text x="184" y="106" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="38" font-weight="700" letter-spacing="-0.6">
+    <tspan fill="#f0e6d2">Apply</tspan><tspan fill="#ffb454">Diff</tspan>
+  </text>
+  <!-- Phosphor Terminal Cursor Block -->
+  <rect x="364" y="78" width="10" height="30" rx="2" fill="#ffb454" opacity="0.85" />
+
+  <text x="186" y="134" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14.5" font-weight="500" fill="#a99b83">
+    git diff for your CV.
+  </text>
+
+  <!-- Feature Pills (Wide enough so CLI · TUI · Web is never clipped) -->
+  <g transform="translate(186, 152)" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11" font-weight="600">
+    <!-- Pill 1: CLI · TUI · Web -->
+    <rect x="0" y="0" width="132" height="26" rx="6" fill="#2a1a0e" stroke="#5c3f12" stroke-width="1.2" />
+    <circle cx="13" cy="13" r="3.5" fill="#ffb454" />
+    <text x="23" y="17" fill="#f0e6d2">CLI &#183; TUI &#183; Web</text>
+
+    <!-- Pill 2: +hunk review -->
+    <rect x="140" y="0" width="100" height="26" rx="6" fill="#1d2412" stroke="#9ccb5a" stroke-opacity="0.45" stroke-width="1.2" />
+    <text x="151" y="17" fill="#9ccb5a">+hunk</text>
+    <text x="191" y="17" fill="#a99b83">review</text>
+  </g>
+
+  <text x="186" y="200" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="11.5" fill="#6f6555">
+    Every application is a branch. Every edit is a hunk.
+  </text>
+
+  <!-- RIGHT: DIFF TERMINAL PREVIEW CARD -->
+  <g transform="translate(456, 22)">
+    <!-- Terminal Card Container (surface: #1a1712, line2: #3d372c) -->
+    <rect x="0" y="0" width="424" height="212" rx="12" fill="#1a1712" stroke="#3d372c" stroke-width="1.5" />
+
+    <!-- Top Bar (surface2: #221e17) -->
+    <path d="M 0 12 A 12 12 0 0 1 12 0 H 412 A 12 12 0 0 1 424 12 V 36 H 0 Z" fill="#221e17" />
+    <line x1="0" y1="36" x2="424" y2="36" stroke="#2f2a21" stroke-width="1.2" />
+
+    <!-- Window Dots -->
+    <circle cx="16" cy="18" r="4" fill="#e5644e" opacity="0.8" />
+    <circle cx="30" cy="18" r="4" fill="#ffb454" opacity="0.8" />
+    <circle cx="44" cy="18" r="4" fill="#9ccb5a" opacity="0.8" />
+
+    <!-- Branch Chip in Topbar -->
+    <rect x="62" y="8" width="176" height="20" rx="5" fill="#2a1a0e" stroke="#5c3f12" stroke-width="1" />
+    <circle cx="73" cy="18" r="3" fill="#ffb454" />
+    <text x="82" y="22" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600" fill="#ffb454">
+      branch: honor/sr-backend
+    </text>
+
+    <!-- Hunk Header Tag -->
+    <text x="312" y="22" font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" fill="#6f6555">
+      @@ exp.gofood @@
+    </text>
+
+    <!-- Diff Content Area -->
+    <g font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">
+      <!-- Context Line -->
+      <text x="16" y="58" fill="#6f6555">14</text>
+      <text x="40" y="58" fill="#a99b83">Senior Software Engineer &#183; GoTo Group</text>
+
+      <!-- Deleted Hunk Row (-) (del-bg: #2a1712, del: #e5644e) -->
+      <rect x="10" y="68" width="404" height="32" rx="6" fill="#2a1712" stroke="#e5644e" stroke-opacity="0.4" stroke-width="1" />
+      <rect x="10" y="72" width="3" height="24" rx="1.5" fill="#e5644e" />
+      <text x="20" y="88" fill="#e5644e" font-weight="700">-</text>
+      <text x="36" y="88" fill="#e5644e" opacity="0.9" text-decoration="line-through">Built backend microservices and APIs for merchants</text>
+
+      <!-- Added Hunk Row (+) (add-bg: #1d2412, add: #9ccb5a) -->
+      <rect x="10" y="106" width="404" height="46" rx="6" fill="#1d2412" stroke="#9ccb5a" stroke-opacity="0.7" stroke-width="1.2" />
+      <rect x="10" y="110" width="3" height="38" rx="1.5" fill="#9ccb5a" />
+      <text x="20" y="125" fill="#9ccb5a" font-weight="700">+</text>
+      <text x="36" y="125" fill="#f0e6d2">Architected <tspan fill="#9ccb5a" font-weight="600">Go &amp; Kafka</tspan> services; cut rollout <tspan fill="#9ccb5a" font-weight="600">-40%</tspan></text>
+
+      <!-- Inline ATS + Hunk Approval Controls -->
+      <rect x="36" y="132" width="68" height="15" rx="3.5" fill="#2a1a0e" stroke="#5c3f12" stroke-width="0.8" />
+      <text x="43" y="142.5" font-size="9" font-weight="600" fill="#ffb454">ATS match</text>
+
+      <rect x="110" y="132" width="84" height="15" rx="3.5" fill="#1d2412" stroke="#9ccb5a" stroke-opacity="0.6" stroke-width="0.8" />
+      <text x="118" y="142.5" font-size="9" font-weight="600" fill="#9ccb5a">&#10003; Accepted</text>
+
+      <!-- Context Line 2 -->
+      <text x="16" y="170" fill="#6f6555">16</text>
+      <text x="40" y="170" fill="#6f6555">Held 99.9%+ uptime across 6+ production services</text>
+    </g>
+
+    <!-- Bottom Pipeline Status Bar -->
+    <line x1="0" y1="180" x2="424" y2="180" stroke="#2f2a21" stroke-width="1.2" />
+    <g font-family="IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="600">
+      <circle cx="18" cy="196" r="3.5" fill="#9ccb5a" />
+      <text x="27" y="200" fill="#a99b83">scan</text>
+      <text x="58" y="200" fill="#6f6555">&#8594;</text>
+      <text x="72" y="200" fill="#a99b83">diff</text>
+      <text x="101" y="200" fill="#6f6555">&#8594;</text>
+      <text x="115" y="200" fill="#9ccb5a">approve</text>
+      <text x="168" y="200" fill="#6f6555">&#8594;</text>
+      <rect x="182" y="186" width="230" height="20" rx="4" fill="#2a1a0e" stroke="#5c3f12" stroke-width="1" />
+      <text x="191" y="199.5" fill="#ffb454" font-size="10">output/2026-10-17-honor-sr.pdf</text>
+    </g>
+  </g>
+</svg>
