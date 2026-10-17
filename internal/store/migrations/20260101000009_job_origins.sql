@@ -1,0 +1,1 @@
+ALTER TABLE jobs ADD COLUMN origins_json TEXT NOT NULL DEFAULT '[]';

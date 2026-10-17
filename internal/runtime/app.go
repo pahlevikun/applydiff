@@ -12,6 +12,11 @@ import (
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
 	"github.com/pahlevikun/applydiff/internal/source/greenhouse"
+	"github.com/pahlevikun/applydiff/internal/source/jobicy"
+	"github.com/pahlevikun/applydiff/internal/source/remotive"
+	"github.com/pahlevikun/applydiff/internal/source/remoteok"
+	"github.com/pahlevikun/applydiff/internal/source/weworkremotely"
+	"github.com/pahlevikun/applydiff/internal/source/workingnomads"
 	"github.com/pahlevikun/applydiff/internal/store"
 )
 
@@ -23,16 +28,16 @@ type App struct {
 	LLM    llm.Runner
 	Facts  *cv.Facts
 
-	DBPath   string
-	CfgPath  string
+	DBPath    string
+	CfgPath   string
 	FactsPath string
 }
 
 // Options configures bootstrap paths.
 type Options struct {
-	DBPath    string
+	DBPath     string
 	ConfigPath string
-	FactsPath string
+	FactsPath  string
 }
 
 // Open creates a migrated store and loads config from the environment / defaults.
@@ -95,8 +100,24 @@ func Open(ctx context.Context, opt Options) (*App, error) {
 }
 
 func registerSources(cfg *jobconfig.Config) {
+	source.Reset()
 	if cfg.Sources.Greenhouse.Enabled {
 		source.Register(greenhouse.NewFromConfig(cfg.Sources.Greenhouse))
+	}
+	if cfg.Sources.Remotive.Enabled {
+		source.Register(remotive.NewFromConfig(cfg.Sources.Remotive))
+	}
+	if cfg.Sources.RemoteOK.Enabled {
+		source.Register(remoteok.NewFromConfig(cfg.Sources.RemoteOK))
+	}
+	if cfg.Sources.Jobicy.Enabled {
+		source.Register(jobicy.NewFromConfig(cfg.Sources.Jobicy))
+	}
+	if cfg.Sources.WeWorkRemotely.Enabled {
+		source.Register(weworkremotely.NewFromConfig(cfg.Sources.WeWorkRemotely))
+	}
+	if cfg.Sources.WorkingNomads.Enabled {
+		source.Register(workingnomads.NewFromConfig(cfg.Sources.WorkingNomads))
 	}
 }
 
