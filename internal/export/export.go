@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -28,13 +26,13 @@ type Result struct {
 }
 
 type Options struct {
-	OutRoot string // default exports/
+	OutRoot string // default output/
 	Job     job.Job
 	Doc     *cv.Document
 	Facts   *cv.Facts
 }
 
-// Build writes CV TeX, cover letter, and proof page under exports/{jobId}/.
+// Build writes CV TeX drafts to a temp dir and the CV PDF under output/<date>-<company>-<role>.pdf.
 func Build(opts Options) (*Result, error) {
 	if opts.Doc == nil {
 		return nil, fmt.Errorf("export: cv document required")
@@ -44,58 +42,64 @@ func Build(opts Options) (*Result, error) {
 	}
 	root := opts.OutRoot
 	if root == "" {
-		root = "exports"
+		root = "output"
 	}
-	slug := slugify(opts.Job.Company)
-	date := time.Now().UTC().Format("2006-01-02")
-	dir := filepath.Join(root, opts.Job.ID)
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(root, 0o755); err != nil {
 		return nil, err
 	}
 
+	workDir, err := os.MkdirTemp("", "applydiff-export-*")
+	if err != nil {
+		return nil, err
+	}
+
+	slug := slugify(opts.Job.Company)
+	date := time.Now().UTC().Format("2006-01-02")
+
 	cvTex := cvexport.ToTeX(opts.Doc)
-	cvTexPath := filepath.Join(dir, fmt.Sprintf("cv-%s-%s.tex", slug, date))
+	cvTexPath := filepath.Join(workDir, fmt.Sprintf("cv-%s-%s.tex", slug, date))
 	if err := os.WriteFile(cvTexPath, []byte(cvTex), 0o644); err != nil {
+		os.RemoveAll(workDir)
 		return nil, err
 	}
 
 	cover := CoverLetterTeX(opts.Doc, opts.Job)
 	if err := gateText(opts.Facts, coverPlainText(opts.Doc, opts.Job)); err != nil {
+		os.RemoveAll(workDir)
 		return nil, fmt.Errorf("export: cover letter: %w", err)
 	}
-	coverPath := filepath.Join(dir, fmt.Sprintf("cover-%s-%s.tex", slug, date))
+	coverPath := filepath.Join(workDir, fmt.Sprintf("cover-%s-%s.tex", slug, date))
 	if err := os.WriteFile(coverPath, []byte(cover), 0o644); err != nil {
+		os.RemoveAll(workDir)
 		return nil, err
 	}
 
 	proof := ProofPageTeX(opts.Doc)
 	if err := gateText(opts.Facts, proofPlainText(opts.Doc)); err != nil {
+		os.RemoveAll(workDir)
 		return nil, fmt.Errorf("export: proof page: %w", err)
 	}
-	proofPath := filepath.Join(dir, fmt.Sprintf("proof-%s-%s.tex", slug, date))
+	proofPath := filepath.Join(workDir, fmt.Sprintf("proof-%s-%s.tex", slug, date))
 	if err := os.WriteFile(proofPath, []byte(proof), 0o644); err != nil {
+		os.RemoveAll(workDir)
 		return nil, err
 	}
 
 	snap, _ := json.Marshal(opts.Doc)
 	res := &Result{
-		Dir:         dir,
+		Dir:         workDir,
 		CVTeX:       cvTexPath,
 		CoverLetter: coverPath,
 		ProofPage:   proofPath,
 		CVSnapshot:  string(snap),
 	}
 
-	if latex, ok := findLaTeX(); ok {
-		pdfPath := filepath.Join(dir, fmt.Sprintf("cv-%s-%s.pdf", slug, date))
-		if err := compileLaTeX(latex, cvTexPath, dir); err != nil {
-			res.CompileNote = fmt.Sprintf("%s failed: %v", latex, err)
-		} else {
-			res.CVPDF = pdfPath
-			res.PDFCompiled = true
-		}
+	pdfPath := PDFOutputPath(root, opts.Job, time.Now().UTC())
+	if err := CompilePDF(cvTexPath, workDir, pdfPath); err != nil {
+		res.CompileNote = err.Error()
 	} else {
-		res.CompileNote = "latexmk/pdflatex not found; .tex files written only"
+		res.CVPDF = pdfPath
+		res.PDFCompiled = true
 	}
 	return res, nil
 }
@@ -213,41 +217,6 @@ func topResults(doc *cv.Document, n int) []string {
 		out = out[:n]
 	}
 	return out
-}
-
-func findLaTeX() (string, bool) {
-	for _, cmd := range []string{"latexmk", "pdflatex"} {
-		if p, err := exec.LookPath(cmd); err == nil {
-			return p, true
-		}
-	}
-	return "", false
-}
-
-func compileLaTeX(latexBin, texPath, workDir string) error {
-	base := filepath.Base(latexBin)
-	var cmd *exec.Cmd
-	if base == "latexmk" {
-		cmd = exec.Command(latexBin, "-pdf", "-interaction=nonstopmode", "-output-directory="+workDir, texPath)
-	} else {
-		cmd = exec.Command(latexBin, "-interaction=nonstopmode", "-output-directory="+workDir, texPath)
-	}
-	cmd.Dir = workDir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("%w: %s", err, truncate(string(out), 400))
-	}
-	return nil
-}
-
-func slugify(s string) string {
-	s = strings.ToLower(strings.TrimSpace(s))
-	s = regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(s, "-")
-	s = strings.Trim(s, "-")
-	if s == "" {
-		return "company"
-	}
-	return s
 }
 
 func truncate(s string, max int) string {

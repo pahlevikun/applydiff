@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/pahlevikun/applydiff/internal/cv"
+	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/llm"
@@ -52,7 +53,10 @@ func TestAPIJobsAndScan(t *testing.T) {
 
 	cfg := &jobconfig.Config{
 		Queries: []string{},
-		Filters: jobconfig.Filters{Regions: []string{"global"}, MaxPostedDays: 30},
+		Filters: jobconfig.Filters{Spec: filter.Spec{
+			Regions:       &filter.CategoryRule{Hard: true, Values: []string{"global"}},
+			MaxPostedDays: &filter.IntRule{Hard: true, Max: 30},
+		}},
 	}
 	srv := &server{
 		store: st,

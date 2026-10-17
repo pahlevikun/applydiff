@@ -17,13 +17,36 @@ Most tools either auto-rewrite your CV or make you copy-paste. ApplyDiff treats 
 
 ## Stack
 
-Go + SQLite + Nuxt 3 + LaTeX (latexmk).
+Go + SQLite + Nuxt 3 + LaTeX (xelatex).
+
+## Install
+
+**Single binary (zero install at runtime).** Build once on a machine with Go and Node, then copy `bin/applydiff` anywhere. It serves the embedded web UI and API; users do not need Go, Node, or LaTeX on PATH unless they run `applydiff build` outside Docker.
+
+```bash
+make web && make cli
+./bin/applydiff serve
+```
+
+Open `http://localhost:8080`. PDF builds write to `output/<date>-<company>-<role>.pdf`.
+
+**Docker (UI + API + TeX in one image).**
+
+```bash
+docker build -t applydiff .
+docker run -p 3000:3000 -v ~/.applydiff:/data applydiff
+```
+
+SQLite lives at `/data/applydiff.db` inside the container (`DATABASE_PATH`).
+
+**Release tarballs.** After `make web`, run `scripts/release.sh` for cross-compiled binaries under `dist/` plus `sha256sums.txt`.
 
 ## Quick start
 
 ```bash
-go run ./cmd/applydiff          # API on :8080
-cd web && npm run dev           # UI
+make web && make cli
+./bin/applydiff serve           # API + embedded UI on :8080
+cd web && npm run dev           # UI dev server only (proxies /api)
 ```
 
 Environment:

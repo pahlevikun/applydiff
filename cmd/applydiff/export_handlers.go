@@ -41,9 +41,9 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		facts = s.factsFromFile()
 	}
-	outRoot := os.Getenv("EXPORT_ROOT")
+	outRoot := os.Getenv("OUTPUT_ROOT")
 	if outRoot == "" {
-		outRoot = filepath.Join("exports")
+		outRoot = filepath.Join("output")
 	}
 	res, err := export.Build(export.Options{
 		OutRoot: outRoot,
