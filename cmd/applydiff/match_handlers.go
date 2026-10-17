@@ -10,9 +10,8 @@ import (
 )
 
 func (s *server) handleMatch(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/match/")
-	jobID := strings.Trim(path, "/")
-	if jobID == "" || strings.Contains(jobID, "/") {
+	jobID := jobIDFromAPIPath("/api/match/", r.URL.Path)
+	if jobID == "" {
 		http.Error(w, "job id required", http.StatusBadRequest)
 		return
 	}
@@ -37,7 +36,7 @@ func (s *server) computeMatch(w http.ResponseWriter, r *http.Request, jobID stri
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	doc, err := s.app.Store.LoadMaster(r.Context())
+	doc, err := s.app.MasterCV(r.Context())
 	if err != nil {
 		http.Error(w, "no master cv saved", http.StatusNotFound)
 		return
@@ -50,6 +49,7 @@ func (s *server) computeMatch(w http.ResponseWriter, r *http.Request, jobID stri
 	if j.Status == "discovered" {
 		_ = s.app.Store.UpdateJobStatus(r.Context(), jobID, "matched")
 	}
+	_ = s.app.RecordMatchPipeline(r.Context(), jobID)
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(res)
 }
@@ -69,9 +69,8 @@ func (s *server) getMatch(w http.ResponseWriter, r *http.Request, jobID string) 
 }
 
 func (s *server) handleJobByID(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/api/jobs/")
-	rest := strings.Trim(path, "/")
-	if rest == "" || strings.Contains(rest, "/") {
+	rest := jobIDFromAPIPath("/api/jobs/", r.URL.Path)
+	if rest == "" {
 		http.NotFound(w, r)
 		return
 	}
@@ -90,14 +89,22 @@ func (s *server) handleJobByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "status required", http.StatusBadRequest)
 		return
 	}
-	if err := s.app.Store.UpdateJobStatus(r.Context(), rest, body.Status); err != nil {
-		if err == sql.ErrNoRows {
+	appStatus := body.Status
+	if appStatus == "discarded" {
+		appStatus = "closed"
+	}
+	if err := s.app.SetJobDecision(r.Context(), rest, appStatus); err != nil {
+		if strings.Contains(err.Error(), "not found") || err == sql.ErrNoRows {
 			http.Error(w, "job not found", http.StatusNotFound)
 			return
 		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if strings.Contains(err.Error(), "illegal transition") {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": body.Status})
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": appStatus, "job_status": body.Status})
 }

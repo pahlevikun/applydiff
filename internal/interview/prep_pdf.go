@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/pahlevikun/applydiff/internal/export"
+	"github.com/pahlevikun/applydiff/internal/export/fonts"
 )
 
-// WritePrepPDF renders markdown content to PDF via the shared xelatex path.
+// WritePrepPDF renders markdown content to PDF via the shared export PDF engine.
 func WritePrepPDF(mdContent string, pdfPath string) error {
 	workDir, err := os.MkdirTemp("", "applydiff-interview-tex-*")
 	if err != nil {
@@ -18,19 +19,23 @@ func WritePrepPDF(mdContent string, pdfPath string) error {
 
 	texName := "interview-prep.tex"
 	texPath := filepath.Join(workDir, texName)
-	tex := markdownToLaTeX(mdContent)
+	fontPath, err := fonts.DejaVuSansPath(workDir)
+	if err != nil {
+		return err
+	}
+	tex := markdownToLaTeX(mdContent, fontPath)
 	if err := os.WriteFile(texPath, []byte(tex), 0o644); err != nil {
 		return err
 	}
 	return export.CompilePDF(texPath, workDir, pdfPath)
 }
 
-func markdownToLaTeX(md string) string {
+func markdownToLaTeX(md string, dejaVuPath string) string {
 	var b strings.Builder
 	b.WriteString("\\documentclass[11pt]{article}\n")
 	b.WriteString("\\usepackage[margin=1in]{geometry}\n")
 	b.WriteString("\\usepackage{fontspec}\n")
-	b.WriteString("\\setmainfont{DejaVu Sans}\n")
+	b.WriteString(fonts.MainfontSpec(dejaVuPath))
 	b.WriteString("\\usepackage{hyperref}\n")
 	b.WriteString("\\begin{document}\n")
 	b.WriteString("\\begin{verbatim}\n")

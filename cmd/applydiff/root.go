@@ -41,8 +41,12 @@ func newRootCmd() *cobra.Command {
 	}
 	root.PersistentFlags().BoolVar(&globalJSON, "json", false, "emit JSON on stdout")
 	root.PersistentFlags().BoolVar(&globalDryRun, "dry-run", false, "do not write changes")
+	root.PersistentFlags().BoolVar(&globalConfirm, "confirm", false, "skip interactive approval gate")
 
 	root.AddCommand(
+		cmdDoctor(),
+		cmdInit(),
+		cmdOpen(),
 		cmdScan(),
 		cmdJobs(),
 		cmdShow(),
@@ -60,6 +64,13 @@ func newRootCmd() *cobra.Command {
 		cmdServe(),
 		cmdTUI(),
 		cmdInterview(),
+		cmdDoctor(),
+		cmdInit(),
+		cmdOpen(),
+		cmdAdd(),
+		cmdPropose(),
+		cmdRuns(),
+		cmdMCP(),
 	)
 	// Legacy entrypoints
 	root.AddCommand(cmdExportDBLegacy(), cmdImportDBLegacy())

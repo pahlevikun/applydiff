@@ -13,6 +13,7 @@ import (
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/risk"
 	"github.com/pahlevikun/applydiff/internal/source"
+	"github.com/pahlevikun/applydiff/internal/source/fourdayweek"
 	"github.com/pahlevikun/applydiff/internal/store"
 )
 
@@ -181,6 +182,8 @@ func queriesFor(cfg *jobconfig.Config, sourceID string) []string {
 		return cfg.QueriesForSource(sourceID, cfg.Sources.WeWorkRemotely.Queries)
 	case "workingnomads":
 		return cfg.QueriesForSource(sourceID, cfg.Sources.WorkingNomads.Queries)
+	case "fourdayweek":
+		return cfg.QueriesForSource(sourceID, cfg.Sources.FourDayWeek.Queries)
 	default:
 		return cfg.Queries
 	}
@@ -246,6 +249,11 @@ func BuildFetchPlans(cfg *jobconfig.Config, onlySource string) []FetchPlan {
 	}
 	add("weworkremotely", cfg.Sources.WeWorkRemotely.Enabled, feed)
 	add("workingnomads", cfg.Sources.WorkingNomads.Enabled, "https://www.workingnomads.com/api/exposed_jobs/")
+	if cfg.Sources.FourDayWeek.Enabled {
+		for p := 1; p <= 5; p++ {
+			add("fourdayweek", true, fourdayweek.PlanURL(p))
+		}
+	}
 	return plans
 }
 

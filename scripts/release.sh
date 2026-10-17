@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Deprecated for publishing: tag v* and let GitHub Actions run GoReleaser (.goreleaser.yaml).
+# Kept for local cross-compiles without GoReleaser (make release).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

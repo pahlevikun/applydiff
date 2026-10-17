@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -26,9 +27,16 @@ func (s *server) handleApplicationStatus(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	path := strings.TrimPrefix(r.URL.Path, "/api/applications/")
-	jobID := strings.TrimSuffix(path, "/status")
+	rest := strings.TrimPrefix(r.URL.Path, "/api/applications/")
+	if !strings.HasSuffix(rest, "/status") {
+		http.NotFound(w, r)
+		return
+	}
+	jobID := strings.TrimSuffix(rest, "/status")
 	jobID = strings.Trim(jobID, "/")
+	if decoded, err := url.PathUnescape(jobID); err == nil {
+		jobID = decoded
+	}
 	if jobID == "" {
 		http.Error(w, "job id required", http.StatusBadRequest)
 		return

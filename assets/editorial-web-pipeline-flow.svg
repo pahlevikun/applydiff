@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="1200" height="780" fill="none" role="img" aria-label="Web UI pipeline: Jobs feed, Match scores, Applications tabs by status, Diff hunks">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#b86b11"/>
+    </marker>
+  </defs>
+
+  <rect x="1" y="1" width="1198" height="778" rx="12" fill="#fbfaf7" stroke="#e6e3db" stroke-width="2"/>
+
+  <text x="56" y="52" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="11.5" font-weight="600" fill="#b86b11" letter-spacing="1.2">05 / PROGRESSION &#183; WEB NAV PIPELINE</text>
+  <text x="56" y="88" font-family="IBM Plex Sans, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25" font-weight="700" fill="#1c1f25" letter-spacing="-0.5">Jobs is the feed &#8212; Applications tabs filter the pipeline table by status</text>
+  <text x="56" y="116" font-family="IBM Plex Sans, sans-serif" font-size="15" fill="#606772">Match writes matched. Shortlist / Tailor / Export advance status. With CV diff needs a tailor proposal.</text>
+
+  <line x1="56" y1="136" x2="1144" y2="136" stroke="#e6e3db" stroke-width="1.5"/>
+
+  <text x="56" y="162" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#606772">TOP NAV</text>
+  <g font-family="IBM Plex Sans, sans-serif" font-size="11" font-weight="600">
+    <rect x="56" y="172" width="64" height="28" rx="6" fill="#ffffff" stroke="#b86b11" stroke-width="1.5"/>
+    <text x="66" y="190" fill="#1c1f25">Jobs</text>
+    <rect x="126" y="172" width="64" height="28" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="136" y="190" fill="#1c1f25">Match</text>
+    <rect x="196" y="172" width="48" height="28" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="206" y="190" fill="#1c1f25">Diff</text>
+    <rect x="250" y="172" width="76" height="28" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="260" y="190" fill="#1c1f25">CV editor</text>
+    <rect x="334" y="172" width="96" height="28" rx="6" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="344" y="190" fill="#1c1f25">Applications</text>
+  </g>
+
+  <path d="M168 318 L308 318" stroke="#b86b11" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M556 318 L570 318" stroke="#b86b11" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M820 318 L834 318" stroke="#b86b11" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="56" y="216" width="220" height="132" rx="8" fill="#ffffff" stroke="#b86b11" stroke-width="1.5"/>
+  <text x="70" y="238" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#b86b11">JOBS</text>
+  <text x="70" y="258" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#1c1f25">Discovery feed</text>
+  <text x="70" y="276" font-family="IBM Plex Mono, monospace" font-size="10" fill="#606772">POST /api/scan</text>
+  <text x="70" y="292" font-family="IBM Plex Mono, monospace" font-size="10" fill="#606772">GET /api/jobs</text>
+  <text x="70" y="310" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">table: jobs only</text>
+  <text x="70" y="328" font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="#9098a3">Scan does not fill Applications</text>
+
+  <rect x="292" y="216" width="220" height="132" rx="8" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="306" y="238" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#b86b11">CV EDITOR</text>
+  <text x="306" y="258" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#1c1f25">Save master</text>
+  <text x="306" y="276" font-family="IBM Plex Mono, monospace" font-size="10" fill="#606772">PUT /api/cv/master</text>
+  <text x="306" y="292" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">Required before match</text>
+  <text x="306" y="310" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">table: cv_master</text>
+
+  <rect x="528" y="216" width="248" height="132" rx="8" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="542" y="238" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#b86b11">MATCH</text>
+  <text x="542" y="258" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#1c1f25">Score vs master CV</text>
+  <text x="542" y="276" font-family="IBM Plex Mono, monospace" font-size="10" fill="#606772">POST /api/match/{id}</text>
+  <text x="542" y="292" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">RecordMatchPipeline</text>
+  <text x="542" y="308" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#3b571c">applications.status = matched</text>
+  <text x="542" y="324" font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="#606772">Shortlist / Tailor / Skip via PUT /api/jobs</text>
+  <text x="542" y="340" font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="#9098a3">/match?job=...</text>
+
+  <rect x="792" y="216" width="352" height="132" rx="8" fill="#9ccb5a" fill-opacity="0.12" stroke="#6f9440"/>
+  <text x="806" y="238" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#3b571c">APPLICATIONS PAGE</text>
+  <text x="806" y="258" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#1c1f25">GET /api/applications + /api/pipeline</text>
+  <text x="806" y="276" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">INNER JOIN applications (not the whole feed)</text>
+  <text x="806" y="292" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">All = every pipeline row</text>
+  <text x="806" y="308" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#606772">Stage tabs = filter by applications.status</text>
+
+  <text x="56" y="378" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">APPLICATIONS TABS (GET /api/pipeline)</text>
+
+  <g font-family="IBM Plex Sans, sans-serif" font-size="10" font-weight="600">
+    <rect x="56" y="390" width="44" height="26" rx="5" fill="#f2efe9" stroke="#d8d4ca"/>
+    <text x="64" y="406" fill="#1c1f25">All</text>
+    <rect x="106" y="390" width="62" height="26" rx="5" fill="#ffffff" stroke="#6f9440"/>
+    <text x="114" y="406" fill="#3b571c">Matched</text>
+    <rect x="174" y="390" width="78" height="26" rx="5" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="182" y="406" fill="#1c1f25">Shortlisted</text>
+    <rect x="258" y="390" width="68" height="26" rx="5" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="266" y="406" fill="#1c1f25">Tailoring</text>
+    <rect x="332" y="390" width="48" height="26" rx="5" fill="#ffffff" stroke="#d8d4ca"/>
+    <text x="340" y="406" fill="#1c1f25">Ready</text>
+    <rect x="386" y="390" width="88" height="26" rx="5" fill="#ffffff" stroke="#ffb454"/>
+    <text x="394" y="406" fill="#1c1f25">With CV diff</text>
+  </g>
+
+  <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#606772">
+    <text x="56" y="434">All</text>
+    <text x="120" y="434">status matched</text>
+    <text x="200" y="434">shortlisted</text>
+    <text x="290" y="434">tailoring</text>
+    <text x="360" y="434">ready</text>
+    <text x="430" y="434">has tailor proposal</text>
+  </g>
+  <g font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="#9098a3">
+    <text x="56" y="450">every application row</text>
+    <text x="120" y="450">after Match score</text>
+    <text x="200" y="450">Shortlist button</text>
+    <text x="290" y="450">Tailor or Generate hunks</text>
+    <text x="360" y="450">often after Export</text>
+    <text x="430" y="450">LoadProposal ok</text>
+  </g>
+
+  <line x1="56" y1="468" x2="1144" y2="468" stroke="#e6e3db" stroke-width="1.5"/>
+
+  <rect x="56" y="484" width="540" height="108" rx="8" fill="#2a1a0e" stroke="#ffb454" stroke-width="1.5"/>
+  <text x="70" y="508" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#ffb454">DIFF (LLM)</text>
+  <text x="70" y="528" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="#f0e6d2">Field hunks: accept / reject</text>
+  <text x="70" y="546" font-family="IBM Plex Mono, monospace" font-size="10" fill="#a99b83">POST /api/tailor/{id} RecordTailorStarted</text>
+  <text x="70" y="562" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#a99b83">/diff?job=... fills With CV diff when proposal saved</text>
+  <text x="70" y="578" font-family="IBM Plex Sans, sans-serif" font-size="9.5" fill="#9098a3">Activity panel shows failed Shortlist / Tailor</text>
+
+  <rect x="612" y="484" width="532" height="108" rx="8" fill="#ffffff" stroke="#d8d4ca"/>
+  <text x="626" y="508" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#1c1f25">EXPORT AND APPLY</text>
+  <text x="626" y="528" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">Export creates row if missing; may set ready</text>
+  <text x="626" y="546" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">CLI: applydiff build, applydiff apply --channel</text>
+  <text x="626" y="562" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#606772">make dev: API :8080, Nuxt :3000 proxies /api</text>
+
+  <rect x="56" y="612" width="1088" height="88" rx="8" fill="#f2efe9" stroke="#d8d4ca"/>
+  <text x="70" y="636" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#606772">TWO TABLES (do not confuse)</text>
+  <text x="70" y="656" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#1c1f25">jobs &#8212; every listing Scan stored (feed on Jobs page)</text>
+  <text x="70" y="674" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="#1c1f25">applications &#8212; pipeline rows only; stage tabs read applications.status (+ proposal for diff)</text>
+  <text x="70" y="692" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="#9098a3">Old bug: LEFT JOIN showed all jobs on All with fake discovered &#8212; fixed INNER JOIN</text>
+
+  <text x="56" y="738" font-family="IBM Plex Mono, monospace" font-size="10" fill="#9098a3">Source: application.go ListApplications, pipeline_handlers.go, decision.go RecordMatchPipeline, Oct 2026</text>
+</svg>

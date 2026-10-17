@@ -32,7 +32,7 @@ func cmdInterviewExport() *cobra.Command {
 		Use:   "export <job-key>",
 		Short: "Export interview prep sheet to output/",
 		Long: `Write output/<YYYY-MM-DD>-<company>-<role>-interview.md with loop, notes, rubric, stories, and weak spots.
-With --pdf, also renders a PDF beside the markdown file using the same xelatex/Docker path as CV export.`,
+With --pdf, also renders a PDF beside the markdown file using the same xelatex or Tectonic engine as CV export.`,
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			res, err := rootApp.ExportInterviewPrep(cmd.Context(), args[0], withPDF)

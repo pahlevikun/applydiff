@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 func cmdScan() *cobra.Command {
 	var sourceID, preset string
+	var async bool
 	minRisk := -1
 	maxRisk := -1
 	c := &cobra.Command{
@@ -34,6 +36,14 @@ With --dry-run, prints planned HTTP requests without writing to the database.`,
 			if maxRisk >= 0 {
 				opt.MaxRisk = &maxRisk
 			}
+			if async {
+				run, err := rootApp.Runs.Start(cmd.Context(), "scan", "", func(ctx context.Context) (any, error) {
+					return rootApp.Scan(ctx, opt)
+				})
+				exitOn(err)
+				exitOn(emitOrJSON(run, func() string { return run.ID }))
+				return
+			}
 			res, err := rootApp.Scan(cmd.Context(), opt)
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
@@ -52,6 +62,7 @@ With --dry-run, prints planned HTTP requests without writing to the database.`,
 	c.Flags().StringVar(&preset, "preset", "", "apply filter preset before scan (e.g. aggressive)")
 	c.Flags().IntVar(&minRisk, "min-risk", -1, "only keep jobs with risk score >= N (0-100)")
 	c.Flags().IntVar(&maxRisk, "max-risk", -1, "only keep jobs with risk score <= N (0-100)")
+	c.Flags().BoolVar(&async, "async", false, "run in background; use runs get <id>")
 	return c
 }
 
@@ -109,11 +120,20 @@ func cmdShow() *cobra.Command {
 }
 
 func cmdMatch() *cobra.Command {
+	var async bool
 	c := &cobra.Command{
 		Use:   "match <job-key>",
 		Short: "Compute match score vs master CV",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			if async {
+				run, err := rootApp.Runs.Start(cmd.Context(), "match", args[0], func(ctx context.Context) (any, error) {
+					return rootApp.ComputeMatch(ctx, args[0], globalDryRun)
+				})
+				exitOn(err)
+				exitOn(emitOrJSON(run, func() string { return run.ID }))
+				return
+			}
 			res, err := rootApp.ComputeMatch(cmd.Context(), args[0], globalDryRun)
 			if err != nil {
 				if globalJSON && res != nil {
@@ -126,15 +146,32 @@ func cmdMatch() *cobra.Command {
 			}))
 		},
 	}
+	c.Flags().BoolVar(&async, "async", false, "run in background; use runs get <id>")
 	return c
 }
 
 func cmdTailor() *cobra.Command {
+	var contextOnly bool
+	var async bool
 	c := &cobra.Command{
 		Use:   "tailor <job-key>",
 		Short: "Generate tailoring hunks (LLM)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			if contextOnly {
+				tc, err := rootApp.TailorContext(cmd.Context(), args[0])
+				exitOn(err)
+				exitOn(emitOrJSON(tc, nil))
+				return
+			}
+			if async {
+				run, err := rootApp.Runs.Start(cmd.Context(), "tailor", args[0], func(ctx context.Context) (any, error) {
+					return rootApp.Tailor(ctx, args[0], globalDryRun)
+				})
+				exitOn(err)
+				exitOn(emitOrJSON(run, func() string { return run.ID }))
+				return
+			}
 			prop, err := rootApp.Tailor(cmd.Context(), args[0], globalDryRun)
 			exitOn(err)
 			exitOn(emitOrJSON(prop, func() string {
@@ -142,6 +179,8 @@ func cmdTailor() *cobra.Command {
 			}))
 		},
 	}
+	c.Flags().BoolVar(&contextOnly, "context", false, "emit tailor context JSON for host-agent drafting")
+	c.Flags().BoolVar(&async, "async", false, "run in background; use runs get <id>")
 	return c
 }
 
@@ -180,6 +219,7 @@ func cmdApprove() *cobra.Command {
 		Short: "Accept diff hunks",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			exitOn(requireApprovalGate(cmd))
 			var indices []int
 			if all {
 				indices = nil
@@ -198,7 +238,7 @@ func cmdApprove() *cobra.Command {
 			} else {
 				exitOn(fmt.Errorf("approve: specify --hunk N[,N] or --all"))
 			}
-			prop, err := rootApp.ApproveHunks(cmd.Context(), args[0], indices, all, globalDryRun)
+			prop, err := rootApp.ApproveHunks(cmd.Context(), args[0], indices, all, globalDryRun, actor())
 			exitOn(err)
 			exitOn(emitOrJSON(prop, func() string {
 				return fmt.Sprintf("approved hunks for %s", args[0])
@@ -217,6 +257,7 @@ func cmdReject() *cobra.Command {
 		Short: "Reject diff hunks",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			exitOn(requireApprovalGate(cmd))
 			if hunkStr == "" {
 				exitOn(fmt.Errorf("reject: --hunk N required"))
 			}
@@ -232,7 +273,7 @@ func cmdReject() *cobra.Command {
 				}
 				indices = append(indices, n)
 			}
-			prop, err := rootApp.RejectHunks(cmd.Context(), args[0], indices, globalDryRun)
+			prop, err := rootApp.RejectHunks(cmd.Context(), args[0], indices, globalDryRun, actor())
 			exitOn(err)
 			exitOn(emitOrJSON(prop, func() string {
 				return fmt.Sprintf("rejected hunks for %s", args[0])
@@ -244,6 +285,7 @@ func cmdReject() *cobra.Command {
 }
 
 func cmdBuild() *cobra.Command {
+	var async bool
 	c := &cobra.Command{
 		Use:   "build <job-key>",
 		Short: "Compile LaTeX PDF for approved branch",
@@ -253,7 +295,16 @@ The file name is output/<YYYY-MM-DD>-<company>-<role>.pdf (company and role are 
 The output/ directory is created when missing. Set OUTPUT_ROOT to override the directory.`,
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			res, err := rootApp.BuildPDF(cmd.Context(), args[0], globalDryRun)
+			exitOn(requireApprovalGate(cmd))
+			if async {
+				run, err := rootApp.Runs.Start(cmd.Context(), "build", args[0], func(ctx context.Context) (any, error) {
+					return rootApp.BuildPDF(ctx, args[0], globalDryRun, actor())
+				})
+				exitOn(err)
+				exitOn(emitOrJSON(run, func() string { return run.ID }))
+				return
+			}
+			res, err := rootApp.BuildPDF(cmd.Context(), args[0], globalDryRun, actor())
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
 				if res.CVPDF != "" {
@@ -263,6 +314,7 @@ The output/ directory is created when missing. Set OUTPUT_ROOT to override the d
 			}))
 		},
 	}
+	c.Flags().BoolVar(&async, "async", false, "run in background; use runs get <id>")
 	return c
 }
 
@@ -295,10 +347,11 @@ func cmdApply() *cobra.Command {
 		Short: "Record application submission (never auto-submits)",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			exitOn(requireApprovalGate(cmd))
 			res, err := rootApp.Apply(cmd.Context(), args[0], runtime.ApplyMode(mode), globalDryRun, runtime.ApplyOptions{
 				Channel:  channel,
 				Referrer: referrer,
-			})
+			}, actor())
 			exitOn(err)
 			exitOn(emitOrJSON(res, func() string {
 				return fmt.Sprintf("%s — %s (%s)", res.JobID, res.URL, res.Message)

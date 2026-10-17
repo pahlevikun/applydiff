@@ -22,11 +22,23 @@ func ToTeX(doc *cv.Document) string {
 
 	b.WriteString(fmt.Sprintf("{\\LARGE %s}\\\\\n", escape(doc.Contact.Name)))
 	b.WriteString(fmt.Sprintf("{\\large %s}\\\\\n", escape(doc.Contact.Headline)))
-	contact := strings.Join([]string{
+	if doc.Contact.Subtitle != "" {
+		b.WriteString(fmt.Sprintf("{\\large %s}\\\\\n", escape(doc.Contact.Subtitle)))
+	}
+	if doc.Contact.StackLine != "" {
+		b.WriteString(escape(doc.Contact.StackLine) + "\\\\\n")
+	}
+	links := []string{
 		escape(doc.Contact.Email),
 		escape(doc.Contact.Site),
-		escape(doc.Contact.LinkedIn),
-	}, " $\\cdot$ ")
+	}
+	if doc.Contact.GitHub != "" {
+		links = append(links, escape(doc.Contact.GitHub))
+	}
+	if doc.Contact.LinkedIn != "" {
+		links = append(links, escape(doc.Contact.LinkedIn))
+	}
+	contact := strings.Join(links, " $\\cdot$ ")
 	if contact != "" {
 		b.WriteString(contact + "\\\\\n")
 	}
@@ -77,7 +89,17 @@ func ToTeX(doc *cv.Document) string {
 		b.WriteString("\\section*{Education}\n")
 		for _, ed := range doc.Education {
 			line := fmt.Sprintf("%s, %s (%s)", ed.Degree, ed.School, ed.Year)
+			if ed.Location != "" {
+				line += " — " + ed.Location
+			}
 			b.WriteString(fmt.Sprintf("\\textbf{%s}\\\\\n", escape(line)))
+			if len(ed.Bullets) > 0 {
+				b.WriteString("\\begin{itemize}\n")
+				for _, bullet := range ed.Bullets {
+					b.WriteString("\\item " + escapePercentInText(bullet.Text) + "\n")
+				}
+				b.WriteString("\\end{itemize}\n")
+			}
 		}
 		b.WriteString("\n")
 	}

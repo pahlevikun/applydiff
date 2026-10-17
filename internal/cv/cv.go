@@ -19,6 +19,8 @@ type Document struct {
 type Contact struct {
 	Name         string `json:"name"`
 	Headline     string `json:"headline"`
+	Subtitle     string `json:"subtitle,omitempty"`
+	StackLine    string `json:"stack_line,omitempty"`
 	Email        string `json:"email"`
 	Site         string `json:"site"`
 	LinkedIn     string `json:"linkedin"`
@@ -55,10 +57,12 @@ type Bullet struct {
 }
 
 type Education struct {
-	ID     string `json:"id"`
-	School string `json:"school"`
-	Degree string `json:"degree"`
-	Year   string `json:"year"`
+	ID       string   `json:"id"`
+	School   string   `json:"school"`
+	Degree   string   `json:"degree"`
+	Year     string   `json:"year"`
+	Location string   `json:"location,omitempty"`
+	Bullets  []Bullet `json:"bullets,omitempty"`
 }
 
 type Achievement struct {
@@ -113,6 +117,11 @@ func Validate(doc *Document) error {
 	for i, ed := range doc.Education {
 		if ed.ID == "" {
 			return fmt.Errorf("cv: education[%d].id is required", i)
+		}
+		for j, b := range ed.Bullets {
+			if b.ID == "" {
+				return fmt.Errorf("cv: education[%d].bullets[%d].id is required", i, j)
+			}
 		}
 	}
 	for i, ach := range doc.Achievements {

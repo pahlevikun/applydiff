@@ -1,0 +1,23 @@
+{
+  "_comment": "Verified metrics for facts gate — numbers must appear in these values to pass tailoring validation.",
+  "facts": {
+    "years_experience": "8+ years",
+    "summary.abac_rollout": "~40%",
+    "summary.availability": "99.9%+",
+    "summary.revenue_gober": "IDR 20B+/year",
+    "summary.hackathon": "1st place GoTo Hackathon 2024",
+    "exp.1.b1.repos": "11 repositories",
+    "exp.1.b2.delivery": "10+ MRs across 4 repos in 6 weeks",
+    "exp.1.b3.revenue": "IDR 20B+/year",
+    "exp.1.b4.abac": "6+ microservices ~40%",
+    "exp.1.b5.features": "5+ merchant features 1-tap",
+    "exp.2.b2.docs_mentorship": "10+ RFCs 5+ engineers",
+    "exp.2.b3.availability": "99.9%+ availability L4–L5",
+    "exp.4.b2.sdk_adoption": "3+ GoTo apps",
+    "exp.7.b1.play_since": "2017",
+    "edu.1.years": "2013–2017",
+    "edu.2.year": "2017",
+    "ach.1.hackathon": "1st Place 2024 48 hours",
+    "ach.2.cert_year": "2017"
+  }
+}

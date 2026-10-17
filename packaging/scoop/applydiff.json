@@ -1,0 +1,31 @@
+{
+  "version": "VERSION",
+  "description": "Git diff for your CV — local-first job search, tailoring, and interview prep",
+  "homepage": "https://github.com/pahlevikun/applydiff",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/pahlevikun/applydiff/releases/download/vVERSION/applydiff_VERSION_windows_amd64.zip",
+      "hash": "WINDOWS_AMD64_SHA256"
+    },
+    "arm64": {
+      "url": "https://github.com/pahlevikun/applydiff/releases/download/vVERSION/applydiff_VERSION_windows_arm64.zip",
+      "hash": "WINDOWS_ARM64_SHA256"
+    }
+  },
+  "bin": "applydiff.exe",
+  "checkver": {
+    "github": "pahlevikun/applydiff"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/pahlevikun/applydiff/releases/download/v$version/applydiff_$version_windows_amd64.zip"
+      },
+      "arm64": {
+        "url": "https://github.com/pahlevikun/applydiff/releases/download/v$version/applydiff_$version_windows_arm64.zip"
+      }
+    }
+  },
+  "notes": "Optional: scoop install tectonic for PDF export (or use xelatex on PATH)."
+}

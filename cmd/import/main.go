@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	texPath := flag.String("tex", "fixtures/resume_ats_v2.tex", "input LaTeX resume")
+	texPath := flag.String("tex", "cv/master_cv.tex", "input LaTeX resume")
 	cvOut := flag.String("cv", "cv.json", "output cv.json path")
 	factsOut := flag.String("facts", "facts.json", "output facts.json path")
 	flag.Parse()

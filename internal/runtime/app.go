@@ -8,9 +8,13 @@ import (
 
 	"github.com/pahlevikun/applydiff/internal/cv"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
+	"github.com/pahlevikun/applydiff/internal/export"
 	"github.com/pahlevikun/applydiff/internal/llm"
+	"github.com/pahlevikun/applydiff/internal/paths"
+	"github.com/pahlevikun/applydiff/internal/runs"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
+	"github.com/pahlevikun/applydiff/internal/source/fourdayweek"
 	"github.com/pahlevikun/applydiff/internal/source/greenhouse"
 	"github.com/pahlevikun/applydiff/internal/source/jobicy"
 	"github.com/pahlevikun/applydiff/internal/source/remotive"
@@ -25,9 +29,11 @@ type App struct {
 	Store  *store.Store
 	Config *jobconfig.Config
 	Runner *scan.Runner
+	Runs   *runs.Runner
 	LLM    llm.Runner
 	Facts  *cv.Facts
 
+	Paths     paths.Paths
 	DBPath    string
 	CfgPath   string
 	FactsPath string
@@ -42,33 +48,33 @@ type Options struct {
 
 // Open creates a migrated store and loads config from the environment / defaults.
 func Open(ctx context.Context, opt Options) (*App, error) {
-	dbPath := opt.DBPath
-	if dbPath == "" {
-		dbPath = os.Getenv("DATABASE_PATH")
-		if dbPath == "" {
-			dbPath = "applydiff.db"
-		}
+	_ = EnsureLoginShellPATH()
+
+	p, err := paths.Resolve()
+	if err != nil {
+		return nil, err
 	}
-	cfgPath := opt.ConfigPath
-	if cfgPath == "" {
-		cfgPath = os.Getenv("JOBS_CONFIG")
-		if cfgPath == "" {
-			cfgPath = filepath.Join("jobs", "config.yaml")
-		}
+	if opt.DBPath != "" {
+		p.DB = opt.DBPath
 	}
-	factsPath := opt.FactsPath
-	if factsPath == "" {
-		factsPath = os.Getenv("FACTS_PATH")
-		if factsPath == "" {
-			factsPath = "facts.json"
-		}
+	if opt.ConfigPath != "" {
+		p.Config = opt.ConfigPath
+	}
+	if opt.FactsPath != "" {
+		p.Facts = opt.FactsPath
+	}
+	if err := paths.EnsureDefaults(p); err != nil {
+		return nil, fmt.Errorf("prepare data dir: %w", err)
 	}
 
-	cfg, err := jobconfig.Load(cfgPath)
+	cfg, err := jobconfig.Load(p.Config)
 	if err != nil {
 		return nil, fmt.Errorf("load jobs config: %w", err)
 	}
-	st, err := store.New(dbPath)
+	if err := os.MkdirAll(filepath.Dir(p.DB), 0o755); err != nil {
+		return nil, err
+	}
+	st, err := store.New(p.DB)
 	if err != nil {
 		return nil, err
 	}
@@ -76,23 +82,30 @@ func Open(ctx context.Context, opt Options) (*App, error) {
 		st.Close()
 		return nil, err
 	}
+	runner := runs.New(st)
+	_ = runner.Recover(ctx)
+	if eng, err := export.ResolveEngine(p); err == nil {
+		export.SetDefaultEngine(eng)
+	}
 	registerSources(cfg)
 
 	var facts *cv.Facts
-	if data, err := os.ReadFile(factsPath); err == nil {
+	if data, err := os.ReadFile(p.Facts); err == nil {
 		facts, _ = cv.LoadFactsJSON(data)
 	}
 
 	app := &App{
 		Store:     st,
 		Config:    cfg,
-		DBPath:    dbPath,
-		CfgPath:   cfgPath,
-		FactsPath: factsPath,
+		Paths:     p,
+		DBPath:    p.DB,
+		CfgPath:   p.Config,
+		FactsPath: p.Facts,
 		Runner: &scan.Runner{
 			Store:  st,
 			Config: cfg,
 		},
+		Runs: runner,
 		LLM:   llm.NewRunnerFromEnv(),
 		Facts: facts,
 	}
@@ -118,6 +131,9 @@ func registerSources(cfg *jobconfig.Config) {
 	}
 	if cfg.Sources.WorkingNomads.Enabled {
 		source.Register(workingnomads.NewFromConfig(cfg.Sources.WorkingNomads))
+	}
+	if cfg.Sources.FourDayWeek.Enabled {
+		source.Register(fourdayweek.NewFromConfig(cfg.Sources.FourDayWeek))
 	}
 }
 

@@ -33,6 +33,14 @@ func TestEmbeddedUIHandler(t *testing.T) {
 	if !strings.Contains(strings.ToLower(body), "<html") {
 		t.Fatalf("expected html body, got %q", truncateBody(body, 120))
 	}
+
+	// Dynamic client routes must not 404 when embedded (job ids are URL-shaped).
+	dyn := httptest.NewRequest(http.MethodGet, "/interview/https%3A%2F%2Fexample.com%2Fjob", nil)
+	dynRec := httptest.NewRecorder()
+	mux.ServeHTTP(dynRec, dyn)
+	if dynRec.Code != http.StatusOK {
+		t.Fatalf("interview deep link status %d", dynRec.Code)
+	}
 }
 
 func truncateBody(s string, n int) string {

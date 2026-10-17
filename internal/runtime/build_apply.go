@@ -3,7 +3,6 @@ package runtime
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/pahlevikun/applydiff/internal/application"
 	"github.com/pahlevikun/applydiff/internal/export"
@@ -11,7 +10,7 @@ import (
 )
 
 // BuildPDF exports LaTeX/PDF for a job branch.
-func (a *App) BuildPDF(ctx context.Context, key string, dryRun bool) (*export.Result, error) {
+func (a *App) BuildPDF(ctx context.Context, key string, dryRun bool, actor Actor) (*export.Result, error) {
 	j, err := a.JobKey(ctx, key)
 	if err != nil {
 		return nil, err
@@ -31,13 +30,7 @@ func (a *App) BuildPDF(ctx context.Context, key string, dryRun bool) (*export.Re
 		return nil, err
 	}
 	facts := a.FactsOrFile(ctx)
-	outRoot := os.Getenv("OUTPUT_ROOT")
-	if outRoot == "" {
-		outRoot = os.Getenv("EXPORT_ROOT")
-	}
-	if outRoot == "" {
-		outRoot = "output"
-	}
+	outRoot := a.OutputRoot()
 	res, err := export.Build(export.Options{
 		OutRoot: outRoot,
 		Job:     *j,
@@ -59,6 +52,7 @@ func (a *App) BuildPDF(ctx context.Context, key string, dryRun bool) (*export.Re
 		}
 	}
 	_ = a.Store.SetApplicationCVSnapshot(ctx, j.ID, res.CVSnapshot)
+	a.recordAction(ctx, j.ID, "build", actor, res.CVPDF)
 	return res, nil
 }
 
@@ -87,7 +81,7 @@ type ApplyOptions struct {
 }
 
 // Apply records submission intent. Auto-submit is never performed.
-func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool, meta ApplyOptions) (*ApplyResult, error) {
+func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool, meta ApplyOptions, actor Actor) (*ApplyResult, error) {
 	if mode == "" {
 		mode = ApplyManual
 	}
@@ -143,6 +137,7 @@ func (a *App) Apply(ctx context.Context, key string, mode ApplyMode, dryRun bool
 		}
 	}
 	res.Status = app.Status
+	a.recordAction(ctx, j.ID, "apply", actor, string(mode))
 	return res, nil
 }
 

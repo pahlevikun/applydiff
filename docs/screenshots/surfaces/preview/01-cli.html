@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>CLI surface</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0d0f12; font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; }
+  .wrap { padding: 40px; max-width: 1100px; }
+  .label { color: #b86b11; font-size: 11px; letter-spacing: 0.12em; margin-bottom: 12px; }
+  h1 { color: #ffb454; font-family: "IBM Plex Sans", sans-serif; font-size: 22px; margin: 0 0 20px; font-weight: 600; }
+  .term { background: #141820; border: 1px solid #2a3140; border-radius: 10px; padding: 20px 24px; color: #e8e6e1; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
+  .prompt { color: #ffb454; }
+  .dim { color: #7a8494; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">SURFACE 01 · CLI</div>
+  <h1>applydiff doctor &amp; jobs</h1>
+  <div class="term"><span class="prompt">$</span> applydiff doctor
+home: /Users/…/Application Support/applydiff
+db: …/applydiff.db (ok=true)
+config: …/jobs/config.yaml
+llm: cli cli=claude -p
+pdf: tectonic
+mcp cursor: not_registered
+
+<span class="prompt">$</span> applydiff scan --async --json
+{"id":"run-7f2a","kind":"scan","status":"running"}
+
+<span class="prompt">$</span> applydiff runs get run-7f2a --json
+<span class="dim"># … jobs land in SQLite; same binary powers TUI and serve</span></div>
+</div>
+</body>
+</html>

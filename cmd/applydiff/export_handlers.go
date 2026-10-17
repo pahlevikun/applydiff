@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/pahlevikun/applydiff/internal/application"
 	"github.com/pahlevikun/applydiff/internal/export"
@@ -17,9 +14,8 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	path := strings.TrimPrefix(r.URL.Path, "/api/export/")
-	jobID := strings.Trim(path, "/")
-	if jobID == "" || strings.Contains(jobID, "/") {
+	jobID := jobIDFromAPIPath("/api/export/", r.URL.Path)
+	if jobID == "" {
 		http.Error(w, "job id required", http.StatusBadRequest)
 		return
 	}
@@ -41,12 +37,8 @@ func (s *server) handleExport(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		facts = s.factsFromFile()
 	}
-	outRoot := os.Getenv("OUTPUT_ROOT")
-	if outRoot == "" {
-		outRoot = filepath.Join("output")
-	}
 	res, err := export.Build(export.Options{
-		OutRoot: outRoot,
+		OutRoot: s.app.OutputRoot(),
 		Job:     *j,
 		Doc:     branch,
 		Facts:   facts,

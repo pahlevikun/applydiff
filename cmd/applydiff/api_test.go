@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/pahlevikun/applydiff/internal/llm"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
+	"github.com/pahlevikun/applydiff/internal/runs"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/store"
 )
@@ -27,6 +29,7 @@ func testServer(st *store.Store, cfg *jobconfig.Config, runner *scan.Runner, llm
 		Store:  st,
 		Config: cfg,
 		Runner: runner,
+		Runs:   runs.New(st),
 		LLM:    llmRunner,
 	}
 	if app.Runner == nil {
@@ -220,6 +223,57 @@ func TestAPIMatchRoundTrip(t *testing.T) {
 	}
 	if postRes["total"] != getRes["total"] {
 		t.Fatalf("total mismatch post=%v get=%v", postRes["total"], getRes["total"])
+	}
+}
+
+func TestAPIMatchURLStyleJobID(t *testing.T) {
+	ctx := context.Background()
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	j := job.Job{
+		Company:     "4 Day Week",
+		Title:       "Staff Software Engineer (Android)",
+		URL:         "https://4dayweek.io/jobs/01a14832-d887-78fb-8eb9-7632d237d526",
+		Source:      "fourdayweek",
+		PostedAt:    "2026-10-10T10:00:00Z",
+		Remote:      "yes",
+		Region:      "global",
+		Status:      "discovered",
+		Description: "- Required: Android\n- Kotlin required",
+	}
+	jobID := job.DedupeKey(j)
+	j.ID = jobID
+	if err := st.InsertJob(ctx, j); err != nil {
+		t.Fatal(err)
+	}
+
+	doc := &cv.Document{
+		Person:  "p",
+		Contact: cv.Contact{Name: "A", Headline: "Senior Engineer", Email: "a@b.c"},
+		Summary: cv.Summary{ID: "summary", Text: "Android Kotlin"},
+		Skills:  []cv.SkillGroup{{ID: "skills.mobile", Label: "M", Items: []string{"Android", "Kotlin"}}},
+	}
+	if err := st.SaveMaster(ctx, doc); err != nil {
+		t.Fatal(err)
+	}
+
+	srv := testServer(st, &jobconfig.Config{}, nil, nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/match/", srv.handleMatch)
+
+	path := "/api/match/" + url.PathEscape(jobID)
+	postReq := httptest.NewRequest(http.MethodPost, path, nil)
+	postRec := httptest.NewRecorder()
+	mux.ServeHTTP(postRec, postReq)
+	if postRec.Code != http.StatusOK {
+		t.Fatalf("post match status %d body %s", postRec.Code, postRec.Body.String())
 	}
 }
 
