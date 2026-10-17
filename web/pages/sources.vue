@@ -6,16 +6,48 @@ type SourceView = {
   enabled: boolean
 }
 
+type FilterRule = {
+  hard?: boolean
+  values?: string[]
+  require?: boolean
+  min?: number
+  max?: number
+  boost?: number
+  currency?: string
+  all?: boolean
+}
+
+type FilterSpec = Record<string, FilterRule | boolean>
+
 type ConfigView = {
   sources: SourceView[]
   queries: string[]
-  filters: {
-    regions: string[]
-    remote_only: boolean
-    min_seniority: string
-    max_posted_days: number
-  }
+  filters: FilterSpec
   llm: { mode: string; model: string }
+}
+
+const filterSections: { title: string; keys: string[] }[] = [
+  { title: 'Work arrangement', keys: ['arrangement', 'weekly_days', 'async_friendly', 'timezone_overlap_hours'] },
+  { title: 'Region & geography', keys: ['regions', 'countries', 'exclude_regions'] },
+  { title: 'Employment & seniority', keys: ['employment_type', 'exclude_employment', 'seniority', 'min_seniority'] },
+  { title: 'Compensation', keys: ['salary_min', 'salary_disclosed', 'equity'] },
+  { title: 'Company', keys: ['company_stage', 'company_size'] },
+  { title: 'Visa & logistics', keys: ['visa_sponsorship', 'relocation', 'eor_friendly'] },
+  { title: 'Role & stack', keys: ['archetype', 'must_have_keywords', 'nice_to_have_keywords', 'exclude_keywords'] },
+  { title: 'Freshness', keys: ['max_posted_days'] },
+  { title: 'Benefits', keys: ['benefits'] },
+]
+
+function ruleLabel(key: string, rule: FilterRule | boolean | undefined): string {
+  if (rule === undefined) return '—'
+  if (typeof rule === 'boolean') return rule ? 'on' : 'off'
+  if (rule.values?.length) {
+    return `${rule.hard ? 'hard' : 'soft'} · ${rule.values.join(', ')}`
+  }
+  if (rule.require) return `${rule.hard ? 'hard' : 'soft'} · required (boost ${rule.boost ?? 5})`
+  if (rule.min) return `${rule.hard ? 'hard' : 'soft'} · min ${rule.min}${rule.currency ? ' ' + rule.currency : ''}`
+  if (rule.max) return `${rule.hard ? 'hard' : 'soft'} · max ${rule.max} days`
+  return 'configured'
 }
 
 const config = ref<ConfigView | null>(null)
@@ -120,14 +152,18 @@ onMounted(load)
           <span class="mono">{{ q }}</span>
         </div>
         <div class="hr" />
-        <div class="lbl">Hard filters</div>
+        <div class="lbl">Filter taxonomy</div>
+        <template v-for="section in filterSections" :key="section.title">
+          <div class="lbl sub">{{ section.title }}</div>
+          <div v-for="key in section.keys" :key="key" class="flow">
+            <span class="mono">{{ key }}</span>
+            <span class="grow" />
+            <span class="chip">{{ ruleLabel(key, config.filters[key]) }}</span>
+          </div>
+        </template>
         <div class="flow">
-          remote in posting <span class="grow" /><span class="chip acc">{{ config.filters.remote_only ? 'on' : 'off' }}</span>
+          remote_only legacy <span class="grow" /><span class="chip acc">{{ config.filters.remote_only === true ? 'on' : 'off' }}</span>
         </div>
-        <div class="flow">region {{ config.filters.regions?.join(' · ') || 'SEA · EU · global' }}</div>
-        <div class="flow">min senior · {{ config.filters.min_seniority || 'senior' }}</div>
-        <div class="flow">drop agencies · unpaid · onsite-only</div>
-        <div class="flow">posted ≤ {{ config.filters.max_posted_days || 14 }} days</div>
         <div class="hr" />
         <div class="lbl">LLM runner</div>
         <div class="flow"><span class="dot-sm" /> {{ config.llm.mode === 'cli' ? 'CLI agent (Claude/Codex)' : 'direct API fallback' }}</div>
@@ -209,6 +245,22 @@ onMounted(load)
   letter-spacing: 0.04em;
   color: var(--dim, #6e7785);
   margin: 10px 0 8px;
+}
+.lbl.sub {
+  margin-top: 14px;
+  color: var(--muted, #9ba3ae);
+}
+.chip {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface2, #20252c);
+  color: var(--muted, #9ba3ae);
+  max-width: 55%;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .f {
   padding: 6px 8px;

@@ -74,22 +74,11 @@ func (s *Store) LoadMatchResult(ctx context.Context, jobID string) (*match.Resul
 }
 
 func (s *Store) GetJob(ctx context.Context, id string) (*job.Job, error) {
-	var j job.Job
-	var desc, salaryPost, salaryATS string
-	err := s.db.QueryRowContext(ctx, `
-		SELECT id, company, title, url, source, posted_at, remote, region, status,
-		       description, salary_post, salary_ats
-		FROM jobs WHERE id = ?
-	`, id).Scan(
-		&j.ID, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.Remote, &j.Region, &j.Status,
-		&desc, &salaryPost, &salaryATS,
-	)
+	row := s.db.QueryRowContext(ctx, jobSelectSQL+` WHERE id = ?`, id)
+	j, err := scanJobRow(row)
 	if err != nil {
 		return nil, err
 	}
-	j.Description = desc
-	j.SalaryPost = salaryPost
-	j.SalaryATS = salaryATS
 	return &j, nil
 }
 

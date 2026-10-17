@@ -81,12 +81,51 @@ func TestAPIJobsAndScan(t *testing.T) {
 	if listRec.Code != http.StatusOK {
 		t.Fatalf("jobs status %d", listRec.Code)
 	}
-	var jobs []job.Job
+	var jobs []job.JobView
 	if err := json.NewDecoder(listRec.Body).Decode(&jobs); err != nil {
 		t.Fatal(err)
 	}
 	if len(jobs) != 1 {
 		t.Fatalf("expected 1 job, got %d", len(jobs))
+	}
+	if !jobs[0].Filter.Keep {
+		t.Fatalf("expected keep true, reasons %v", jobs[0].Filter.Reasons)
+	}
+}
+
+func TestAPIFilterPresetsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(ctx); err != nil {
+		t.Fatal(err)
+	}
+	srv := &server{store: st, cfg: &jobconfig.Config{}}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/filters/presets", srv.handleFilterPresets)
+	mux.HandleFunc("/api/filters/presets/", srv.handleFilterPresets)
+
+	body := `{"name":"Test","spec":{"arrangement":{"hard":true,"values":["remote"]}}}`
+	postReq := httptest.NewRequest(http.MethodPost, "/api/filters/presets", strings.NewReader(body))
+	postReq.Header.Set("Content-Type", "application/json")
+	postRec := httptest.NewRecorder()
+	mux.ServeHTTP(postRec, postReq)
+	if postRec.Code != http.StatusOK {
+		t.Fatalf("post %d %s", postRec.Code, postRec.Body.String())
+	}
+	var created map[string]interface{}
+	if err := json.NewDecoder(postRec.Body).Decode(&created); err != nil {
+		t.Fatal(err)
+	}
+	id, _ := created["id"].(string)
+	applyReq := httptest.NewRequest(http.MethodPost, "/api/filters/presets/"+id+"/apply", nil)
+	applyRec := httptest.NewRecorder()
+	mux.ServeHTTP(applyRec, applyReq)
+	if applyRec.Code != http.StatusOK {
+		t.Fatalf("apply %d", applyRec.Code)
 	}
 }
 
