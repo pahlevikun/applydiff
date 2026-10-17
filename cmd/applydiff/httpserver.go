@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/pahlevikun/applydiff/internal/runtime"
+	"github.com/pahlevikun/applydiff/internal/scan"
 )
 
 func runHTTPServer(port string, app *runtime.App) {
@@ -79,7 +80,7 @@ func (s *server) handleScan(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
-	result, err := s.app.Runner.Run(ctx)
+	result, err := s.app.Runner.Run(ctx, scan.Options{})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

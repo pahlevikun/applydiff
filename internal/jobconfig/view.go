@@ -6,14 +6,16 @@ import (
 
 	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/llm"
+	"github.com/pahlevikun/applydiff/internal/store"
 )
 
 // SourceView is one row in the sources settings grid.
 type SourceView struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Hint    string `json:"hint"`
-	Enabled bool   `json:"enabled"`
+	ID       string                `json:"id"`
+	Name     string                `json:"name"`
+	Hint     string                `json:"hint"`
+	Enabled  bool                  `json:"enabled"`
+	LastScan *store.SourceScanResult `json:"last_scan,omitempty"`
 }
 
 // ConfigView is exposed to the Sources UI.
@@ -40,6 +42,8 @@ var defaultSources = []SourceView{
 	{ID: "weworkremotely", Name: "We Work Remotely", Hint: "remote board", Enabled: true},
 	{ID: "remoteok", Name: "Remote OK", Hint: "remote board", Enabled: true},
 	{ID: "remotive", Name: "Remotive", Hint: "remote board", Enabled: true},
+	{ID: "jobicy", Name: "Jobicy", Hint: "remote board", Enabled: true},
+	{ID: "workingnomads", Name: "Working Nomads", Hint: "remote board", Enabled: true},
 	{ID: "otta", Name: "Otta", Hint: "filter remote on site", Enabled: true},
 	{ID: "ycombinator", Name: "Y Combinator", Hint: "workatastartup", Enabled: true},
 	{ID: "alignjobs", Name: "AlignJobs.id", Hint: "ID-focused, freemium", Enabled: false},
@@ -47,12 +51,17 @@ var defaultSources = []SourceView{
 }
 
 // BuildView merges yaml config, persisted toggles, and LLM env.
-func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Context, key string) (string, error)) ConfigView {
+func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Context, key string) (string, error), lastScan map[string]store.SourceScanResult) ConfigView {
 	sources := make([]SourceView, len(defaultSources))
 	for i, s := range defaultSources {
 		sources[i] = s
 	}
 	sources[1].Enabled = c.Sources.Greenhouse.Enabled
+	setEnabled(&sources, "remotive", c.Sources.Remotive.Enabled)
+	setEnabled(&sources, "remoteok", c.Sources.RemoteOK.Enabled)
+	setEnabled(&sources, "jobicy", c.Sources.Jobicy.Enabled)
+	setEnabled(&sources, "weworkremotely", c.Sources.WeWorkRemotely.Enabled)
+	setEnabled(&sources, "workingnomads", c.Sources.WorkingNomads.Enabled)
 
 	if loadOverride != nil {
 		raw, err := loadOverride(ctx, "source_enabled")
@@ -68,6 +77,13 @@ func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Co
 		}
 	}
 
+	for i := range sources {
+		if res, ok := lastScan[sources[i].ID]; ok {
+			cp := res
+			sources[i].LastScan = &cp
+		}
+	}
+
 	llmCfg := llm.ConfigFromEnv()
 	return ConfigView{
 		Sources: sources,
@@ -77,5 +93,14 @@ func (c *Config) BuildView(ctx context.Context, loadOverride func(ctx context.Co
 			Mode:  llmCfg.Provider,
 			Model: llmCfg.Model,
 		},
+	}
+}
+
+func setEnabled(sources *[]SourceView, id string, enabled bool) {
+	for i := range *sources {
+		if (*sources)[i].ID == id {
+			(*sources)[i].Enabled = enabled
+			return
+		}
 	}
 }

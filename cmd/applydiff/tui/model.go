@@ -459,16 +459,22 @@ func (m model) viewDiff() string {
 }
 
 func (m model) viewSources() string {
-	view := m.app.Config.BuildView(m.ctx, func(ctx context.Context, key string) (string, error) {
-		return m.app.Store.GetSetting(ctx, key)
-	})
+	view := m.app.SourcesConfigView(m.ctx)
 	var b strings.Builder
 	for _, s := range view.Sources {
 		state := "off"
 		if s.Enabled {
-			state = "ok"
+			state = "on"
 		}
-		b.WriteString(fmt.Sprintf("%s  %s  %s\n", s.ID, state, s.Hint))
+		scanNote := ""
+		if s.LastScan != nil {
+			if s.LastScan.Error != "" {
+				scanNote = fmt.Sprintf(" err=%s", trunc(s.LastScan.Error, 40))
+			} else {
+				scanNote = fmt.Sprintf(" fetched=%d", s.LastScan.Fetched)
+			}
+		}
+		b.WriteString(fmt.Sprintf("%s  %s  %s%s\n", s.ID, state, s.Hint, scanNote))
 	}
 	return m.styles.surface.Padding(1).Render(b.String())
 }

@@ -1,9 +1,18 @@
 <script setup lang="ts">
+type SourceScan = {
+  at: string
+  fetched: number
+  stored?: number
+  skipped?: number
+  error?: string
+}
+
 type SourceView = {
   id: string
   name: string
   hint: string
   enabled: boolean
+  last_scan?: SourceScan
 }
 
 type FilterRule = {
@@ -141,7 +150,14 @@ onMounted(load)
                 @click="toggleSource(src.id, !src.enabled)"
               />
             </div>
-            <div class="m"><span>{{ src.hint }}</span></div>
+            <div class="m">
+              <span>{{ src.hint }}</span>
+              <span v-if="src.last_scan" class="scan">
+                · last scan
+                <template v-if="src.last_scan.error">error</template>
+                <template v-else>fetched {{ src.last_scan.fetched }}</template>
+              </span>
+            </div>
           </div>
         </div>
       </section>
@@ -325,6 +341,12 @@ onMounted(load)
 .card .m {
   font-size: 11.5px;
   color: var(--muted, var(--muted));
+}
+.card .scan {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--dim, var(--dim));
 }
 .mono {
   font-family: ui-monospace, monospace;

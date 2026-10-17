@@ -9,25 +9,33 @@ import (
 	"github.com/pahlevikun/applydiff/internal/scan"
 )
 
-// ScanOptions tune risk filtering and presets for a scan run.
+// ScanOptions controls job discovery, risk filters, and presets.
 type ScanOptions struct {
-	MinRisk *int
-	MaxRisk *int
-	Preset  string
-	Source  string
+	SourceID string
+	DryRun   bool
+	Preset   string
+	MinRisk  *int
+	MaxRisk  *int
 }
 
 // Scan runs job sources.
-func (a *App) Scan(ctx context.Context, dryRun bool, opt ScanOptions) (scan.Result, error) {
-	if dryRun {
+func (a *App) Scan(ctx context.Context, opt ScanOptions) (scan.Result, error) {
+	if a == nil || a.Runner == nil {
 		return scan.Result{}, nil
 	}
-	if a.Runner != nil {
-		a.Runner.MinRisk = opt.MinRisk
-		a.Runner.MaxRisk = opt.MaxRisk
-		a.Runner.Preset = opt.Preset
+	if opt.DryRun {
+		return a.Runner.Run(ctx, scan.Options{
+			SourceID: opt.SourceID,
+			DryRun:   true,
+		})
 	}
-	return a.Runner.Run(ctx)
+	a.Runner.MinRisk = opt.MinRisk
+	a.Runner.MaxRisk = opt.MaxRisk
+	a.Runner.Preset = opt.Preset
+	return a.Runner.Run(ctx, scan.Options{
+		SourceID: opt.SourceID,
+		DryRun:   false,
+	})
 }
 
 // ComputeMatch scores a job against the master CV.

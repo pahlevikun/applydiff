@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 )
@@ -9,9 +8,7 @@ import (
 func (s *server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		view := s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-			return s.app.Store.GetSetting(ctx, key)
-		})
+		view := s.app.SourcesConfigView(r.Context())
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(view)
 	case http.MethodPut:
@@ -34,9 +31,7 @@ func (s *server) putConfigSources(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "source_id required", http.StatusBadRequest)
 		return
 	}
-	view := s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-		return s.app.Store.GetSetting(ctx, key)
-	})
+	view := s.app.SourcesConfigView(r.Context())
 	overrides := map[string]bool{}
 	for _, src := range view.Sources {
 		overrides[src.ID] = src.Enabled
@@ -51,12 +46,21 @@ func (s *server) putConfigSources(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if body.SourceID == "greenhouse" {
+	switch body.SourceID {
+	case "greenhouse":
 		s.app.Config.Sources.Greenhouse.Enabled = body.Enabled
+	case "remotive":
+		s.app.Config.Sources.Remotive.Enabled = body.Enabled
+	case "remoteok":
+		s.app.Config.Sources.RemoteOK.Enabled = body.Enabled
+	case "jobicy":
+		s.app.Config.Sources.Jobicy.Enabled = body.Enabled
+	case "weworkremotely":
+		s.app.Config.Sources.WeWorkRemotely.Enabled = body.Enabled
+	case "workingnomads":
+		s.app.Config.Sources.WorkingNomads.Enabled = body.Enabled
 	}
-	view = s.app.Config.BuildView(r.Context(), func(ctx context.Context, key string) (string, error) {
-		return s.app.Store.GetSetting(ctx, key)
-	})
+	view = s.app.SourcesConfigView(r.Context())
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(view)
 }
