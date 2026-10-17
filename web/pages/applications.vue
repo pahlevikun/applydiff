@@ -6,6 +6,8 @@ type ApplicationRow = {
   url: string
   status: string
   follow_up_note: string
+  channel: string
+  referrer: string
 }
 
 type ExportResult = {
@@ -66,6 +68,8 @@ onMounted(load)
           <NuxtLink :to="`/diff/${row.job_id}`" class="title">{{ row.title }}</NuxtLink>
           <span class="muted">{{ row.company }}</span>
           <span class="chip">{{ row.status }}</span>
+          <span v-if="row.channel" class="chip channel">{{ row.channel }}</span>
+          <span v-if="row.referrer" class="muted">via {{ row.referrer }}</span>
         </div>
         <div class="actions">
           <NuxtLink :to="`/diff/${row.job_id}`" class="btn ghost">Diff</NuxtLink>
