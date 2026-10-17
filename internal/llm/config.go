@@ -7,7 +7,7 @@ import (
 
 // Config selects the LLM backend and model.
 type Config struct {
-	Provider string // "api" or "cli"
+	Provider string // "api", "cli", or "fake"
 	Model    string
 	APIURL   string
 	APIKey   string
@@ -15,10 +15,6 @@ type Config struct {
 }
 
 func ConfigFromEnv() Config {
-	provider := strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER")))
-	if provider == "" {
-		provider = "api"
-	}
 	model := os.Getenv("LLM_MODEL")
 	if model == "" {
 		model = "gpt-4o-mini"
@@ -27,11 +23,34 @@ func ConfigFromEnv() Config {
 	if apiURL == "" {
 		apiURL = "https://api.openai.com/v1/chat/completions"
 	}
-	return Config{
-		Provider: provider,
-		Model:    model,
-		APIURL:   apiURL,
-		APIKey:   os.Getenv("LLM_API_KEY"),
-		CLI:      os.Getenv("LLM_CLI"),
+	cfg := Config{
+		Model:  model,
+		APIURL: apiURL,
+		APIKey: strings.TrimSpace(os.Getenv("LLM_API_KEY")),
+		CLI:    strings.TrimSpace(os.Getenv("LLM_CLI")),
 	}
+
+	explicit := strings.ToLower(strings.TrimSpace(os.Getenv("LLM_PROVIDER")))
+	if explicit != "" {
+		cfg.Provider = explicit
+		if cfg.Provider == "cli" && cfg.CLI == "" {
+			cfg.CLI = DetectCLI()
+		}
+		return cfg
+	}
+	if cfg.CLI != "" {
+		cfg.Provider = "cli"
+		return cfg
+	}
+	if cmd := DetectCLI(); cmd != "" {
+		cfg.CLI = cmd
+		cfg.Provider = "cli"
+		return cfg
+	}
+	if cfg.APIKey != "" {
+		cfg.Provider = "api"
+		return cfg
+	}
+	cfg.Provider = "fake"
+	return cfg
 }
