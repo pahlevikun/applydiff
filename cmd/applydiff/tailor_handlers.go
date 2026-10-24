@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/pahlevikun/applydiff/internal/hunkdecision"
 	"github.com/pahlevikun/applydiff/internal/tailor"
 )
 
@@ -123,14 +124,28 @@ func (s *server) handleHunkAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "hunk blocked by facts gate", http.StatusConflict)
 		return
 	}
-	if err := s.app.Store.SetHunkStatus(r.Context(), hunkID, status); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 	jobID, err := s.app.Store.JobIDForHunk(r.Context(), hunkID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+	if err := s.app.Store.SetHunkStatus(r.Context(), hunkID, status); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	propBefore, _ := s.app.Store.LoadProposal(r.Context(), jobID)
+	if propBefore != nil {
+		for i, hk := range propBefore.Hunks {
+			if hk.ID == hunkID {
+				decision := hunkdecision.DecisionReject
+				if status == tailor.StatusAccepted {
+					decision = hunkdecision.DecisionAccept
+				}
+				hash := hunkdecision.ContentHash(hk)
+				_, _ = s.app.Store.UpsertHunkDecision(r.Context(), jobID, i, decision, "", hash)
+				break
+			}
+		}
 	}
 	prop, err := s.app.Store.LoadProposal(r.Context(), jobID)
 	if err != nil {

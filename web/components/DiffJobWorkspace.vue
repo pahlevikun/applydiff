@@ -21,6 +21,22 @@ type Proposal = {
   hunks: Hunk[]
 }
 
+type HunkReview = {
+  index: number
+  hunk: Hunk
+  decision?: string
+  text?: string
+  stale: boolean
+  decided: boolean
+}
+
+type HunkReviewSummary = {
+  job_id: string
+  total: number
+  decided: number
+  hunks: HunkReview[]
+}
+
 type CvDoc = {
   contact: { name: string; headline: string; email: string; location?: string }
   summary: { id: string; text: string }
@@ -31,6 +47,10 @@ type CvDoc = {
 type JobView = { job: { id: string; company: string; title: string } }
 
 const proposal = ref<Proposal | null>(null)
+const review = ref<HunkReviewSummary | null>(null)
+const showHelp = ref(false)
+const editText = ref('')
+const editOpen = ref(false)
 const master = ref<CvDoc | null>(null)
 const jobInfo = ref<{ company: string; title: string } | null>(null)
 const jobMissing = ref(false)
@@ -59,6 +79,10 @@ const hunkByField = computed(() => {
 const selectedHunk = computed(() =>
   proposal.value?.hunks.find((h) => h.id === selectedHunkId.value) ?? null
 )
+
+const decidedCount = computed(() => review.value?.decided ?? 0)
+const totalHunks = computed(() => review.value?.total ?? proposal.value?.hunks.length ?? 0)
+const buildReady = computed(() => totalHunks.value > 0 && decidedCount.value >= totalHunks.value)
 
 async function resolveJob() {
   jobMissing.value = false
@@ -96,8 +120,10 @@ async function loadAll() {
       throw new Error(await propRes.text())
     }
     proposal.value = await propRes.json()
+    await loadReview()
     if (!selectedHunkId.value && proposal.value?.hunks.length) {
       selectedHunkId.value = proposal.value.hunks[0].id
+      hunkIndex.value = 0
     }
   } catch (e: unknown) {
     error.value = actionErrorMessage(e)
@@ -119,16 +145,89 @@ async function generate() {
   }
 }
 
+async function loadReview() {
+  const res = await fetch(`/api/jobs/${apiJobId.value}/hunks`)
+  if (res.status === 404) {
+    review.value = null
+    return
+  }
+  if (!res.ok) {
+    throw new Error(await res.text())
+  }
+  review.value = (await res.json()) as HunkReviewSummary
+  if (review.value?.hunks.length) {
+    proposal.value = {
+      id: proposal.value?.id ?? '',
+      job_id: review.value.job_id,
+      hunks: review.value.hunks.map((r) => ({
+        ...r.hunk,
+        status: r.hunk.status,
+        stale: r.stale,
+        decision: r.decision,
+      })),
+    }
+  }
+}
+
+async function postDecision(index: number, decision: string, text = '') {
+  const res = await fetch(`/api/jobs/${apiJobId.value}/hunks/${index}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ decision, text }),
+  })
+  if (!res.ok) {
+    throw new Error(await res.text())
+  }
+  review.value = (await res.json()) as HunkReviewSummary
+  if (review.value?.hunks.length) {
+    proposal.value = {
+      id: proposal.value?.id ?? '',
+      job_id: review.value.job_id,
+      hunks: review.value.hunks.map((r) => r.hunk),
+    }
+  }
+}
+
 async function setStatus(hunk: Hunk, action: 'accept' | 'reject') {
+  const idx = (proposal.value?.hunks.findIndex((h) => h.id === hunk.id) ?? -1) + 1
+  if (idx < 1) return
   const verb = action === 'accept' ? 'Accept' : 'Reject'
   try {
-    proposal.value = await track(`${verb} hunk · ${hunk.field_id}`, async () => {
-      const res = await fetch(`/api/hunks/${hunk.id}/${action}`, { method: 'POST' })
-      if (!res.ok) {
-        throw new Error('Could not update hunk')
-      }
-      return (await res.json()) as Proposal
+    await track(`${verb} hunk · ${hunk.field_id}`, async () => {
+      await postDecision(idx, action)
     })
+  } catch (e) {
+    error.value = actionErrorMessage(e)
+  }
+}
+
+async function buildPdf() {
+  if (!buildReady.value) return
+  try {
+    await track('Build PDF', async () => {
+      const res = await fetch(`/api/jobs/${apiJobId.value}/build`, { method: 'POST' })
+      if (!res.ok) {
+        throw new Error(await res.text())
+      }
+      return res.json()
+    })
+  } catch (e) {
+    error.value = actionErrorMessage(e)
+  }
+}
+
+function openEdit() {
+  const h = selectedHunk.value
+  if (!h) return
+  editText.value = h.after
+  editOpen.value = true
+}
+
+async function submitEdit() {
+  const idx = hunkIndex.value + 1
+  editOpen.value = false
+  try {
+    await postDecision(idx, 'edit', editText.value)
   } catch (e) {
     error.value = actionErrorMessage(e)
   }
@@ -168,7 +267,20 @@ async function toggleSelectedHunk() {
 }
 
 function onDiffKey(e: KeyboardEvent) {
+  if (editOpen.value) return
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+  if (showHelp.value) {
+    if (e.key === '?' || e.key === 'Escape') {
+      e.preventDefault()
+      showHelp.value = false
+    }
+    return
+  }
+  if (e.key === '?') {
+    e.preventDefault()
+    showHelp.value = true
+    return
+  }
   if (e.key === 'j') {
     e.preventDefault()
     moveHunk(1)
@@ -177,9 +289,40 @@ function onDiffKey(e: KeyboardEvent) {
     e.preventDefault()
     moveHunk(-1)
   }
+  if (e.key === 'g') {
+    e.preventDefault()
+    hunkIndex.value = 0
+    if (proposal.value?.hunks[0]) selectedHunkId.value = proposal.value.hunks[0].id
+  }
+  if (e.key === 'G') {
+    e.preventDefault()
+    const n = proposal.value?.hunks.length ?? 0
+    if (n > 0) {
+      hunkIndex.value = n - 1
+      selectedHunkId.value = proposal.value!.hunks[n - 1].id
+    }
+  }
   if (e.code === 'Space') {
     e.preventDefault()
-    toggleSelectedHunk()
+    void toggleSelectedHunk()
+  }
+  if (e.key === 'a') {
+    e.preventDefault()
+    const h = proposal.value?.hunks[hunkIndex.value]
+    if (h) void setStatus(h, 'accept')
+  }
+  if (e.key === 'x') {
+    e.preventDefault()
+    const h = proposal.value?.hunks[hunkIndex.value]
+    if (h) void setStatus(h, 'reject')
+  }
+  if (e.key === 'e') {
+    e.preventDefault()
+    openEdit()
+  }
+  if (e.key === 'b') {
+    e.preventDefault()
+    void buildPdf()
   }
 }
 
@@ -308,6 +451,30 @@ watch(
         </template>
         <p v-else class="muted">Select a change.</p>
       </aside>
+    </div>
+
+    <footer v-if="proposal" class="diff-bar">
+      <span class="progress">{{ decidedCount }} of {{ totalHunks }} decided</span>
+      <button type="button" class="btn" :disabled="!buildReady || loading" @click="buildPdf">Build PDF</button>
+    </footer>
+
+    <div v-if="showHelp" class="help" role="dialog" aria-label="Keyboard shortcuts">
+      <p><strong>Diff keyboard</strong> (press ? to close)</p>
+      <ul>
+        <li>j / k — next / previous hunk</li>
+        <li>g / G — first / last hunk</li>
+        <li>a accept · x reject · e edit · space toggle</li>
+        <li>b — build PDF when all hunks decided</li>
+      </ul>
+    </div>
+
+    <div v-if="editOpen" class="edit-modal" role="dialog">
+      <label class="lbl">Edit hunk text</label>
+      <textarea v-model="editText" rows="5" />
+      <div class="edit-actions">
+        <button type="button" class="btn ghost" @click="editOpen = false">Cancel</button>
+        <button type="button" class="btn" @click="submitEdit">Save</button>
+      </div>
     </div>
   </div>
 </template>
@@ -587,5 +754,64 @@ ins {
 }
 .accepted {
   opacity: 0.85;
+}
+.diff-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.progress {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.help {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+}
+.help ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  line-height: 1.6;
+}
+.help p {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 1rem 1.25rem;
+  max-width: 22rem;
+}
+.edit-modal {
+  position: fixed;
+  bottom: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, 92vw);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 1rem;
+  z-index: 35;
+}
+.edit-modal textarea {
+  width: 100%;
+  margin-top: 0.5rem;
+  font-family: inherit;
+}
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.st.stale {
+  color: var(--amber);
 }
 </style>

@@ -102,6 +102,13 @@ func (s *Store) SaveProposal(ctx context.Context, jobID string, hunks []tailor.H
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
+	prop, err := s.LoadProposal(ctx, jobID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.ApplyHunkDecisions(ctx, jobID, prop.Hunks); err != nil {
+		return nil, err
+	}
 	return s.LoadProposal(ctx, jobID)
 }
 
@@ -116,6 +123,12 @@ func (s *Store) LoadProposal(ctx context.Context, jobID string) (*Proposal, erro
 	hunks, err := s.loadProposalHunks(ctx, p.ID)
 	if err != nil {
 		return nil, err
+	}
+	if _, err := s.ApplyHunkDecisions(ctx, jobID, hunks); err != nil {
+		return nil, err
+	}
+	for i := range hunks {
+		hunks[i].Index = i + 1
 	}
 	p.Hunks = hunks
 	master, err := s.LoadMaster(ctx)
@@ -133,7 +146,7 @@ func (s *Store) LoadProposal(ctx context.Context, jobID string) (*Proposal, erro
 func (s *Store) loadProposalHunks(ctx context.Context, proposalID string) ([]tailor.Hunk, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, field_id, section, before_text, after_text, rationale, evidence, tags, status
-		FROM proposal_hunks WHERE proposal_id = ? ORDER BY field_id
+		FROM proposal_hunks WHERE proposal_id = ? ORDER BY rowid ASC
 	`, proposalID)
 	if err != nil {
 		return nil, err

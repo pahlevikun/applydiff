@@ -24,10 +24,14 @@ func (e ErrNoMatch) Error() string {
 
 // ErrNeedsApproval is exit code 3.
 type ErrNeedsApproval struct {
-	Pending int
+	Pending   int
+	Undecided []int
 }
 
 func (e ErrNeedsApproval) Error() string {
+	if len(e.Undecided) > 0 {
+		return fmt.Sprintf("%d hunk(s) still need approval: %v", e.Pending, e.Undecided)
+	}
 	return fmt.Sprintf("%d hunk(s) still need approval", e.Pending)
 }
 

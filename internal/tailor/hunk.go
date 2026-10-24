@@ -5,6 +5,7 @@ const (
 	StatusAccepted = "accepted"
 	StatusRejected = "rejected"
 	StatusBlocked  = "blocked"
+	StatusSkipped  = "skipped"
 )
 
 const TagATSKeyword = "ats_keyword"
@@ -20,6 +21,9 @@ type Hunk struct {
 	Evidence  []string `json:"evidence"`
 	Tags      []string `json:"tags,omitempty"`
 	Status    string   `json:"status"`
+	Index     int      `json:"index,omitempty"`
+	Decision  string   `json:"decision,omitempty"`
+	Stale     bool     `json:"stale,omitempty"`
 }
 
 // RawHunk is the LLM JSON shape before validation.

@@ -12,8 +12,10 @@ import (
 	"github.com/pahlevikun/applydiff/internal/features"
 	"github.com/pahlevikun/applydiff/internal/interview"
 	"github.com/pahlevikun/applydiff/internal/job"
+	"github.com/pahlevikun/applydiff/internal/hunkdecision"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/store"
+	"github.com/pahlevikun/applydiff/internal/tailor"
 )
 
 type screen int
@@ -249,24 +251,24 @@ func (m model) updateDiff(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.hunkIdx > 0 {
 			m.hunkIdx--
 		}
+	case "g":
+		m.hunkIdx = 0
+	case "G":
+		m.hunkIdx = len(m.proposal.Hunks) - 1
 	case " ":
-		m.hunkSel[m.hunkIdx] = !m.hunkSel[m.hunkIdx]
+		h := m.proposal.Hunks[m.hunkIdx]
+		decision := hunkdecision.DecisionAccept
+		if h.Status == tailor.StatusAccepted {
+			decision = hunkdecision.DecisionReject
+		}
+		m.applyHunkDecision(decision, "")
 	case "a":
-		_, err := m.app.ApproveHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false, false, runtime.ActorHuman)
-		if err != nil {
-			m.err = err.Error()
-		} else {
-			p, _ := m.app.LoadProposal(m.ctx, m.selected)
-			m.proposal = p
-		}
+		m.applyHunkDecision(hunkdecision.DecisionAccept, "")
 	case "x":
-		_, err := m.app.RejectHunks(m.ctx, m.selected, []int{m.hunkIdx + 1}, false, runtime.ActorHuman)
-		if err != nil {
-			m.err = err.Error()
-		} else {
-			p, _ := m.app.LoadProposal(m.ctx, m.selected)
-			m.proposal = p
-		}
+		m.applyHunkDecision(hunkdecision.DecisionReject, "")
+	case "e":
+		h := m.proposal.Hunks[m.hunkIdx]
+		m.applyHunkDecision(hunkdecision.DecisionEdit, h.After)
 	case "b":
 		_, err := m.app.BuildPDF(m.ctx, m.selected, false, runtime.ActorHuman)
 		if err != nil {
@@ -276,6 +278,38 @@ func (m model) updateDiff(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+func (m *model) applyHunkDecision(decision, text string) {
+	_, err := m.app.SetHunkDecision(m.ctx, m.selected, m.hunkIdx+1, decision, text, false, runtime.ActorHuman)
+	if err != nil {
+		m.err = err.Error()
+		return
+	}
+	p, err := m.app.LoadProposal(m.ctx, m.selected)
+	if err != nil {
+		m.err = err.Error()
+		return
+	}
+	m.proposal = p
+	m.err = ""
+}
+
+func (m model) diffProgress() (decided, total int) {
+	if m.proposal == nil {
+		return 0, 0
+	}
+	total = len(m.proposal.Hunks)
+	for _, h := range m.proposal.Hunks {
+		if h.Stale {
+			continue
+		}
+		switch h.Status {
+		case tailor.StatusAccepted, tailor.StatusRejected, tailor.StatusSkipped:
+			decided++
+		}
+	}
+	return decided, total
 }
 
 func filterJobs(jobs []job.JobView, q string) []job.JobView {
@@ -364,7 +398,7 @@ func (m model) helpOverlay() string {
 	return lipgloss.NewStyle().Padding(1, 2).Render(`ApplyDiff TUI — Phosphor
 ? close help
 Feed: j/k g/G move · enter job · / filter
-Diff: j/k hunk · space toggle · a accept · x reject · b build PDF` + iv + `
+Diff: j/k hunk · g/G ends · space toggle · a accept · x reject · e edit · b build PDF` + iv + `
 tab / shift+tab: switch screen`)
 }
 
@@ -452,7 +486,12 @@ func (m model) viewDiff() string {
 		return m.styles.muted.Render("No hunks")
 	}
 	h := m.proposal.Hunks[m.hunkIdx]
+	decided, total := m.diffProgress()
 	var b strings.Builder
+	b.WriteString(m.styles.muted.Render(fmt.Sprintf("%d of %d decided", decided, total)) + "\n")
+	if h.Stale {
+		b.WriteString(m.styles.amber.Render("stale — re-review") + "\n")
+	}
 	b.WriteString(m.styles.accent.Render(fmt.Sprintf("Hunk %d/%d · %s", m.hunkIdx+1, len(m.proposal.Hunks), h.FieldID)) + "\n")
 	b.WriteString(m.styles.del.Render("- "+h.Before) + "\n")
 	b.WriteString(m.styles.add.Render("+ "+h.After) + "\n")
@@ -510,16 +549,30 @@ func Run(app *runtime.App) error {
 	}
 	m := initialModel(app)
 	if !isInteractive() {
-		if os.Getenv("APPLYDIFF_TUI_SNAPSHOT") != "" && features.InterviewPrepEnabled {
-			m.screen = screenInterview
-			m.status = "Interview"
+		if os.Getenv("APPLYDIFF_TUI_SNAPSHOT") != "" {
+			m.screen = screenDiff
+			m.status = "Diff"
 			m.width = 100
 			m.height = 24
-			if fw := interview.FrameworkByID("system-design"); fw != nil {
-				m.ivFramework = fw
-				m.ivLoop = []string{"recruiter screen", "technical screen", "coding"}
-				m.ivTopics = []string{"caching", "scalability"}
-				m.ensureIVSteps(fw)
+			m.selected = "job-snapshot"
+			m.proposal = &store.Proposal{
+				JobID: "job-snapshot",
+				Hunks: []tailor.Hunk{
+					{FieldID: "summary", Before: "Was", After: "Now", Rationale: "fit", Status: tailor.StatusAccepted},
+					{FieldID: "exp.1.b1", Before: "Old", After: "New", Rationale: "JD", Status: tailor.StatusPending},
+					{FieldID: "skills.backend", Before: "Go", After: "Go, K8s", Rationale: "ATS", Status: tailor.StatusPending},
+				},
+			}
+			m.hunkIdx = 1
+			if features.InterviewPrepEnabled && os.Getenv("APPLYDIFF_TUI_SNAPSHOT_INTERVIEW") == "1" {
+				m.screen = screenInterview
+				m.status = "Interview"
+				if fw := interview.FrameworkByID("system-design"); fw != nil {
+					m.ivFramework = fw
+					m.ivLoop = []string{"recruiter screen", "technical screen", "coding"}
+					m.ivTopics = []string{"caching", "scalability"}
+					m.ensureIVSteps(fw)
+				}
 			}
 		}
 		fmt.Println(m.View())
