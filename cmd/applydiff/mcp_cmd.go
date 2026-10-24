@@ -12,7 +12,7 @@ func cmdMCP() *cobra.Command {
 		Use:   "mcp",
 		Short: "Run MCP server over stdio",
 		Run: func(cmd *cobra.Command, args []string) {
-			exitOn(mcpserver.Run(cmd.Context(), rootApp))
+			exitOn(mcpserver.Run(cmd.Context()))
 		},
 	}
 	c.AddCommand(cmdMCPInstall())
