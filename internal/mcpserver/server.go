@@ -1,119 +1,264 @@
 package mcpserver
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
-
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/pahlevikun/applydiff/internal/features"
-	"github.com/pahlevikun/applydiff/internal/runtime"
-	"github.com/pahlevikun/applydiff/internal/tailor"
+	"sync"
 )
 
-// Run serves MCP tools over stdio using the shared runtime.App.
-func Run(ctx context.Context, app *runtime.App) error {
-	server := mcp.NewServer(&mcp.Implementation{Name: "applydiff", Version: "dev"}, nil)
+const protocolVersion = "2024-11-05"
 
-	type jobKeyArgs struct {
-		JobKey string `json:"job_key" jsonschema:"job id or key"`
-	}
-	type empty struct{}
-
-	mcp.AddTool(server, &mcp.Tool{Name: "list_jobs", Description: "List jobs with filter scores"}, func(ctx context.Context, _ *mcp.CallToolRequest, _ empty) (*mcp.CallToolResult, any, error) {
-		jobs, err := app.ListJobs(ctx)
-		return jsonResult(jobs, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "show_job", Description: "Job detail and match"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		d, err := app.ShowJob(ctx, args.JobKey)
-		return jsonResult(d, err)
-	})
-
-	type addJobArgs struct {
-		Title       string `json:"title"`
-		Company     string `json:"company"`
-		URL         string `json:"url"`
-		Description string `json:"description"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "add_job", Description: "Add pasted job description"}, func(ctx context.Context, _ *mcp.CallToolRequest, args addJobArgs) (*mcp.CallToolResult, any, error) {
-		os.Setenv("APPLYDIFF_ACTOR", "agent:mcp")
-		j, err := app.AddJob(ctx, runtime.AddJobInput{
-			Title: args.Title, Company: args.Company, URL: args.URL, Description: args.Description,
-		}, runtime.Actor("agent:mcp"))
-		return jsonResult(j, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "scan", Description: "Scan configured job sources (async)"}, func(ctx context.Context, _ *mcp.CallToolRequest, _ empty) (*mcp.CallToolResult, any, error) {
-		run, err := app.Runs.Start(ctx, "scan", "", func(ctx context.Context) (any, error) {
-			return app.Scan(ctx, runtime.ScanOptions{})
-		})
-		return jsonResult(run, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "match", Description: "Compute match for a job"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		run, err := app.Runs.Start(ctx, "match", args.JobKey, func(ctx context.Context) (any, error) {
-			return app.ComputeMatch(ctx, args.JobKey, false)
-		})
-		return jsonResult(run, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "tailor", Description: "Tailor with built-in LLM (async)"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		run, err := app.Runs.Start(ctx, "tailor", args.JobKey, func(ctx context.Context) (any, error) {
-			return app.Tailor(ctx, args.JobKey, false)
-		})
-		return jsonResult(run, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "tailor_context", Description: "Context for host-agent drafting"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		tc, err := app.TailorContext(ctx, args.JobKey)
-		return jsonResult(tc, err)
-	})
-
-	type proposeArgs struct {
-		JobKey string           `json:"job_key"`
-		Hunks  []tailor.RawHunk `json:"hunks"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "propose_hunks", Description: "Save validated hunks from host agent"}, func(ctx context.Context, _ *mcp.CallToolRequest, args proposeArgs) (*mcp.CallToolResult, any, error) {
-		prop, err := app.ProposeHunks(ctx, args.JobKey, args.Hunks, runtime.Actor("agent:mcp"))
-		return jsonResult(prop, err)
-	})
-
-	type runIDArgs struct {
-		RunID string `json:"run_id"`
-	}
-	mcp.AddTool(server, &mcp.Tool{Name: "get_run", Description: "Async run status"}, func(ctx context.Context, _ *mcp.CallToolRequest, args runIDArgs) (*mcp.CallToolResult, any, error) {
-		run, err := app.Runs.Get(ctx, args.RunID)
-		return jsonResult(run, err)
-	})
-
-	mcp.AddTool(server, &mcp.Tool{Name: "review_link", Description: "Web UI diff URL"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-		url := app.ReviewURL("8080", args.JobKey)
-		return jsonResult(map[string]string{"url": url}, nil)
-	})
-
-	if features.InterviewPrepEnabled {
-		mcp.AddTool(server, &mcp.Tool{Name: "interview_kit", Description: "Interview prep surface for job"}, func(ctx context.Context, _ *mcp.CallToolRequest, args jobKeyArgs) (*mcp.CallToolResult, any, error) {
-			kit, err := app.GenerateInterviewKit(ctx, args.JobKey)
-			return jsonResult(kit, err)
-		})
-	}
-
-	mcp.AddTool(server, &mcp.Tool{Name: "doctor", Description: "Environment diagnostics"}, func(ctx context.Context, _ *mcp.CallToolRequest, _ empty) (*mcp.CallToolResult, any, error) {
-		rep, err := runtime.Doctor(ctx, app)
-		return jsonResult(rep, err)
-	})
-
-	return server.Run(ctx, &mcp.StdioTransport{})
+// Run serves MCP over stdio (JSON-RPC 2.0, newline-delimited). Only JSON-RPC frames go to stdout.
+func Run(ctx context.Context) error {
+	fmt.Fprintln(os.Stderr, "applydiff mcp: ready")
+	srv := &Server{cli: CLI{Bin: ResolveCLI()}, out: os.Stdout, encMu: new(sync.Mutex)}
+	return srv.serve(ctx, os.Stdin)
 }
 
-func jsonResult(v any, err error) (*mcp.CallToolResult, any, error) {
-	if err != nil {
-		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: err.Error()}}, IsError: true}, nil, nil
+// Server implements a minimal MCP stdio server by delegating to the CLI.
+type Server struct {
+	cli   CLI
+	out   io.Writer
+	encMu *sync.Mutex
+}
+
+func (s *Server) serve(ctx context.Context, in io.Reader) error {
+	sc := bufio.NewScanner(in)
+	sc.Buffer(make([]byte, 1024*1024), 1024*1024)
+	for sc.Scan() {
+		if err := s.handleLine(ctx, sc.Bytes()); err != nil {
+			return err
+		}
 	}
-	raw, _ := json.MarshalIndent(v, "", "  ")
-	return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: string(raw)}}}, v, nil
+	return sc.Err()
+}
+
+func (s *Server) handleLine(ctx context.Context, line []byte) error {
+	line = trimSpace(line)
+	if len(line) == 0 {
+		return nil
+	}
+	var req rpcRequest
+	if err := json.Unmarshal(line, &req); err != nil {
+		return s.writeResponse(rpcResponse{JSONRPC: "2.0", ID: nil, Error: &rpcError{Code: -32700, Message: "parse error"}})
+	}
+	if req.JSONRPC != "2.0" {
+		return s.writeResponse(rpcResponse{JSONRPC: "2.0", ID: req.ID, Error: &rpcError{Code: -32600, Message: "invalid request"}})
+	}
+	if req.ID == nil {
+		return s.handleNotification(ctx, req.Method, req.Params)
+	}
+	result, errObj := s.dispatch(ctx, req.Method, req.Params)
+	if errObj != nil {
+		return s.writeResponse(rpcResponse{JSONRPC: "2.0", ID: req.ID, Error: errObj})
+	}
+	return s.writeResponse(rpcResponse{JSONRPC: "2.0", ID: req.ID, Result: result})
+}
+
+func (s *Server) handleNotification(ctx context.Context, method string, params json.RawMessage) error {
+	switch method {
+	case "notifications/initialized", "initialized":
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (s *Server) dispatch(ctx context.Context, method string, params json.RawMessage) (any, *rpcError) {
+	switch method {
+	case "initialize":
+		return s.handleInitialize(params)
+	case "tools/list":
+		return map[string]any{"tools": toolDefinitions()}, nil
+	case "tools/call":
+		return s.handleToolsCall(ctx, params)
+	default:
+		return nil, &rpcError{Code: -32601, Message: "method not found"}
+	}
+}
+
+func (s *Server) handleInitialize(params json.RawMessage) (any, *rpcError) {
+	return map[string]any{
+		"protocolVersion": protocolVersion,
+		"capabilities": map[string]any{
+			"tools": map[string]any{},
+		},
+		"serverInfo": map[string]string{
+			"name":    "applydiff",
+			"version": "dev",
+		},
+	}, nil
+}
+
+type toolsCallParams struct {
+	Name      string          `json:"name"`
+	Arguments json.RawMessage `json:"arguments"`
+}
+
+func (s *Server) handleToolsCall(ctx context.Context, params json.RawMessage) (any, *rpcError) {
+	var p toolsCallParams
+	if err := json.Unmarshal(params, &p); err != nil {
+		return nil, &rpcError{Code: -32602, Message: "invalid params"}
+	}
+	text, isErr, err := s.callTool(ctx, p.Name, p.Arguments)
+	if err != nil {
+		return nil, &rpcError{Code: -32603, Message: err.Error()}
+	}
+	return map[string]any{
+		"content": []map[string]any{
+			{"type": "text", "text": text},
+		},
+		"isError": isErr,
+	}, nil
+}
+
+func (s *Server) callTool(ctx context.Context, name string, rawArgs json.RawMessage) (text string, isErr bool, err error) {
+	switch name {
+	case "inbox_list":
+		var args struct {
+			State string `json:"state"`
+			Limit int    `json:"limit"`
+		}
+		if len(rawArgs) > 0 && string(rawArgs) != "null" {
+			if err := json.Unmarshal(rawArgs, &args); err != nil {
+				return "", false, fmt.Errorf("invalid arguments: %w", err)
+			}
+		}
+		out, err := s.cli.inboxList(ctx, args.State, args.Limit)
+		return out, false, err
+	case "job_get":
+		var args struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(rawArgs, &args); err != nil || args.Key == "" {
+			return "", false, fmt.Errorf("key required")
+		}
+		out, err := s.cli.jobGet(ctx, args.Key)
+		return out, false, err
+	case "hunk_decide":
+		var args struct {
+			Key      string `json:"key"`
+			Index    int    `json:"index"`
+			Decision string `json:"decision"`
+			Text     string `json:"text"`
+		}
+		if err := json.Unmarshal(rawArgs, &args); err != nil {
+			return "", false, fmt.Errorf("invalid arguments: %w", err)
+		}
+		if args.Key == "" || args.Index < 1 {
+			return "", false, fmt.Errorf("key and index required")
+		}
+		switch args.Decision {
+		case "accept", "reject", "edit", "skip":
+		default:
+			return "", false, fmt.Errorf("unknown decision %q", args.Decision)
+		}
+		out, err := s.cli.hunkDecide(ctx, args.Key, args.Index, args.Decision, args.Text)
+		return out, false, err
+	case "build_pdf":
+		var args struct {
+			Key string `json:"key"`
+		}
+		if err := json.Unmarshal(rawArgs, &args); err != nil || args.Key == "" {
+			return "", false, fmt.Errorf("key required")
+		}
+		out, err := s.cli.buildPDF(ctx, args.Key)
+		return out, false, err
+	default:
+		return "", false, fmt.Errorf("unknown tool %q", name)
+	}
+}
+
+func toolDefinitions() []map[string]any {
+	return []map[string]any{
+		{
+			"name":        "inbox_list",
+			"description": "List the decision queue (same JSON as applydiff inbox --json)",
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"state": map[string]any{"type": "string", "description": "needs-decision, in-progress, sent, interview"},
+					"limit": map[string]any{"type": "integer", "minimum": 0},
+				},
+			},
+		},
+		{
+			"name":        "job_get",
+			"description": "Job detail with match fit dimensions (applydiff show --json)",
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"key": map[string]any{"type": "string"},
+				},
+				"required": []string{"key"},
+			},
+		},
+		{
+			"name":        "hunk_decide",
+			"description": "Record accept/reject/edit/skip for one hunk (applydiff hunk decide --json)",
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"key":      map[string]any{"type": "string"},
+					"index":    map[string]any{"type": "integer", "minimum": 1},
+					"decision": map[string]any{"type": "string", "enum": []string{"accept", "reject", "edit", "skip"}},
+					"text":     map[string]any{"type": "string"},
+				},
+				"required": []string{"key", "index", "decision"},
+			},
+		},
+		{
+			"name":        "build_pdf",
+			"description": "Build CV PDF when all hunks are decided (applydiff build --json)",
+			"inputSchema": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"key": map[string]any{"type": "string"},
+				},
+				"required": []string{"key"},
+			},
+		},
+	}
+}
+
+type rpcRequest struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      *json.RawMessage `json:"id"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params"`
+}
+
+type rpcResponse struct {
+	JSONRPC string          `json:"jsonrpc"`
+	ID      *json.RawMessage `json:"id"`
+	Result  any             `json:"result,omitempty"`
+	Error   *rpcError       `json:"error,omitempty"`
+}
+
+type rpcError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+func (s *Server) writeResponse(resp rpcResponse) error {
+	s.encMu.Lock()
+	defer s.encMu.Unlock()
+	enc := json.NewEncoder(s.out)
+	return enc.Encode(resp)
+}
+
+func trimSpace(b []byte) []byte {
+	for len(b) > 0 && (b[0] == ' ' || b[0] == '\t' || b[0] == '\r' || b[0] == '\n') {
+		b = b[1:]
+	}
+	for len(b) > 0 && (b[len(b)-1] == ' ' || b[len(b)-1] == '\t' || b[len(b)-1] == '\r' || b[len(b)-1] == '\n') {
+		b = b[:len(b)-1]
+	}
+	return b
 }
 
 // InstallMCP writes client MCP config snippets (cursor, claude, codex).

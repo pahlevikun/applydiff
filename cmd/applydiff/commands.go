@@ -305,7 +305,15 @@ The output/ directory is created when missing. Set OUTPUT_ROOT to override the d
 				return
 			}
 			res, err := rootApp.BuildPDF(cmd.Context(), args[0], globalDryRun, actor())
-			exitOn(err)
+			if err != nil {
+				if globalJSON {
+					if na, ok := err.(runtime.ErrNeedsApproval); ok {
+						exitOn(emitJSON(map[string]any{"blocked": true, "undecided": na.Undecided}))
+						return
+					}
+				}
+				exitOn(err)
+			}
 			exitOn(emitOrJSON(res, func() string {
 				if res.CVPDF != "" {
 					return res.CVPDF

@@ -23,6 +23,11 @@ func newRootCmd() *cobra.Command {
 		Use:   "applydiff",
 		Short: "ApplyDiff — scan, match, tailor, and approve CV diffs",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			for c := cmd; c != nil; c = c.Parent() {
+				if c.Name() == "mcp" {
+					return nil
+				}
+			}
 			if rootApp != nil {
 				return nil
 			}
@@ -73,6 +78,7 @@ func newRootCmd() *cobra.Command {
 		cmdDaemon(),
 		cmdNotify(),
 		cmdInbox(),
+		cmdHunk(),
 		cmdMCP(),
 	)
 	// Legacy entrypoints
