@@ -39,6 +39,7 @@ func runHTTPServer(port string, app *runtime.App) {
 	mux.HandleFunc("/api/runs", srv.handleRuns)
 	mux.HandleFunc("/api/pipeline", srv.handlePipeline)
 	mux.HandleFunc("/api/inbox", srv.handleInbox)
+	mux.HandleFunc("/api/status", srv.handleStatus)
 	mux.HandleFunc("/api/jobs/", srv.handleJobByID)
 	if features.InterviewPrepEnabled {
 		mux.HandleFunc("/api/interview/stories/", srv.handleInterviewStory)

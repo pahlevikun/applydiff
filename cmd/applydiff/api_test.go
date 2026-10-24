@@ -460,6 +460,38 @@ func TestAPIApplicationsAndExport(t *testing.T) {
 	}
 }
 
+func TestAPIStatus(t *testing.T) {
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SaveSourceScanResult(context.Background(), "stub", store.SourceScanResult{
+		At: "2026-10-21T08:00:00Z", Fetched: 2, Stored: 1,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	srv := testServer(st, nil, nil, nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/status", srv.handleStatus)
+	req := httptest.NewRequest(http.MethodGet, "/api/status", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d %s", rec.Code, rec.Body.String())
+	}
+	var payload map[string]string
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["last_scan_at"] != "2026-10-21T08:00:00Z" {
+		t.Fatalf("last_scan_at %q", payload["last_scan_at"])
+	}
+}
+
 func TestAPIInboxCounts(t *testing.T) {
 	st, err := store.New(":memory:")
 	if err != nil {

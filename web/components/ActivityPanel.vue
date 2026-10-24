@@ -165,14 +165,14 @@ const timeLine = computed(() => {
 .pill.success {
   background: var(--add-bg);
   color: var(--add);
-  border-color: #3d5220;
+  border-color: var(--line2);
 }
 
 .pill.failed,
 .pill.timeout {
   background: var(--del-bg);
   color: var(--del);
-  border-color: #5c2a22;
+  border-color: var(--line2);
 }
 
 .grow {
@@ -221,12 +221,12 @@ const timeLine = computed(() => {
 }
 
 .current.success {
-  border-color: #3d5220;
+  border-color: var(--line2);
 }
 
 .current.failed,
 .current.timeout {
-  border-color: #5c2a22;
+  border-color: var(--line2);
 }
 
 .current-head {
@@ -279,7 +279,7 @@ const timeLine = computed(() => {
   display: block;
   height: 100%;
   width: 40%;
-  background: linear-gradient(90deg, transparent, #ffffff22, transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fg) 13%, transparent), transparent);
   animation: shimmer 1.4s ease-in-out infinite;
 }
 

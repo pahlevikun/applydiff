@@ -6,13 +6,82 @@ export const en = {
   brand: 'ApplyDiff',
 
   nav: {
+    inbox: 'Inbox',
+    pipeline: 'Pipeline',
+    cv: 'CV',
+    interview: 'Interview',
+    settings: 'Settings',
     jobs: 'Jobs',
     match: 'Match',
     diff: 'Diff',
-    cv: 'CV editor',
     applications: 'Applications',
-    interview: 'Interview',
     sources: 'Sources',
+  },
+
+  status: {
+    offline: 'Cannot reach the ApplyDiff API. Start the local server or daemon.',
+    offlineCmd: 'applydiff serve',
+    retry: 'Retry',
+    stale: 'Last scan was more than 24 hours ago ({when}). Run a scan or start the daemon.',
+  },
+
+  inbox: {
+    title: 'Inbox',
+    emptyTitle: 'No decisions waiting',
+    emptyDaemon: 'Start the daemon to scan, match, and queue decisions automatically.',
+    emptyScan: 'Or run a one-off scan from Jobs to fetch listings now.',
+    emptyScanLink: 'Open Jobs',
+    filters: 'Filters',
+    showFilters: 'Show filters',
+    hideFilters: 'Hide filters',
+    activeFilter: 'Active',
+    groups: {
+      needsDecision: 'Needs decision',
+      inProgress: 'In progress',
+      sent: 'Sent',
+      interview: 'Interview',
+    },
+    actions: {
+      review: 'Review',
+      continue: 'Continue',
+      track: 'Track',
+      prepare: 'Prepare',
+    },
+    age: {
+      today: 'Today',
+      oneDay: '1d',
+      days: '{days}d',
+    },
+    verdict: {
+      fresh: 'Fresh',
+      stale: 'Stale',
+      unknown: 'Unknown',
+    },
+    filterLabels: {
+      preset: 'Preset',
+      verdict: 'Verdict',
+      risk: 'Risk',
+      arrangement: 'Arrangement',
+    },
+    skipPrompt: 'Skip reason (optional)',
+    partialSource: '{name} failed: {error}',
+    sourceRetry: 'Retry scan',
+  },
+
+  jobDetail: {
+    tabs: {
+      fit: 'Fit',
+      diff: 'Diff',
+      letter: 'Letter',
+      interview: 'Interview',
+    },
+    letterEmpty: 'Cover letter is generated when you build the application PDF.',
+    letterHint: 'After tailoring, build from the Diff tab to refresh the letter draft.',
+    openInterview: 'Open interview prep',
+    decisions: 'Decisions on this job',
+    primaryContinue: 'Continue',
+    primaryBuild: 'Build PDF',
+    score: 'Score {total}/25',
   },
 
   common: {

@@ -10,7 +10,7 @@ const decoded = (() => {
   }
 })()
 
-await navigateTo({ path: '/diff', query: { job: decoded } }, { replace: true })
+await navigateTo(jobDetailPath(decoded, 'diff'), { replace: true })
 </script>
 
 <template>
