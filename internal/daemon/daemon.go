@@ -13,10 +13,13 @@ import (
 
 	"github.com/pahlevikun/applydiff/internal/inbox"
 	"github.com/pahlevikun/applydiff/internal/llm"
+	"github.com/pahlevikun/applydiff/internal/notify"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/scan"
 	"github.com/pahlevikun/applydiff/internal/source"
 	"github.com/pahlevikun/applydiff/internal/store"
+
+	"github.com/google/uuid"
 )
 
 const runKindDaemonTick = "daemon_tick"
@@ -93,6 +96,10 @@ func tick(ctx context.Context, app *runtime.App, opt Options) error {
 		return ctx.Err()
 	}
 	started := time.Now().UTC()
+	needsBefore := 0
+	if opt.Notify && !opt.DryRun {
+		needsBefore, _ = notify.NeedsDecisionCount(ctx, app.Store)
+	}
 	detail := store.PipelineRunDetail{DryRun: opt.DryRun, Notify: opt.Notify, Sources: map[string]store.SourceTickResult{}}
 	var fetched, stored, skipped int
 	var tickErr string
@@ -136,7 +143,9 @@ func tick(ctx context.Context, app *runtime.App, opt Options) error {
 	if opt.DryRun {
 		return nil
 	}
-	return app.Store.InsertPipelineRun(ctx, store.PipelineRun{
+	runID := uuid.NewString()
+	if err := app.Store.InsertPipelineRun(ctx, store.PipelineRun{
+		ID:         runID,
 		Kind:       runKindDaemonTick,
 		StartedAt:  started,
 		FinishedAt: finished,
@@ -145,7 +154,16 @@ func tick(ctx context.Context, app *runtime.App, opt Options) error {
 		Skipped:    skipped,
 		Error:      tickErr,
 		DetailJSON: store.MarshalPipelineDetail(detail),
-	})
+	}); err != nil {
+		return err
+	}
+	if opt.Notify {
+		cfg := notify.LoadConfig()
+		if err := notify.SendNeedsDecisionDigest(ctx, app.Store, notify.DigestNotifier(), cfg, runID, needsBefore); err != nil {
+			log.Printf("notification error: %v", err)
+		}
+	}
+	return nil
 }
 
 func matchJobs(ctx context.Context, app *runtime.App) (int, error) {

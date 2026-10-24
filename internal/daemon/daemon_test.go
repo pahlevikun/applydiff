@@ -81,6 +81,33 @@ func sampleCV() *cv.Document {
 	}
 }
 
+func TestDaemonNotifyWithoutTelegramStillSucceeds(t *testing.T) {
+	t.Setenv("TELEGRAM_BOT_TOKEN", "")
+	t.Setenv("TELEGRAM_CHAT_ID", "")
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	app := testApp(t, st, stubSource{
+		id: "good",
+		jobs: []job.Job{{
+			Company: "Acme", Title: "Senior Go Engineer", URL: "https://example.com/notify-1",
+			Source: "good", PostedAt: "2026-10-10", Remote: "yes", Region: "global", Status: "discovered",
+			Description: "We need Go, Kubernetes, and backend APIs.",
+		}},
+	})
+	dir := t.TempDir()
+	if err := daemon.Run(context.Background(), app, daemon.Options{
+		Once: true, DataDir: dir, MaxDraftsPerDay: 10, Notify: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestDaemonOnceWritesRun(t *testing.T) {
 	st, err := store.New(":memory:")
 	if err != nil {

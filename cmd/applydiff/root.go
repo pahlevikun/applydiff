@@ -71,6 +71,7 @@ func newRootCmd() *cobra.Command {
 		cmdPropose(),
 		cmdRuns(),
 		cmdDaemon(),
+		cmdNotify(),
 		cmdInbox(),
 		cmdMCP(),
 	)
