@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -87,6 +88,14 @@ func (s *Source) Fetch(ctx context.Context, queries []string) ([]job.Job, error)
 }
 
 func (s *Source) fetchQuery(ctx context.Context, client HTTPDoer, query string) ([]job.Job, error) {
+	if fixture := strings.TrimSpace(os.Getenv("REMOTIVE_FIXTURE")); fixture != "" {
+		f, err := os.Open(fixture)
+		if err != nil {
+			return nil, fmt.Errorf("remotive fixture: %w", err)
+		}
+		defer f.Close()
+		return parseJobs(f)
+	}
 	u := apiBase
 	if query != "" {
 		u = apiBase + "?search=" + url.QueryEscape(query)

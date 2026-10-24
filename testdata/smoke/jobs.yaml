@@ -1,0 +1,25 @@
+# Minimal job sources for scripts/smoke.sh (offline fixture + optional live remotive).
+sources:
+  remotive:
+    enabled: true
+  greenhouse:
+    enabled: false
+  remoteok:
+    enabled: false
+  jobicy:
+    enabled: false
+  weworkremotely:
+    enabled: false
+  workingnomads:
+    enabled: false
+  fourdayweek:
+    enabled: false
+
+queries:
+  - golang
+
+filters:
+  remote_only: false
+  max_posted_days:
+    hard: false
+    max: 365

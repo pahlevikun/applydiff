@@ -1,10 +1,28 @@
 package remotive
 
 import (
+	"context"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/pahlevikun/applydiff/internal/jobconfig"
 )
+
+func TestFetchUsesFixtureEnv(t *testing.T) {
+	t.Setenv("REMOTIVE_FIXTURE", "testdata/jobs_min.json")
+	src := NewFromConfig(jobconfig.RemotiveConfig{})
+	jobs, err := src.Fetch(context.Background(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(jobs) != 1 {
+		t.Fatalf("expected 1 job, got %d", len(jobs))
+	}
+	if jobs[0].Company != "Acme Remote" {
+		t.Fatalf("unexpected company %q", jobs[0].Company)
+	}
+}
 
 func TestParseJobsFixture(t *testing.T) {
 	f, err := os.Open("testdata/jobs_min.json")

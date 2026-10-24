@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -128,7 +129,7 @@ func (r *Runner) Run(ctx context.Context, opt Options) (Result, error) {
 			j.Status = "discovered"
 		}
 
-		if !job.Alive(ctx, r.Client, j.URL) {
+		if os.Getenv("APPLYDIFF_SKIP_JOB_LIVENESS") != "1" && !job.Alive(ctx, r.Client, j.URL) {
 			res.Dead++
 			continue
 		}
