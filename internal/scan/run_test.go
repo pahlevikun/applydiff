@@ -32,19 +32,25 @@ func (aliveClient) Do(req *http.Request) (*http.Response, error) {
 
 func TestScanDedupeRecordsMultipleOrigins(t *testing.T) {
 	source.Reset()
-	url := "https://example.com/jobs/senior-backend-go"
 	source.Register(fakeSource{
 		id: "alpha",
 		jobs: []job.Job{{
-			Company: "Acme", Title: "Senior Backend Engineer", URL: url,
+			Company: "Acme Inc", Title: "Senior Backend Engineer", URL: "https://boards.example.com/acme/1",
 			Source: "alpha", PostedAt: "2026-10-10", Remote: "yes", Region: "global", Status: "discovered",
 		}},
 	})
 	source.Register(fakeSource{
 		id: "beta",
 		jobs: []job.Job{{
-			Company: "Acme", Title: "Senior Backend Engineer", URL: url,
+			Company: "ACME", Title: "Senior Backend Engineer, Remote", URL: "https://jobicy.com/jobs/acme-senior",
 			Source: "beta", PostedAt: "2026-10-11", Remote: "yes", Region: "global", Status: "discovered",
+		}},
+	})
+	source.Register(fakeSource{
+		id: "gamma",
+		jobs: []job.Job{{
+			Company: "Acme", Title: "senior backend engineer", URL: "https://remotive.com/job/acme-backend",
+			Source: "gamma", PostedAt: "2026-10-12", Remote: "yes", Region: "global", Status: "discovered",
 		}},
 	})
 
@@ -78,7 +84,46 @@ func TestScanDedupeRecordsMultipleOrigins(t *testing.T) {
 	if len(jobs) != 1 {
 		t.Fatalf("expected 1 job in db, got %d", len(jobs))
 	}
-	if len(jobs[0].Origins) < 2 {
-		t.Fatalf("expected both origins recorded, got %#v", jobs[0].Origins)
+	if len(jobs[0].Origins) < 3 {
+		t.Fatalf("expected three origins recorded, got %#v", jobs[0].Origins)
+	}
+}
+
+func TestScanTwiceStableRowCount(t *testing.T) {
+	source.Reset()
+	source.Register(fakeSource{
+		id: "solo",
+		jobs: []job.Job{{
+			Company: "Solo Corp", Title: "Platform Engineer", URL: "https://example.com/jobs/p1",
+			Source: "solo", PostedAt: "2026-10-10", Remote: "yes", Region: "global", Status: "discovered",
+		}},
+	})
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	cfg := &jobconfig.Config{
+		Filters: jobconfig.Filters{Spec: filter.Spec{
+			Regions:       &filter.CategoryRule{Hard: false, Values: []string{"global"}},
+			MaxPostedDays: &filter.IntRule{Hard: false, Max: 365},
+		}},
+	}
+	runner := &scan.Runner{Store: st, Config: cfg, Client: aliveClient{}}
+	for i := 0; i < 2; i++ {
+		_, err := runner.Run(context.Background(), scan.Options{})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	n, err := st.CountJobs(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("expected row count 1 after two scans, got %d", n)
 	}
 }

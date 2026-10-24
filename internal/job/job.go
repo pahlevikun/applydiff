@@ -9,6 +9,9 @@ type Job struct {
 	Source      string   `json:"source"`
 	Origins     []string `json:"origins,omitempty"`
 	PostedAt    string `json:"posted_at"`
+	FirstSeen   string `json:"first_seen,omitempty"`
+	RoleKey     string `json:"-"`
+	Restamped   bool   `json:"restamped,omitempty"`
 	Remote      string `json:"remote"`
 	Region      string `json:"region"`
 	Status      string `json:"status"`

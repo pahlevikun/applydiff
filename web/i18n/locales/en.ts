@@ -57,6 +57,7 @@ export const en = {
       stale: 'Stale',
       unknown: 'Unknown',
     },
+    restamped: 'Re-stamped',
     filterLabels: {
       preset: 'Preset',
       verdict: 'Verdict',
