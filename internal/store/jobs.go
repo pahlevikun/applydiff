@@ -14,7 +14,7 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 		dedupeKey = job.DedupeKey(j)
 	}
 	if j.ID == "" {
-		j.ID = dedupeKey
+		j.ID = job.IDFromDedupeKey(dedupeKey)
 	}
 	kw, _ := json.Marshal(j.Keywords)
 	ben, _ := json.Marshal(j.Benefits)
@@ -162,7 +162,7 @@ func boolInt(b bool) int {
 }
 
 const jobSelectSQL = `
-	SELECT id, company, title, url, source, posted_at, remote, region, status,
+	SELECT id, dedupe_key, company, title, url, source, posted_at, remote, region, status,
 		description, salary_post, salary_ats,
 		arrangement, days_onsite, weekly_days, async_friendly, timezone_overlap_hours, country,
 		employment_type, seniority, salary_min, salary_currency, salary_disclosed, equity,
@@ -179,7 +179,7 @@ func scanJobRow(scanner interface {
 	var async, salDisc, equity, visa, reloc, eor int
 	var kwJSON, benJSON, originsJSON, flagsRaw string
 	err := scanner.Scan(
-		&j.ID, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.Remote, &j.Region, &j.Status,
+		&j.ID, &j.DedupeKey, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.Remote, &j.Region, &j.Status,
 		&desc, &salaryPost, &salaryATS,
 		&j.Arrangement, &j.DaysOnsite, &j.WeeklyDays, &async, &j.TimezoneOverlapHours, &j.Country,
 		&j.EmploymentType, &j.Seniority, &j.SalaryMin, &j.SalaryCurrency, &salDisc, &equity,

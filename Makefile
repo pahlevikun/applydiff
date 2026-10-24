@@ -1,11 +1,12 @@
-.PHONY: help cli tui web pdf docker release test build dev dev-web serve plugins
+.PHONY: help cli tui web pdf docker release test build dev dev-web serve plugins smoke
 
 BIN := bin/applydiff
 GO := go
 PORT ?= 8080
 
 help:
-	@echo "Targets: cli, tui, web, pdf, docker, release, release-snapshot, test, build"
+	@echo "Targets: cli, tui, web, pdf, docker, release, release-snapshot, test, build, smoke"
+	@echo "  smoke     — end-to-end integration smoke (scripts/smoke.sh)"
 	@echo "  serve     — build CLI and run API + embedded UI (PORT=$(PORT))"
 	@echo "  dev       — API on :$(PORT) + Nuxt dev (live web, proxies /api)"
 	@echo "  dev-web   — Nuxt dev only (run 'make serve' in another terminal)"
@@ -41,6 +42,9 @@ release-snapshot:
 
 test:
 	$(GO) test ./...
+
+smoke:
+	bash scripts/smoke.sh
 
 build: cli web
 

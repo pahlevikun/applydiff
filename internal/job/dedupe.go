@@ -1,6 +1,8 @@
 package job
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"net/url"
 	"strings"
 )
@@ -41,6 +43,15 @@ func normalizePart(s string) string {
 // DedupeKey collapses listings that share the same normalized URL and company+role.
 func DedupeKey(j Job) string {
 	return NormalizeURL(j.URL) + "\x00" + normalizePart(j.Company) + "\x00" + normalizePart(j.Title)
+}
+
+// IDFromDedupeKey returns a stable, CLI-safe job id for a dedupe key.
+func IDFromDedupeKey(dedupeKey string) string {
+	if dedupeKey == "" {
+		return ""
+	}
+	sum := sha256.Sum256([]byte(dedupeKey))
+	return "job-" + hex.EncodeToString(sum[:12])
 }
 
 // Dedupe keeps the first occurrence of each dedupe key.

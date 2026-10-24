@@ -2,6 +2,7 @@ package job
 
 type Job struct {
 	ID          string `json:"id"`
+	DedupeKey   string `json:"dedupe_key,omitempty"`
 	Company     string `json:"company"`
 	Title       string `json:"title"`
 	URL         string `json:"url"`

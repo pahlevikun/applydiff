@@ -19,7 +19,7 @@ func NewRunner(cfg Config) (Runner, error) {
 	case "cli":
 		return NewCLIRunner(cfg)
 	case "fake":
-		return FakeRunner{Response: `{"hunks":[]}`}, nil
+		return FakeRunner{Response: fakeResponseFromEnv()}, nil
 	default:
 		return nil, fmt.Errorf("llm: unknown provider %q", cfg.Provider)
 	}
@@ -31,7 +31,7 @@ func NewRunnerFromEnv() Runner {
 	runner, err := NewRunner(cfg)
 	if err != nil {
 		log.Printf("llm: using fake runner (%v)", err)
-		return FakeRunner{Response: `{"hunks":[]}`}
+		return FakeRunner{Response: fakeResponseFromEnv()}
 	}
 	if cfg.Provider == "fake" {
 		log.Printf("llm: no LLM_API_KEY or agent CLI configured; using fake runner (set LLM_CLI or install claude/codex/cursor-agent/hermes)")
