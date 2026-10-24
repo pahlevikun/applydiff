@@ -94,7 +94,7 @@ func (r *Runner) Run(ctx context.Context, opt Options) (Result, error) {
 	}
 	res.Fetched = len(fetched)
 
-	deduped := job.MergeByDedupeKey(fetched)
+	deduped := job.MergeByRoleKey(job.MergeByDedupeKey(fetched))
 	res.Deduped = len(deduped)
 
 	candidates := deduped

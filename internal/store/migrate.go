@@ -77,8 +77,9 @@ func (s *Store) Migrate(ctx context.Context) error {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}
 		if _, err := s.db.ExecContext(ctx, string(raw)); err != nil {
-			if name == "20260101000009_job_origins.sql" && strings.Contains(err.Error(), "duplicate column name") {
-				// Dev DBs from an earlier branch may already have origins_json.
+			if (name == "20260101000009_job_origins.sql" || name == "20260101000013_job_first_seen_role_key.sql") &&
+				strings.Contains(err.Error(), "duplicate column name") {
+				// Dev DBs from an earlier branch may already have these columns.
 			} else {
 				return fmt.Errorf("migration %s: %w", name, err)
 			}

@@ -24,6 +24,8 @@ type JobRow = {
     arrangement?: string
     remote?: string
     posted_at: string
+    first_seen?: string
+    restamped?: boolean
   }
 }
 
@@ -80,6 +82,7 @@ function enrich(item: InboxItem): InboxCardModel {
     riskHard: job?.flags?.some((f) => f.severity === 'hard'),
     verdict:
       verdictForJob(job) === 'fresh' ? t('inbox.verdict.fresh') : t('inbox.verdict.stale'),
+    restamped: job?.restamped,
   }
 }
 

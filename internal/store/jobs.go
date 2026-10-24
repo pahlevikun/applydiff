@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/risk"
@@ -13,6 +14,18 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 	if dedupeKey == "" {
 		dedupeKey = job.DedupeKey(j)
 	}
+	roleKey := job.RoleKey(j.Company, j.Title)
+	if roleKey != "" {
+		existing, err := s.findJobByRoleKey(ctx, roleKey)
+		if err == nil && existing != nil {
+			if existing.DedupeKey != "" {
+				dedupeKey = existing.DedupeKey
+			}
+			if existing.ID != "" {
+				j.ID = existing.ID
+			}
+		}
+	}
 	if j.ID == "" {
 		j.ID = dedupeKey
 	}
@@ -20,26 +33,27 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 	ben, _ := json.Marshal(j.Benefits)
 	origins, _ := json.Marshal(j.Origins)
 	mergedOrigins, _ := s.mergeJobOrigins(ctx, dedupeKey, origins)
+	firstSeen := time.Now().UTC().Format(time.RFC3339)
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO jobs (id, company, title, url, source, posted_at, remote, region, status, dedupe_key,
+		INSERT INTO jobs (id, company, title, url, source, posted_at, first_seen, role_key, remote, region, status, dedupe_key,
 			description, salary_post, salary_ats,
 			arrangement, days_onsite, weekly_days, async_friendly, timezone_overlap_hours, country,
 			employment_type, seniority, salary_min, salary_currency, salary_disclosed, equity,
 			company_stage, company_size, visa_sponsorship, relocation, eor_friendly, archetype,
 			keywords_json, benefits_json, filter_skip_reason, origins_json,
 			risk, flags, applicant_count)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?)
 		ON CONFLICT(dedupe_key) DO UPDATE SET
-			company = excluded.company,
-			title = excluded.title,
-			url = excluded.url,
-			source = excluded.source,
-			posted_at = excluded.posted_at,
-			remote = excluded.remote,
-			region = excluded.region,
-			status = excluded.status,
+			company = CASE WHEN excluded.company != '' THEN excluded.company ELSE jobs.company END,
+			title = CASE WHEN excluded.title != '' THEN excluded.title ELSE jobs.title END,
+			url = CASE WHEN excluded.url != '' THEN excluded.url ELSE jobs.url END,
+			source = CASE WHEN excluded.source != '' THEN excluded.source ELSE jobs.source END,
+			posted_at = CASE WHEN excluded.posted_at != '' THEN excluded.posted_at ELSE jobs.posted_at END,
+			role_key = CASE WHEN excluded.role_key != '' THEN excluded.role_key ELSE jobs.role_key END,
+			remote = CASE WHEN excluded.remote != '' THEN excluded.remote ELSE jobs.remote END,
+			region = CASE WHEN excluded.region != '' THEN excluded.region ELSE jobs.region END,
 			description = CASE WHEN excluded.description != '' THEN excluded.description ELSE jobs.description END,
 			salary_post = CASE WHEN excluded.salary_post != '' THEN excluded.salary_post ELSE jobs.salary_post END,
 			salary_ats = CASE WHEN excluded.salary_ats != '' THEN excluded.salary_ats ELSE jobs.salary_ats END,
@@ -63,12 +77,11 @@ func (s *Store) UpsertJob(ctx context.Context, j job.Job, dedupeKey string) erro
 			archetype = CASE WHEN excluded.archetype != '' THEN excluded.archetype ELSE jobs.archetype END,
 			keywords_json = CASE WHEN excluded.keywords_json != '[]' THEN excluded.keywords_json ELSE jobs.keywords_json END,
 			benefits_json = CASE WHEN excluded.benefits_json != '[]' THEN excluded.benefits_json ELSE jobs.benefits_json END,
-			filter_skip_reason = excluded.filter_skip_reason,
 			origins_json = excluded.origins_json,
 			risk = excluded.risk,
 			flags = excluded.flags,
 			applicant_count = CASE WHEN excluded.applicant_count > 0 THEN excluded.applicant_count ELSE jobs.applicant_count END
-	`, j.ID, j.Company, j.Title, j.URL, j.Source, j.PostedAt, j.Remote, j.Region, j.Status, dedupeKey,
+	`, j.ID, j.Company, j.Title, j.URL, j.Source, j.PostedAt, firstSeen, roleKey, j.Remote, j.Region, j.Status, dedupeKey,
 		j.Description, j.SalaryPost, j.SalaryATS,
 		j.Arrangement, j.DaysOnsite, j.WeeklyDays, boolInt(j.AsyncFriendly), j.TimezoneOverlapHours, j.Country,
 		j.EmploymentType, j.Seniority, j.SalaryMin, j.SalaryCurrency, boolInt(j.SalaryDisclosed), boolInt(j.Equity),
@@ -90,6 +103,25 @@ func flagsJSON(j job.Job) string {
 		return "[]"
 	}
 	return string(raw)
+}
+
+type jobRowRef struct {
+	ID        string
+	DedupeKey string
+}
+
+func (s *Store) findJobByRoleKey(ctx context.Context, roleKey string) (*jobRowRef, error) {
+	var ref jobRowRef
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, dedupe_key FROM jobs
+		WHERE role_key = ? AND role_key != ''
+		ORDER BY first_seen ASC, id ASC
+		LIMIT 1
+	`, roleKey).Scan(&ref.ID, &ref.DedupeKey)
+	if err != nil {
+		return nil, err
+	}
+	return &ref, nil
 }
 
 func (s *Store) mergeJobOrigins(ctx context.Context, dedupeKey string, incoming []byte) ([]byte, error) {
@@ -141,9 +173,14 @@ func (s *Store) ListJobs(ctx context.Context) ([]job.Job, error) {
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, j)
+		out = append(out, enrichJob(j))
 	}
 	return out, rows.Err()
+}
+
+func enrichJob(j job.Job) job.Job {
+	j.Restamped = job.Restamped(j.PostedAt, j.FirstSeen)
+	return j
 }
 
 func (s *Store) InsertJob(ctx context.Context, j job.Job) error {
@@ -162,13 +199,13 @@ func boolInt(b bool) int {
 }
 
 const jobSelectSQL = `
-	SELECT id, company, title, url, source, posted_at, remote, region, status,
+	SELECT id, company, title, url, source, posted_at, first_seen, role_key, remote, region, status,
 		description, salary_post, salary_ats,
 		arrangement, days_onsite, weekly_days, async_friendly, timezone_overlap_hours, country,
 		employment_type, seniority, salary_min, salary_currency, salary_disclosed, equity,
 		company_stage, company_size, visa_sponsorship, relocation, eor_friendly, archetype,
 		keywords_json, benefits_json, filter_skip_reason, origins_json,
-		risk, flags, applicant_count
+		risk, flags, applicant_count, dedupe_key
 	FROM jobs`
 
 func scanJobRow(scanner interface {
@@ -178,14 +215,15 @@ func scanJobRow(scanner interface {
 	var desc, salaryPost, salaryATS string
 	var async, salDisc, equity, visa, reloc, eor int
 	var kwJSON, benJSON, originsJSON, flagsRaw string
+	var dedupeKey string
 	err := scanner.Scan(
-		&j.ID, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.Remote, &j.Region, &j.Status,
+		&j.ID, &j.Company, &j.Title, &j.URL, &j.Source, &j.PostedAt, &j.FirstSeen, &j.RoleKey, &j.Remote, &j.Region, &j.Status,
 		&desc, &salaryPost, &salaryATS,
 		&j.Arrangement, &j.DaysOnsite, &j.WeeklyDays, &async, &j.TimezoneOverlapHours, &j.Country,
 		&j.EmploymentType, &j.Seniority, &j.SalaryMin, &j.SalaryCurrency, &salDisc, &equity,
 		&j.CompanyStage, &j.CompanySize, &visa, &reloc, &eor, &j.Archetype,
 		&kwJSON, &benJSON, &j.FilterSkipReason, &originsJSON,
-		&j.Risk, &flagsRaw, &j.ApplicantCount,
+		&j.Risk, &flagsRaw, &j.ApplicantCount, &dedupeKey,
 	)
 	if err != nil {
 		return j, err
@@ -204,6 +242,7 @@ func scanJobRow(scanner interface {
 	_ = json.Unmarshal([]byte(originsJSON), &j.Origins)
 	j.FlagsJSON = flagsRaw
 	j.Flags = decodeJobFlags(flagsRaw)
+	_ = dedupeKey
 	return j, nil
 }
 
@@ -239,4 +278,11 @@ func (s *Store) ListJobDescriptionHashes(ctx context.Context) (map[string][]stri
 		out[h] = append(out[h], id)
 	}
 	return out, rows.Err()
+}
+
+// CountJobs returns the number of job rows (including dead).
+func (s *Store) CountJobs(ctx context.Context) (int, error) {
+	var n int
+	err := s.db.QueryRowContext(ctx, `SELECT COUNT(1) FROM jobs`).Scan(&n)
+	return n, err
 }
