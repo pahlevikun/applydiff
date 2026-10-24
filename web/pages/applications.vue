@@ -328,7 +328,7 @@ onMounted(load)
   color: var(--muted);
 }
 .err {
-  color: #c0392b;
+  color: var(--del);
   padding: 0 1.25rem;
 }
 .note {

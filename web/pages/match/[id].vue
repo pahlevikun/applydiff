@@ -11,7 +11,7 @@ const decoded = (() => {
   }
 })()
 
-await navigateTo({ path: '/match', query: { job: decoded } }, { replace: true })
+await navigateTo(jobDetailPath(decoded, 'fit'), { replace: true })
 </script>
 
 <template>

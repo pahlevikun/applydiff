@@ -16,7 +16,8 @@ export default defineNuxtConfig({
     preset: 'static',
   },
   routeRules: {
-    '/': { redirect: '/jobs' },
+    '/pipeline': { redirect: '/applications' },
+    '/settings': { redirect: '/sources' },
     ...interviewRouteRules,
   },
   css: ['~/assets/theme.css'],

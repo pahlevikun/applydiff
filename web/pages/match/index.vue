@@ -1,14 +1,18 @@
 <script setup lang="ts">
 const jobId = useJobIdFromRoute()
 const { t } = useI18n()
+
+if (jobId.value) {
+  await navigateTo(jobDetailPath(jobId.value, 'fit'), { replace: true })
+}
 </script>
 
 <template>
-  <MatchJobWorkspace v-if="jobId" :key="jobId" :job-id="jobId" />
-  <div v-else class="page muted">
+  <div v-if="!jobId" class="page muted">
     {{ t('match.emptyLead') }}
     <p class="hint">{{ t('match.emptyHint') }}</p>
   </div>
+  <p v-else class="muted page">Redirecting…</p>
 </template>
 
 <style scoped>
