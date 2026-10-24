@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pahlevikun/applydiff/internal/hunkdecision"
 	"github.com/pahlevikun/applydiff/internal/store"
 	"github.com/pahlevikun/applydiff/internal/tailor"
 )
@@ -52,11 +53,11 @@ func (a *App) LoadProposal(ctx context.Context, key string) (*store.Proposal, er
 	return prop, err
 }
 
-// PendingHunks counts hunks still pending or blocked unresolved.
+// PendingHunks counts hunks still pending, blocked, stale, or skip without reason.
 func PendingHunks(hunks []tailor.Hunk) int {
 	n := 0
 	for _, h := range hunks {
-		if h.Status == tailor.StatusPending {
+		if h.Stale || h.Status == tailor.StatusPending || h.Status == tailor.StatusBlocked {
 			n++
 		}
 	}
@@ -101,6 +102,8 @@ func (a *App) ApproveHunks(ctx context.Context, key string, indices []int, all b
 		if err := a.Store.SetHunkStatus(ctx, h.ID, tailor.StatusAccepted); err != nil {
 			return nil, err
 		}
+		hash := hunkdecision.ContentHash(h)
+		_, _ = a.Store.UpsertHunkDecision(ctx, prop.JobID, i, hunkdecision.DecisionAccept, "", hash)
 	}
 	prop, err = a.LoadProposal(ctx, key)
 	if err == nil {
@@ -138,6 +141,8 @@ func (a *App) RejectHunks(ctx context.Context, key string, indices []int, dryRun
 		if err := a.Store.SetHunkStatus(ctx, h.ID, tailor.StatusRejected); err != nil {
 			return nil, err
 		}
+		hash := hunkdecision.ContentHash(h)
+		_, _ = a.Store.UpsertHunkDecision(ctx, prop.JobID, n-1, hunkdecision.DecisionReject, "", hash)
 	}
 	prop, err = a.LoadProposal(ctx, key)
 	if err == nil {
@@ -151,8 +156,9 @@ func RequireAllDecided(prop *store.Proposal) error {
 	if prop == nil {
 		return nil
 	}
-	if n := PendingHunks(prop.Hunks); n > 0 {
-		return ErrNeedsApproval{Pending: n}
+	undecided := UndecidedHunkIndexes(prop)
+	if len(undecided) > 0 {
+		return ErrNeedsApproval{Pending: len(undecided), Undecided: undecided}
 	}
 	return nil
 }

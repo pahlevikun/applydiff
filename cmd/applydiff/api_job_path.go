@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 )
@@ -18,6 +19,71 @@ func jobIDFromAPIPath(prefix, requestPath string) string {
 		return rest
 	}
 	return decoded
+}
+
+type jobAPISubroute int
+
+const (
+	jobAPISubNone   jobAPISubroute = 0
+	jobAPISubHunks  jobAPISubroute = 1
+	jobAPISubBuild  jobAPISubroute = 2
+)
+
+// parseJobAPIPath splits /api/jobs/{key} and optional /hunks, /hunks/{n}, or /build.
+func parseJobAPIPath(requestPath string) (jobKey string, sub jobAPISubroute, hunkIndex int, ok bool) {
+	rest := strings.TrimPrefix(requestPath, "/api/jobs/")
+	rest = strings.Trim(rest, "/")
+	if rest == "" {
+		return "", jobAPISubNone, 0, false
+	}
+	if strings.HasSuffix(rest, "/build") {
+		key := strings.TrimSuffix(rest, "/build")
+		key = strings.Trim(key, "/")
+		if key == "" {
+			return "", jobAPISubNone, 0, false
+		}
+		return pathUnescapeJobKey(key), jobAPISubBuild, 0, true
+	}
+	const marker = "/hunks"
+	if idx := strings.Index(rest, marker); idx >= 0 {
+		jobKey = strings.Trim(rest[:idx], "/")
+		tail := strings.TrimPrefix(rest[idx:], marker)
+		tail = strings.Trim(tail, "/")
+		if tail == "" {
+			return pathUnescapeJobKey(jobKey), jobAPISubHunks, 0, true
+		}
+		n, err := parseHunkIndexSegment(tail)
+		if err != nil {
+			return "", jobAPISubNone, 0, false
+		}
+		return pathUnescapeJobKey(jobKey), jobAPISubHunks, n, true
+	}
+	return pathUnescapeJobKey(rest), jobAPISubNone, 0, true
+}
+
+func pathUnescapeJobKey(raw string) string {
+	decoded, err := url.PathUnescape(raw)
+	if err != nil {
+		return raw
+	}
+	return decoded
+}
+
+func parseHunkIndexSegment(seg string) (int, error) {
+	if seg == "" {
+		return 0, fmt.Errorf("empty hunk index")
+	}
+	var n int
+	for _, c := range seg {
+		if c < '0' || c > '9' {
+			return 0, fmt.Errorf("invalid hunk index")
+		}
+		n = n*10 + int(c-'0')
+	}
+	if n < 1 {
+		return 0, fmt.Errorf("invalid hunk index")
+	}
+	return n, nil
 }
 
 type interviewSubroute int

@@ -11,6 +11,7 @@ import (
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/store"
+	"github.com/pahlevikun/applydiff/internal/tailor"
 )
 
 func TestFeedScreenSnapshot(t *testing.T) {
@@ -48,6 +49,24 @@ func TestFeedScreenSnapshot(t *testing.T) {
 	}
 	if !strings.Contains(out, "Presets") {
 		t.Fatalf("expected presets rail, got:\n%s", out)
+	}
+}
+
+func TestDiffScreenSnapshotProgress(t *testing.T) {
+	app := &runtime.App{Store: nil, Config: &jobconfig.Config{}}
+	m := initialModel(app)
+	m.width = 90
+	m.height = 20
+	m.screen = screenDiff
+	m.proposal = &store.Proposal{
+		Hunks: []tailor.Hunk{
+			{FieldID: "summary", Before: "a", After: "b", Rationale: "r", Status: tailor.StatusAccepted},
+			{FieldID: "exp.1.b1", Before: "c", After: "d", Rationale: "r", Status: tailor.StatusPending},
+		},
+	}
+	out := m.View()
+	if !strings.Contains(out, "1 of 2 decided") {
+		t.Fatalf("expected progress counter, got:\n%s", out)
 	}
 }
 

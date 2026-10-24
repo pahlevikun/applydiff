@@ -69,15 +69,28 @@ func (s *server) getMatch(w http.ResponseWriter, r *http.Request, jobID string) 
 }
 
 func (s *server) handleJobByID(w http.ResponseWriter, r *http.Request) {
-	rest := jobIDFromAPIPath("/api/jobs/", r.URL.Path)
-	if rest == "" {
+	jobKey, sub, hunkIndex, ok := parseJobAPIPath(r.URL.Path)
+	if !ok {
 		http.NotFound(w, r)
+		return
+	}
+	switch sub {
+	case jobAPISubHunks:
+		if hunkIndex > 0 {
+			s.handleHunkDecisionPost(w, r, jobKey, hunkIndex)
+			return
+		}
+		s.handleHunksList(w, r, jobKey)
+		return
+	case jobAPISubBuild:
+		s.handleJobBuild(w, r, jobKey)
 		return
 	}
 	if r.Method != http.MethodPut {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	rest := jobKey
 	var body struct {
 		Status string `json:"status"`
 	}
