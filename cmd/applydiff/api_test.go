@@ -12,6 +12,7 @@ import (
 	"github.com/pahlevikun/applydiff/internal/cv"
 	"github.com/pahlevikun/applydiff/internal/filter"
 	"github.com/pahlevikun/applydiff/internal/job"
+	"github.com/pahlevikun/applydiff/internal/match"
 	"github.com/pahlevikun/applydiff/internal/jobconfig"
 	"github.com/pahlevikun/applydiff/internal/llm"
 	"github.com/pahlevikun/applydiff/internal/scan"
@@ -456,6 +457,62 @@ func TestAPIApplicationsAndExport(t *testing.T) {
 	mux.ServeHTTP(cfgRec, cfgReq)
 	if cfgRec.Code != http.StatusOK {
 		t.Fatalf("config %d", cfgRec.Code)
+	}
+}
+
+func TestAPIInboxCounts(t *testing.T) {
+	st, err := store.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer st.Close()
+	if err := st.Migrate(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	j := job.Job{
+		ID: "job-inbox-1", Company: "Acme", Title: "Go Dev", URL: "https://example.com/inbox",
+		Source: "manual", PostedAt: "2026-10-10", Remote: "yes", Region: "global", Status: "matched",
+	}
+	if err := st.UpsertJob(context.Background(), j, job.DedupeKey(j)); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SaveMatchResult(context.Background(), matchResult(j.ID, 20)); err != nil {
+		t.Fatal(err)
+	}
+	srv := testServer(st, nil, nil, nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/inbox", srv.handleInbox)
+	req := httptest.NewRequest(http.MethodGet, "/api/inbox", nil)
+	rec := httptest.NewRecorder()
+	mux.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d %s", rec.Code, rec.Body.String())
+	}
+	var payload struct {
+		Data []struct {
+			State string `json:"state"`
+		} `json:"data"`
+		Meta struct {
+			Counts struct {
+				NeedsDecision int `json:"needs_decision"`
+			} `json:"counts"`
+		} `json:"meta"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Meta.Counts.NeedsDecision < 1 {
+		t.Fatalf("expected needs_decision count, got %+v", payload.Meta.Counts)
+	}
+	if len(payload.Data) < 1 {
+		t.Fatal("expected data rows")
+	}
+}
+
+func matchResult(jobID string, total int) match.Result {
+	return match.Result{
+		JobID: jobID, Total: total,
+		ComputedAt: "2026-10-10T00:00:00Z",
 	}
 }
 

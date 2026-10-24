@@ -70,6 +70,8 @@ func newRootCmd() *cobra.Command {
 		cmdAdd(),
 		cmdPropose(),
 		cmdRuns(),
+		cmdDaemon(),
+		cmdInbox(),
 		cmdMCP(),
 	)
 	// Legacy entrypoints
