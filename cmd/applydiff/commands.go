@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pahlevikun/applydiff/internal/job"
 	"github.com/pahlevikun/applydiff/internal/present"
 	"github.com/pahlevikun/applydiff/internal/runtime"
 	"github.com/pahlevikun/applydiff/internal/theme"
@@ -67,12 +68,22 @@ With --dry-run, prints planned HTTP requests without writing to the database.`,
 }
 
 func cmdJobs() *cobra.Command {
+	var restampedOnly bool
 	c := &cobra.Command{
 		Use:   "jobs",
 		Short: "List jobs with filter scores",
 		Run: func(cmd *cobra.Command, args []string) {
 			jobs, err := rootApp.ListJobs(cmd.Context())
 			exitOn(err)
+			if restampedOnly {
+				filtered := make([]job.JobView, 0, len(jobs))
+				for _, j := range jobs {
+					if j.Job.Restamped {
+						filtered = append(filtered, j)
+					}
+				}
+				jobs = filtered
+			}
 			exitOn(emitOrJSON(jobs, func() string {
 				var b strings.Builder
 				for _, j := range jobs {
@@ -83,6 +94,7 @@ func cmdJobs() *cobra.Command {
 			}))
 		},
 	}
+	c.Flags().BoolVar(&restampedOnly, "restamped", false, "only list jobs whose posted_at is much newer than first_seen")
 	return c
 }
 

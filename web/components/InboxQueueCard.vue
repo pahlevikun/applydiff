@@ -10,6 +10,7 @@ export type InboxCardModel = {
   risk?: number
   riskHard?: boolean
   verdict?: string
+  restamped?: boolean
 }
 
 const props = defineProps<{
@@ -60,6 +61,7 @@ const verdictLabel = computed(() => props.item.verdict || t('inbox.verdict.unkno
     </p>
     <div class="badges">
       <span class="badge verdict">{{ verdictLabel }}</span>
+      <span v-if="item.restamped" class="badge restamped">{{ t('inbox.restamped') }}</span>
       <span v-if="item.risk" :class="['badge', item.riskHard ? 'risk-hard' : 'risk-soft']">
         {{ t('jobs.risk', { score: item.risk }) }}
       </span>
@@ -121,6 +123,11 @@ const verdictLabel = computed(() => props.item.verdict || t('inbox.verdict.unkno
 .verdict {
   background: var(--surface2);
   color: var(--muted);
+  border: 1px solid var(--line);
+}
+.restamped {
+  background: var(--amber-bg);
+  color: var(--amber);
   border: 1px solid var(--line);
 }
 .risk-soft {

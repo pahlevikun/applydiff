@@ -79,6 +79,7 @@ func (s *Store) GetJob(ctx context.Context, id string) (*job.Job, error) {
 	if err != nil {
 		return nil, err
 	}
+	j = enrichJob(j)
 	return &j, nil
 }
 
